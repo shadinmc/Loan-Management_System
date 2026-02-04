@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="94172bc9-ecc6-4ab9-bb14-296ec23d4b1c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/Food App.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/copilot.data.migration.agent.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/copilot.data.migration.ask.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/copilot.data.migration.edit.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/.gitattributes" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/.mvn/wrapper/maven-wrapper.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/pom.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/FoodAppApplication.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/config/CorsConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/config/DataSeeder.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/config/MongoDebugConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/config/SecurityConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/controller/AuthController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/controller/CartController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/controller/RestaurantController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/dto/AddFoodRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/dto/AddRestaurantRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/dto/AddToCartRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/dto/CartItemRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/dto/CheckoutRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/dto/LoginRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/dto/LoginResponse.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/dto/SignupRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/dto/UpdateOrderStatusRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/enums/FoodCategory.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/enums/OrderStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/enums/Role.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/model/Cart.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/model/CartItem.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/model/FoodItem.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/model/Restaurant.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/model/User.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/repository/CartRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/repository/RestaurantRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/repository/UserRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/service/AuthService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/service/CartService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/com/example/FoodApp/service/RestaurantService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/resources/application.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/test/java/com/example/FoodApp/FoodAppApplicationTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/.idea/copilot.data.migration.agent.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/.idea/copilot.data.migration.ask.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/.idea/copilot.data.migration.ask2agent.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/.idea/copilot.data.migration.edit.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/.idea/frontend.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/public/favicon.ico" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/public/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/public/logo192.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/public/logo512.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/public/manifest.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/public/robots.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/App.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/App.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/App.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/App.test.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/api/api.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/components/AddFoodForm.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/components/AddRestaurantForm.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/components/AdminOrderCard.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/components/CartItem.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/components/FoodItemCard.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/components/NavLogin.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/components/Navbar.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/components/OrderCard.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/components/RestaurantCard.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/contexts/AuthContext.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/contexts/CartContext.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/index.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/index.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/logo.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/pages/AdminMenuPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/pages/AdminOrdersPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/pages/AdminRestaurantPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/pages/CartPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/pages/LoginPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/pages/OrdersPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/pages/RestaurantListPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/pages/RestaurantMenuPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/pages/SignupPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/reportWebVitals.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/routes.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-Enhanced/src/setupTests.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.idea/copilot.data.migration.agent.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.idea/copilot.data.migration.ask.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.idea/copilot.data.migration.ask2agent.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.idea/frontend.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/public/favicon.ico" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/public/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/public/logo192.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/public/logo512.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/public/manifest.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/public/robots.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.test.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/api.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/AddFoodForm.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/AddRestaurantForm.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/AdminOrderCard.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/CartItem.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/FoodItemCard.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Navbar.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/OrderCard.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/RestaurantCard.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/contexts/AuthContext.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/contexts/CartContext.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/index.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/index.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/logo.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/AdminMenuPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/AdminOrdersPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/AdminRestaurantPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/CartPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/LoginPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/OrdersPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/RestaurantListPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/RestaurantMenuPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/SignupPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/reportWebVitals.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/routes.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/setupTests.js" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_C:/Users/304483/Desktop/JAVA_LMS_4_repo" value="39BtMOJPXLvmtFmMYVAGRS2T4vx" />
+    </persistenceIdMap>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 5
+}]]></component>
+  <component name="ProjectId" id="39BtMOJPXLvmtFmMYVAGRS2T4vx" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "base",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/304483/Desktop/JAVA_LMS_4_repo",
+    "settings.editor.selected.configurable": "configurable.group.appearance"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="94172bc9-ecc6-4ab9-bb14-296ec23d4b1c" name="Changes" comment="" />
+      <created>1770181243704</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1770181243704</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>
