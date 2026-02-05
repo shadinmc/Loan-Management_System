@@ -1,8 +1,9 @@
 package com.lms.decision.dto;
 
-import com.lms.eligibility.context.LoanType;
+import com.lms.common.enums.LoanType;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+
 
 import java.time.LocalDate;
 

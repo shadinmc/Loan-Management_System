@@ -3,6 +3,19 @@ package com.lms.loan.entity;
 import com.lms.common.enums.LoanStatus;
 import com.lms.common.enums.LoanType;
 import com.lms.loan.entity.embedded.*;
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.lms.common.enums.LoanStatus;
+import com.lms.common.enums.LoanType;
+import com.lms.loan.entity.embedded.*;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;

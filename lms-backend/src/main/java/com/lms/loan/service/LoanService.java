@@ -9,6 +9,7 @@ import com.lms.loan.repository.LoanRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class LoanService {
@@ -104,6 +105,10 @@ public class LoanService {
                 }
             }
         }
+    }
+
+    public List<Loan> getAllLoans() {
+        return loanRepository.findAll();
     }
 
 
