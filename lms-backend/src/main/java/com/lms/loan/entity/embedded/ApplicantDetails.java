@@ -1,28 +1,23 @@
 package com.lms.loan.entity.embedded;
 
-import jakarta.validation.constraints.*;
-import lombok.*;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class ApplicantDetails {
-
-    @NotBlank
+    private String fullName;
+    private LocalDate dateOfBirth;
+    private String email;
+    private String phone;
+    private String address;
+    private String city;
+    private String state;
+    private String pincode;
     private String employmentType;
-
-    @Positive
-    private Double monthlyIncome;
-
-    @NotBlank
-    private String proofOfIdentity;
-
-    @NotBlank
-    private String proofOfIncome;
-
-    @NotBlank
-    private String proofOfAddress;
-
-    // getters & setters
+    private String employerName;
+    private BigDecimal monthlyIncome;
+    private BigDecimal existingEmi;
+    private Integer creditScore;
 }

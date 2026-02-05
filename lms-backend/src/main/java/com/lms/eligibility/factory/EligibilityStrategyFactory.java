@@ -1,9 +1,10 @@
 package com.lms.eligibility.factory;
 
-import com.lms.eligibility.context.LoanType;
+import com.lms.common.enums.LoanType;
 import com.lms.eligibility.strategy.LoanEligibilityStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
 
 import java.util.Map;
 

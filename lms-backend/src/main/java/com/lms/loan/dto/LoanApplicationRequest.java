@@ -6,6 +6,8 @@ import lombok.Data;
 @Data
 public class LoanApplicationRequest {
 
+    private ApplicantDetailsDto applicantDetails;
+
     // -------- Common loan fields --------
     private LoanType loanType;
     private Double loanAmount;
@@ -17,4 +19,6 @@ public class LoanApplicationRequest {
     private EducationLoanDetailsDto educationLoanDetails;
     private BusinessLoanDetailsDto businessLoanDetails;
     private VehicleLoanDetailsDto vehicleLoanDetails;
+
+
 }

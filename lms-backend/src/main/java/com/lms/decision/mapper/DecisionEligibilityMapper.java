@@ -2,7 +2,6 @@ package com.lms.decision.mapper;
 
 import com.lms.decision.dto.DecisionInput;
 import com.lms.eligibility.context.EligibilityContext;
-import com.lms.eligibility.context.LoanType;
 
 public class DecisionEligibilityMapper {
 

@@ -1,8 +1,9 @@
 package com.lms.eligibility.context;
 
+import com.lms.common.enums.LoanType;
 import lombok.Data;
 import java.time.LocalDate;
-import com.lms.eligibility.context.LoanType;
+
 
 @Data
 public class EligibilityContext {

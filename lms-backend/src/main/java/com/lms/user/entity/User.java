@@ -1,25 +1,40 @@
 package com.lms.user.entity;
 
+import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-import lombok.*;
 
-@Document(collection = "users")
+import java.time.LocalDateTime;
+import java.util.Set;
+
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Document(collection = "users")
 public class User {
 
     @Id
-    private String userId;
+    private String id;
 
-    private String fullName;
+    @Indexed(unique = true)
     private String email;
+
+    @Indexed(unique = true)
+    private String username;
+
+    private String password;
+    private String fullName;
     private String phone;
+    private String branchCode;
 
-    private String pan;
-    private String aadhaar;
+    private Set<Role> roles;
 
-    private Integer creditScore;
+    private boolean active = true;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    public enum Role {
+        USER,
+        BRANCH_MANAGER,
+        REGIONAL_MANAGER
+    }
 }
