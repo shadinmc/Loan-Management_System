@@ -1,16 +1,14 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 import {
   X, User, LogOut, Home, LayoutDashboard,
-  FileText, Clock, Settings, HelpCircle
+  FileText, Clock, Settings, HelpCircle, Sun, Moon
 } from 'lucide-react';
 
-/**
- * Sidebar Component
- * Slide-out navigation panel with user profile and actions
- */
 export default function Sidebar({ isOpen, onClose }) {
   const { user, isLoggedIn, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -28,34 +26,25 @@ export default function Sidebar({ isOpen, onClose }) {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <>
-      {/* Overlay */}
-      <div
+    <><div
         className={`sidebar-overlay ${isOpen ? 'active' : ''}`}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Sidebar Panel */}
       <aside
         className={`sidebar ${isOpen ? 'open' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"
       >
-        {/* Header */}
         <div className="sidebar-header">
           <h3>Menu</h3>
-          <button
-            className="close-btn"
-            onClick={onClose}
-            aria-label="Close menu"
-          >
+          <button className="close-btn" onClick={onClose} aria-label="Close menu">
             <X size={24} />
           </button>
         </div>
 
-        {/* User Profile Section */}
         {isLoggedIn && (
           <div className="user-profile">
             <div className="avatar" aria-hidden="true">
@@ -68,7 +57,23 @@ export default function Sidebar({ isOpen, onClose }) {
           </div>
         )}
 
-        {/* Navigation Links */}
+        {/* Theme Toggle */}
+        <div className="theme-toggle-section">
+          <span className="theme-label">Appearance</span>
+          <button
+            className="theme-toggle-btn"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          >
+            <span className={`toggle-option ${theme === 'light' ? 'active' : ''}`}>
+              <Sun size={16} /> Light
+            </span>
+            <span className={`toggle-option ${theme === 'dark' ? 'active' : ''}`}>
+              <Moon size={16} /> Dark
+            </span>
+          </button>
+        </div>
+
         <nav className="sidebar-nav" aria-label="Sidebar navigation">
           <button
             className={`nav-item ${isActive('/') ? 'active' : ''}`}
@@ -106,28 +111,19 @@ export default function Sidebar({ isOpen, onClose }) {
 
               <div className="nav-divider" />
 
-              <button
-                className="nav-item"
-                onClick={() => handleNavigation('/settings')}
-              >
+              <button className="nav-item" onClick={() => handleNavigation('/settings')}>
                 <Settings size={20} />
                 <span>Settings</span>
               </button>
 
-              <button
-                className="nav-item"
-                onClick={() => handleNavigation('/help')}
-              >
+              <button className="nav-item" onClick={() => handleNavigation('/help')}>
                 <HelpCircle size={20} />
                 <span>Help & Support</span>
               </button>
 
               <div className="nav-divider" />
 
-              <button
-                className="nav-item logout"
-                onClick={handleLogout}
-              >
+              <button className="nav-item logout" onClick={handleLogout}>
                 <LogOut size={20} />
                 <span>Logout</span>
               </button>
@@ -153,7 +149,6 @@ export default function Sidebar({ isOpen, onClose }) {
           )}
         </nav>
 
-        {/* Footer */}
         <div className="sidebar-footer">
           <p>LoanWise v1.0</p>
           <p className="copyright">© 2024 All rights reserved</p>
@@ -229,11 +224,6 @@ export default function Sidebar({ isOpen, onClose }) {
           color: #EF4444;
         }
 
-        .close-btn:focus-visible {
-          outline: 2px solid #2DBE60;
-          outline-offset: 2px;
-        }
-
         .user-profile {
           display: flex;
           align-items: center;
@@ -273,6 +263,53 @@ export default function Sidebar({ isOpen, onClose }) {
           color: var(--text-muted);
         }
 
+        .theme-toggle-section {
+          padding: 16px;
+          margin: 0 16px 8px;
+          background: var(--bg-secondary);
+          border-radius: 12px;
+        }
+
+        .theme-label {
+          display: block;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 12px;
+        }
+
+        .theme-toggle-btn {
+          width: 100%;
+          display: flex;
+          padding: 4px;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          border-radius: 10px;
+          cursor: pointer;
+        }
+
+        .toggle-option {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 10px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: var(--text-secondary);
+          border-radius: 8px;
+          transition: all 0.2s ease;
+        }
+
+        .toggle-option.active {
+          background: #2DBE60;
+          color: white;
+          box-shadow: 0 2px 8px rgba(45, 190, 96, 0.3);
+        }
+
         .sidebar-nav {
           flex: 1;
           padding: 8px 16px;
@@ -310,11 +347,6 @@ export default function Sidebar({ isOpen, onClose }) {
           background: rgba(45, 190, 96, 0.15);
         }
 
-        .nav-item:focus-visible {
-          outline: 2px solid #2DBE60;
-          outline-offset: 2px;
-        }
-
         .nav-item.logout {
           color: #EF4444;
         }
@@ -342,10 +374,6 @@ export default function Sidebar({ isOpen, onClose }) {
         .sidebar-footer p {
           font-size: 0.75rem;
           color: var(--text-muted);
-        }
-
-        .sidebar-footer .copyright {
-          margin-top: 4px;
         }
 
         @media (max-width: 480px) {

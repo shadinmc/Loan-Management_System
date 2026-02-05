@@ -1,125 +1,190 @@
+// src/components/Navbar.jsx
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Sun, Moon, Menu, MoreVertical, Wallet } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
+import { Menu, MoreVertical, Wallet, Calculator } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 
-/**
- * Navigation Bar Component
- * Premium fintech design with solid colors
- */
 export default function Navbar({ onMenuClick }) {
-  const { theme, toggleTheme } = useTheme();
   const { user, isLoggedIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const isActive = (path) => location.pathname === path;
 
+  const scrollToLoans = (e) => {
+    e.preventDefault();
+    if (location.pathname !== '/') {
+      navigate('/', { state: { scrollToLoans: true } });
+    } else {
+      const loansSection = document.getElementById('loans-section');
+      if (loansSection) {
+        loansSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
+
+  const scrollToCalculator = (e) => {
+    e.preventDefault();
+    if (location.pathname !== '/') {
+      navigate('/', { state: { scrollToCalculator: true } });
+    } else {
+      const calculator = document.getElementById('emi-calculator');
+      if (calculator) {
+        calculator.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
+
   return (
-    <nav className="navbar" role="navigation" aria-label="Main navigation">
+    <motion.nav
+      className="navbar"
+      role="navigation"
+      aria-label="Main navigation"
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+    >
       <div className="navbar-container">
         {/* Logo */}
         <Link to="/" className="navbar-brand" aria-label="LoanWise - Go to homepage">
-          <div className="logo-icon" aria-hidden="true">
+          <motion.div
+            className="logo-icon"
+            aria-hidden="true"
+            whileHover={{ scale: 1.05, rotate: 5 }}
+            whileTap={{ scale: 0.95 }}
+          >
             <Wallet size={20} />
-          </div>
+          </motion.div>
           <span className="logo-text">LoanWise</span>
         </Link>
 
         {/* Navigation Links - Desktop */}
         <div className="navbar-links" role="menubar">
-          <Link
-            to="/"
-            className={`nav-link ${isActive('/') ? 'active' : ''}`}
+          <motion.a
+            href="#loans-section"
+            onClick={scrollToLoans}
+            className={`nav-link ${isActive('/') && !location.hash ? 'active' : ''}`}
             role="menuitem"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             Loans
-          </Link>
+          </motion.a>
+
+          <motion.a
+            href="#emi-calculator"
+            onClick={scrollToCalculator}
+            className="nav-link calculator-link"
+            role="menuitem"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Calculator size={16} />
+            EMI Calculator
+          </motion.a>
 
           {isLoggedIn && (
             <>
-              <Link
-                to="/dashboard"
-                className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`}
-                role="menuitem"
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/loan/status"
-                className={`nav-link ${isActive('/loan/status') ? 'active' : ''}`}
-                role="menuitem"
-              >
-                Loan Status
-              </Link>
-            </>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link
+                  to="/dashboard"
+                  className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`}
+                  role="menuitem"
+                >
+                  Dashboard
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link
+                  to="/loan/status"
+                  className={`nav-link ${isActive('/loan/status') ? 'active' : ''}`}
+                  role="menuitem"
+                >
+                  Loan Status
+                </Link>
+              </motion.div></>
           )}
         </div>
 
         {/* Right Section */}
         <div className="navbar-actions">
-          {/* Theme Toggle */}
-          <button
-            className="theme-toggle"
-            onClick={toggleTheme}
-            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          {/* Calculator Quick Access Button */}
+          <motion.button
+            className="calculator-btn"
+            onClick={scrollToCalculator}
+            aria-label="Open EMI Calculator"
+            title="EMI Calculator"
+            whileHover={{ scale: 1.05, borderColor: '#8B5CF6' }}
+            whileTap={{ scale: 0.95 }}
           >
-            <div className="toggle-icon">
-              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-            </div>
-          </button>
+            <Calculator size={18} />
+          </motion.button>
 
           {/* Auth Buttons or User Info */}
           {!isLoggedIn ? (
             <div className="auth-buttons">
-              <button
+              <motion.button
                 className="btn-ghost"
                 onClick={() => navigate('/login')}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 Login
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 className="btn-primary"
                 onClick={() => navigate('/signup')}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
               >
                 Get Started
-              </button>
+              </motion.button>
             </div>
           ) : (
-            <div className="user-section">
-              <div className="user-avatar" aria-hidden="true">
+            <motion.div
+              className="user-section"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <motion.div
+                className="user-avatar"
+                aria-hidden="true"
+                whileHover={{ scale: 1.1 }}
+              >
                 {user?.username?.charAt(0).toUpperCase() || 'U'}
-              </div>
+              </motion.div>
               <span className="welcome-text">
                 Hi, <strong>{user?.username || 'User'}</strong>
               </span>
-            </div>
+            </motion.div>
           )}
 
           {/* Three-dot Menu Button */}
-          <button
+          <motion.button
             className="menu-button"
             onClick={onMenuClick}
             aria-label="Open navigation menu"
             aria-expanded="false"
             aria-haspopup="true"
+            whileHover={{ scale: 1.05, borderColor: '#2DBE60' }}
+            whileTap={{ scale: 0.95 }}
           >
             <MoreVertical size={20} />
-          </button>
+          </motion.button>
 
           {/* Mobile Menu Button */}
-          <button
+          <motion.button
             className="mobile-menu-button"
             onClick={onMenuClick}
             aria-label="Open mobile menu"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             <Menu size={24} />
-          </button>
+          </motion.button>
         </div>
-      </div>
-
-      <style>{`
+      </div><style>{`
         .navbar {
           position: fixed;
           top: 0;
@@ -127,11 +192,10 @@ export default function Navbar({ onMenuClick }) {
           right: 0;
           height: 72px;
           background: var(--navbar-bg);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
           border-bottom: 1px solid var(--border-color);
           z-index: 300;
-          transition: background 0.25s ease;
         }
 
         .navbar-container {
@@ -155,12 +219,13 @@ export default function Navbar({ onMenuClick }) {
         .logo-icon {
           width: 40px;
           height: 40px;
-          background: #2DBE60;
-          border-radius: 10px;
+          background: linear-gradient(135deg, #2DBE60 0%, #22a652 100%);
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
+          box-shadow: 0 4px 12px rgba(45, 190, 96, 0.25);
         }
 
         .logo-text {
@@ -177,13 +242,16 @@ export default function Navbar({ onMenuClick }) {
 
         .nav-link {
           padding: 10px 18px;
-          border-radius: 8px;
+          border-radius: 10px;
           color: var(--text-secondary);
           font-weight: 500;
           font-size: 0.9375rem;
-          transition: all 0.15s ease;
+          transition: color 0.2s ease, background 0.2s ease;
           text-decoration: none;
-        }
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          cursor: pointer;}
 
         .nav-link:hover {
           color: var(--text-primary);
@@ -192,11 +260,16 @@ export default function Navbar({ onMenuClick }) {
 
         .nav-link.active {
           color: #2DBE60;
-          background: #E9F8EF;
+          background: rgba(45, 190, 96, 0.1);
         }
 
-        [data-theme="dark"] .nav-link.active {
-          background: rgba(45, 190, 96, 0.15);
+        .nav-link.calculator-link {
+          color: #8B5CF6;
+        }
+
+        .nav-link.calculator-link:hover {
+          background: rgba(139, 92, 246, 0.1);
+          color: #8B5CF6;
         }
 
         .navbar-actions {
@@ -205,7 +278,7 @@ export default function Navbar({ onMenuClick }) {
           gap: 12px;
         }
 
-        .theme-toggle {
+        .calculator-btn {
           width: 40px;
           height: 40px;
           border: 1px solid var(--border-color);
@@ -215,29 +288,17 @@ export default function Navbar({ onMenuClick }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: var(--text-secondary);
-          transition: all 0.15s ease;
+          color: #8B5CF6;
+          transition: background 0.2s ease;
         }
 
-        .theme-toggle:hover {
-          border-color: #2DBE60;
-          color: #2DBE60;
-          background: #E9F8EF;
+        .calculator-btn:hover {
+          background: rgba(139, 92, 246, 0.1);
         }
 
-        [data-theme="dark"] .theme-toggle:hover {
-          background: rgba(45, 190, 96, 0.15);
-        }
-
-        .theme-toggle:focus-visible {
-          outline: 2px solid #2DBE60;
+        .calculator-btn:focus-visible {
+          outline: 2px solid #8B5CF6;
           outline-offset: 2px;
-        }
-
-        .toggle-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
         }
 
         .auth-buttons {
@@ -250,11 +311,11 @@ export default function Navbar({ onMenuClick }) {
           border: none;
           background: transparent;
           color: var(--text-primary);
-          border-radius: 8px;
+          border-radius: 10px;
           font-weight: 500;
           font-size: 0.9375rem;
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: background 0.2s ease;
         }
 
         .btn-ghost:hover {
@@ -264,18 +325,13 @@ export default function Navbar({ onMenuClick }) {
         .btn-primary {
           padding: 10px 20px;
           border: none;
-          background: #2DBE60;
+          background: linear-gradient(135deg, #2DBE60 0%, #22a652 100%);
           color: white;
-          border-radius: 8px;
+          border-radius: 10px;
           font-weight: 600;
           font-size: 0.9375rem;
           cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        .btn-primary:hover {
-          background: #25A854;
-          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(45, 190, 96, 0.25);
         }
 
         .user-section {
@@ -287,7 +343,7 @@ export default function Navbar({ onMenuClick }) {
         .user-avatar {
           width: 36px;
           height: 36px;
-          background: #2DBE60;
+          background: linear-gradient(135deg, #2DBE60 0%, #22a652 100%);
           color: white;
           border-radius: 50%;
           display: flex;
@@ -318,12 +374,7 @@ export default function Navbar({ onMenuClick }) {
           align-items: center;
           justify-content: center;
           color: var(--text-secondary);
-          transition: all 0.15s ease;
-        }
-
-        .menu-button:hover {
-          border-color: #2DBE60;
-          color: #2DBE60;
+          transition: color 0.2s ease;
         }
 
         .menu-button:focus-visible {
@@ -342,18 +393,12 @@ export default function Navbar({ onMenuClick }) {
           align-items: center;
           justify-content: center;
           color: var(--text-primary);
-          transition: all 0.15s ease;
-        }
-
-        .mobile-menu-button:hover {
-          background: var(--bg-tertiary);
         }
 
         @media (max-width: 1024px) {
           .navbar-links {
             display: none;
-          }
-        }
+          }}
 
         @media (max-width: 768px) {
           .navbar-container {
@@ -362,7 +407,8 @@ export default function Navbar({ onMenuClick }) {
 
           .auth-buttons,
           .welcome-text,
-          .menu-button {
+          .menu-button,
+          .calculator-btn {
             display: none;
           }
 
@@ -375,6 +421,6 @@ export default function Navbar({ onMenuClick }) {
           }
         }
       `}</style>
-    </nav>
+    </motion.nav>
   );
 }
