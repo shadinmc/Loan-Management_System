@@ -1,0 +1,10 @@
+.stat-card.neutral {
+  border-left: 5px solid #cbd5e1;
+}
+
+.loan-types div small {
+  display: block;
+  font-size: 12px;
+  color: #6366f1;
+  margin-top: 4px;
+}
