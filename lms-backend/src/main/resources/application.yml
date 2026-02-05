@@ -4,7 +4,7 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://localhost:27017/lms_dev
+      uri: mongodb://localhost:27017/lms
 
 server:
   port: 8080
