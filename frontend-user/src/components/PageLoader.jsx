@@ -4,7 +4,7 @@ import { Wallet, TrendingUp, Shield, Sparkles } from 'lucide-react';
 
 /**
  * Page Loader Component
- * Animated full-page loader with branding
+ * Premium fintech design with navy + green palette
  */
 export default function PageLoader({ onComplete }) {
   const [progress, setProgress] = useState(0);
@@ -37,45 +37,43 @@ export default function PageLoader({ onComplete }) {
     <div className="page-loader">
       <div className="loader-content">
         {/* Logo Animation */}
-        <div className="logo-container animate-float">
+        <div className="logo-container">
           <div className="logo-icon">
-            <Wallet size={48} />
+            <Wallet size={40} />
           </div>
-          <div className="logo-glow" />
         </div>
 
         {/* Brand Name */}
-        <h1 className="brand-name animate-fade-in-up">
-          <span className="gradient-text">Loan</span>Wise
+        <h1 className="brand-name">
+          <span className="highlight-text">Loan</span>Wise
         </h1>
 
         {/* Progress Bar */}
-        <div className="progress-container animate-fade-in-up stagger-2">
+        <div className="progress-container">
           <div className="progress-bar">
             <div
               className="progress-fill"
               style={{ width: `${progress}%` }}
             />
-            <div className="progress-glow" style={{ left: `${progress}%` }} />
           </div>
           <span className="progress-text">{progress}%</span>
         </div>
 
         {/* Loading Text */}
-        <p className="loading-text animate-fade-in-up stagger-3">
+        <p className="loading-text">
           {loadingText}
         </p>
 
         {/* Feature Icons */}
-        <div className="feature-icons animate-fade-in-up stagger-4">
+        <div className="feature-icons">
           <div className="feature-icon">
-            <TrendingUp size={20} />
+            <TrendingUp size={18} />
           </div>
           <div className="feature-icon">
-            <Shield size={20} />
+            <Shield size={18} />
           </div>
           <div className="feature-icon">
-            <Sparkles size={20} />
+            <Sparkles size={18} />
           </div>
         </div>
       </div>
@@ -87,7 +85,7 @@ export default function PageLoader({ onComplete }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--bg-primary);
+          background: #0B1E3C;
           z-index: 10000;
         }
 
@@ -97,161 +95,113 @@ export default function PageLoader({ onComplete }) {
           align-items: center;
           gap: 24px;
           text-align: center;
+          animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         .logo-container {
           position: relative;
+          animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
         }
 
         .logo-icon {
-          width: 100px;
-          height: 100px;
-          background: var(--gradient-primary);
-          border-radius: 24px;
+          width: 88px;
+          height: 88px;
+          background: #2DBE60;
+          border-radius: 20px;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
-          box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
-        }
-
-        .logo-glow {
-          position: absolute;
-          inset: -10px;
-          background: var(--gradient-primary);
-          border-radius: 30px;
-          opacity: 0.3;
-          filter: blur(20px);
-          animation: pulse 2s ease-in-out infinite;
+          box-shadow: 0 20px 40px rgba(45, 190, 96, 0.3);
         }
 
         .brand-name {
-          font-size: 2.5rem;
+          font-size: 2rem;
           font-weight: 800;
-          color: var(--text-primary);
-          letter-spacing: -1px;
+          color: white;
+          letter-spacing: -0.02em;
         }
 
-        .gradient-text {
-          background: var(--gradient-primary);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+        .highlight-text {
+          color: #2DBE60;
         }
 
         .progress-container {
           display: flex;
           align-items: center;
           gap: 16px;
-          width: 280px;
+          width: 260px;
         }
 
         .progress-bar {
           flex: 1;
           height: 6px;
-          background: var(--bg-tertiary);
+          background: rgba(255, 255, 255, 0.1);
           border-radius: 3px;
           overflow: hidden;
-          position: relative;}
+        }
 
         .progress-fill {
           height: 100%;
-          background: var(--gradient-primary);
+          background: #2DBE60;
           border-radius: 3px;
-          transition: width 0.4s ease;
-        }
-
-        .progress-glow {
-          position: absolute;
-          top: -4px;
-          width: 20px;
-          height: 14px;
-          background: var(--accent-primary);
-          filter: blur(8px);
-          opacity: 0.6;
-          transition: left 0.4s ease;
+          transition: width 0.35s ease;
         }
 
         .progress-text {
-          font-size: 0.85rem;
+          font-size: 0.8125rem;
           font-weight: 600;
-          color: var(--accent-primary);
+          color: #2DBE60;
           min-width: 40px;
         }
 
         .loading-text {
-          font-size: 0.95rem;
-          color: var(--text-secondary);
+          font-size: 0.9375rem;
+          color: #A5B4CF;
           min-height: 24px;
         }
 
         .feature-icons {
           display: flex;
-          gap: 16px;
+          gap: 12px;
           margin-top: 16px;
         }
 
         .feature-icon {
-          width: 44px;
-          height: 44px;
-          background: var(--bg-secondary);
-          border: 1px solid var(--border-color);
-          border-radius: 12px;
+          width: 40px;
+          height: 40px;
+          background: rgba(45, 190, 96, 0.15);
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: var(--text-muted);
+          color: #2DBE60;
           animation: bounce 2s ease-in-out infinite;
         }
 
         .feature-icon:nth-child(2) {
-          animation-delay: 0.2s;
+          animation-delay: 0.15s;
         }
 
         .feature-icon:nth-child(3) {
-          animation-delay: 0.4s;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 0.3; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.1); }
+          animation-delay: 0.3s;
         }
 
         @keyframes bounce {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-        }
-
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-15px); }
-        }
-
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-
-        .animate-fade-in-up {
-          opacity: 0;
-          animation: fadeInUp 0.6s ease-out forwards;
-        }
-
-        .stagger-2 { animation-delay: 0.2s; }
-        .stagger-3 { animation-delay: 0.4s; }
-        .stagger-4 { animation-delay: 0.6s; }
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          50% { transform: translateY(-6px); }
         }
       `}</style>
     </div>
   );
 }
-

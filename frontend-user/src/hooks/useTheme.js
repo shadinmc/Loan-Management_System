@@ -1,45 +1,16 @@
-// Theme management hook with system preference detection
-import { useState, useEffect, useCallback } from 'react';
+import { useContext } from 'react';
+import { ThemeContext } from '../components/ThemeProvider';
 
-const THEME_KEY = 'loanwise-theme';
+/**
+ * Custom hook for accessing theme context
+ * Provides current theme and toggle function
+ */
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
 
-export function useTheme() {
-  const [theme, setThemeState] = useState(() => {
-    if (typeof window === 'undefined') return 'light';
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
 
-    const stored = localStorage.getItem(THEME_KEY);
-    if (stored) return stored;
-
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.setAttribute('data-theme', theme);
-    localStorage.setItem(THEME_KEY, theme);
-  }, [theme]);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const handleChange = (e) => {
-      const stored = localStorage.getItem(THEME_KEY);
-      if (!stored) {
-        setThemeState(e.matches ? 'dark' : 'light');
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  const setTheme = useCallback((newTheme) => {
-    setThemeState(newTheme);
-  }, []);
-
-  const toggleTheme = useCallback(() => {
-    setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
-  }, []);
-
-  return { theme, setTheme, toggleTheme };
-}
+  return context;
+};

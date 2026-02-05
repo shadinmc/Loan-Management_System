@@ -2,17 +2,12 @@
  * Application Constants
  * Centralized configuration values and loan type definitions
  */
-export const API_BASE_URL = "http://localhost:3000/api";
+
 export const LOAN_TYPES = {
   PERSONAL: 'PERSONAL',
   EDUCATION: 'EDUCATION',
   BUSINESS: 'BUSINESS',
   VEHICLE: 'VEHICLE'
-};
-export const LOAN_STATUS = {
-  PENDING: "Pending",
-  APPROVED: "Approved",
-  REJECTED: "Rejected"
 };
 
 export const LOAN_CONFIG = {
@@ -31,8 +26,9 @@ export const LOAN_CONFIG = {
       'Flexible repayment options',
       'Minimal documentation'
     ],
-    color: '#3b82f6',
-    gradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+    color: '#2F54EB',
+    bgColor: '#E6ECFF',
+    iconBg: '#2F54EB'
   },
   [LOAN_TYPES.EDUCATION]: {
     id: 'education',
@@ -49,8 +45,9 @@ export const LOAN_CONFIG = {
       'Tax benefits under Section 80E',
       'Co-applicant support'
     ],
-    color: '#8b5cf6',
-    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)'
+    color: '#8B5CF6',
+    bgColor: '#F3E8FF',
+    iconBg: '#8B5CF6'
   },
   [LOAN_TYPES.BUSINESS]: {
     id: 'business',
@@ -67,8 +64,9 @@ export const LOAN_CONFIG = {
       'Quick disbursement',
       'Working capital support'
     ],
-    color: '#10b981',
-    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+    color: '#2DBE60',
+    bgColor: '#E9F8EF',
+    iconBg: '#2DBE60'
   },
   [LOAN_TYPES.VEHICLE]: {
     id: 'vehicle',
@@ -85,8 +83,9 @@ export const LOAN_CONFIG = {
       'Quick processing',
       'Insurance financing available'
     ],
-    color: '#f59e0b',
-    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+    color: '#F59E0B',
+    bgColor: '#FEF3C7',
+    iconBg: '#F59E0B'
   }
 };
 

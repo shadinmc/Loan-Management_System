@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 
 /**
  * Navigation Bar Component
- * Responsive navbar with theme toggle, user menu, and accessibility support
+ * Premium fintech design with solid colors
  */
 export default function Navbar({ onMenuClick }) {
   const { theme, toggleTheme } = useTheme();
@@ -13,7 +13,6 @@ export default function Navbar({ onMenuClick }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if current path matches
   const isActive = (path) => location.pathname === path;
 
   return (
@@ -22,7 +21,7 @@ export default function Navbar({ onMenuClick }) {
         {/* Logo */}
         <Link to="/" className="navbar-brand" aria-label="LoanWise - Go to homepage">
           <div className="logo-icon" aria-hidden="true">
-            <Wallet size={22} />
+            <Wallet size={20} />
           </div>
           <span className="logo-text">LoanWise</span>
         </Link>
@@ -75,7 +74,7 @@ export default function Navbar({ onMenuClick }) {
           {!isLoggedIn ? (
             <div className="auth-buttons">
               <button
-                className="btn-secondary"
+                className="btn-ghost"
                 onClick={() => navigate('/login')}
               >
                 Login
@@ -84,7 +83,7 @@ export default function Navbar({ onMenuClick }) {
                 className="btn-primary"
                 onClick={() => navigate('/signup')}
               >
-                Sign Up
+                Get Started
               </button>
             </div>
           ) : (
@@ -93,7 +92,7 @@ export default function Navbar({ onMenuClick }) {
                 {user?.username?.charAt(0).toUpperCase() || 'U'}
               </div>
               <span className="welcome-text">
-                Welcome, <strong>{user?.username || 'User'}</strong>
+                Hi, <strong>{user?.username || 'User'}</strong>
               </span>
             </div>
           )}
@@ -126,20 +125,20 @@ export default function Navbar({ onMenuClick }) {
           top: 0;
           left: 0;
           right: 0;
-          height: 70px;
+          height: 72px;
           background: var(--navbar-bg);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
           border-bottom: 1px solid var(--border-color);
-          z-index: var(--z-sticky, 200);
-          transition: all var(--transition-base, 0.2s ease);
+          z-index: 300;
+          transition: background 0.25s ease;
         }
 
         .navbar-container {
-          max-width: 1400px;
+          max-width: 1200px;
           margin: 0 auto;
           height: 100%;
-          padding: 0 var(--space-6, 1.5rem);
+          padding: 0 24px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -148,84 +147,90 @@ export default function Navbar({ onMenuClick }) {
         .navbar-brand {
           display: flex;
           align-items: center;
-          gap: var(--space-3, 0.75rem);
+          gap: 10px;
           text-decoration: none;
           color: var(--text-primary);
         }
 
         .logo-icon {
-          width: 42px;
-          height: 42px;
-          background: var(--gradient-primary);
-          border-radius: var(--radius-lg, 0.75rem);
+          width: 40px;
+          height: 40px;
+          background: #2DBE60;
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
         .logo-text {
-          font-size: var(--text-xl, 1.25rem);
-          font-weight: var(--font-bold, 700);
-          background: var(--gradient-primary);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          letter-spacing: -0.01em;
         }
 
         .navbar-links {
           display: flex;
-          gap: var(--space-2, 0.5rem);
+          gap: 4px;
         }
 
         .nav-link {
-          padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-          border-radius: var(--radius-lg, 0.75rem);
+          padding: 10px 18px;
+          border-radius: 8px;
           color: var(--text-secondary);
-          font-weight: var(--font-medium, 500);
-          font-size: var(--text-sm, 0.875rem);
-          transition: all var(--transition-fast, 0.15s ease);
+          font-weight: 500;
+          font-size: 0.9375rem;
+          transition: all 0.15s ease;
           text-decoration: none;
         }
 
         .nav-link:hover {
           color: var(--text-primary);
-          background: var(--bg-tertiary);
+          background: var(--bg-secondary);
         }
 
         .nav-link.active {
-          color: var(--accent-primary);
-          background: rgba(59, 130, 246, 0.1);
+          color: #2DBE60;
+          background: #E9F8EF;
+        }
+
+        [data-theme="dark"] .nav-link.active {
+          background: rgba(45, 190, 96, 0.15);
         }
 
         .navbar-actions {
           display: flex;
           align-items: center;
-          gap: var(--space-3, 0.75rem);
+          gap: 12px;
         }
 
         .theme-toggle {
-          width: 42px;
-          height: 42px;
+          width: 40px;
+          height: 40px;
           border: 1px solid var(--border-color);
           background: var(--card-bg);
-          border-radius: var(--radius-lg, 0.75rem);
+          border-radius: 10px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: var(--text-primary);
-          transition: all var(--transition-fast, 0.15s ease);
+          color: var(--text-secondary);
+          transition: all 0.15s ease;
         }
 
         .theme-toggle:hover {
-          border-color: var(--accent-primary);
-          color: var(--accent-primary);
+          border-color: #2DBE60;
+          color: #2DBE60;
+          background: #E9F8EF;
+        }
+
+        [data-theme="dark"] .theme-toggle:hover {
+          background: rgba(45, 190, 96, 0.15);
         }
 
         .theme-toggle:focus-visible {
-          outline: 2px solid var(--accent-primary);
+          outline: 2px solid #2DBE60;
           outline-offset: 2px;
         }
 
@@ -237,112 +242,111 @@ export default function Navbar({ onMenuClick }) {
 
         .auth-buttons {
           display: flex;
-          gap: var(--space-2, 0.5rem);
+          gap: 8px;
         }
 
-        .btn-secondary {
-          padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-          border: 1px solid var(--border-color);
+        .btn-ghost {
+          padding: 10px 18px;
+          border: none;
           background: transparent;
           color: var(--text-primary);
-          border-radius: var(--radius-lg, 0.75rem);
-          font-weight: var(--font-medium, 500);
-          font-size: var(--text-sm, 0.875rem);
+          border-radius: 8px;
+          font-weight: 500;
+          font-size: 0.9375rem;
           cursor: pointer;
-          transition: all var(--transition-fast, 0.15s ease);
+          transition: all 0.15s ease;
         }
 
-        .btn-secondary:hover {
-          background: var(--bg-tertiary);
-          border-color: var(--text-muted);
+        .btn-ghost:hover {
+          background: var(--bg-secondary);
         }
 
         .btn-primary {
-          padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+          padding: 10px 20px;
           border: none;
-          background: var(--gradient-primary);
+          background: #2DBE60;
           color: white;
-          border-radius: var(--radius-lg, 0.75rem);
-          font-weight: var(--font-medium, 500);
-          font-size: var(--text-sm, 0.875rem);
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.9375rem;
           cursor: pointer;
-          transition: all var(--transition-fast, 0.15s ease);
+          transition: all 0.15s ease;
         }
 
         .btn-primary:hover {
+          background: #25A854;
           transform: translateY(-1px);
-          box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
         }
 
         .user-section {
           display: flex;
           align-items: center;
-          gap: var(--space-3, 0.75rem);
+          gap: 10px;
         }
 
         .user-avatar {
           width: 36px;
           height: 36px;
-          background: var(--gradient-primary);
+          background: #2DBE60;
           color: white;
-          border-radius: var(--radius-full, 9999px);
+          border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: var(--font-semibold, 600);
-          font-size: var(--text-sm, 0.875rem);
+          font-weight: 600;
+          font-size: 0.875rem;
         }
 
         .welcome-text {
           color: var(--text-secondary);
-          font-size: var(--text-sm, 0.875rem);
+          font-size: 0.875rem;
         }
 
         .welcome-text strong {
-          color: var(--accent-primary);
-          font-weight: var(--font-semibold, 600);
+          color: var(--text-primary);
+          font-weight: 600;
         }
 
         .menu-button {
-          width: 42px;
-          height: 42px;
+          width: 40px;
+          height: 40px;
           border: 1px solid var(--border-color);
           background: var(--card-bg);
-          border-radius: var(--radius-lg, 0.75rem);
+          border-radius: 10px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: var(--text-primary);
-          transition: all var(--transition-fast, 0.15s ease);
+          color: var(--text-secondary);
+          transition: all 0.15s ease;
         }
 
         .menu-button:hover {
-          border-color: var(--accent-primary);
-          color: var(--accent-primary);
+          border-color: #2DBE60;
+          color: #2DBE60;
         }
 
         .menu-button:focus-visible {
-          outline: 2px solid var(--accent-primary);
+          outline: 2px solid #2DBE60;
           outline-offset: 2px;
         }
 
         .mobile-menu-button {
           display: none;
-          width: 42px;
-          height: 42px;
+          width: 40px;
+          height: 40px;
           border: none;
-          background: var(--bg-tertiary);
-          border-radius: var(--radius-lg, 0.75rem);
+          background: var(--bg-secondary);
+          border-radius: 10px;
           cursor: pointer;
           align-items: center;
           justify-content: center;
           color: var(--text-primary);
-          transition: all var(--transition-fast, 0.15s ease);
+          transition: all 0.15s ease;
         }
 
         .mobile-menu-button:hover {
-          background: var(--bg-secondary);
+          background: var(--bg-tertiary);
         }
 
         @media (max-width: 1024px) {
@@ -353,7 +357,7 @@ export default function Navbar({ onMenuClick }) {
 
         @media (max-width: 768px) {
           .navbar-container {
-            padding: 0 var(--space-4, 1rem);
+            padding: 0 16px;
           }
 
           .auth-buttons,
@@ -367,7 +371,7 @@ export default function Navbar({ onMenuClick }) {
           }
 
           .logo-text {
-            font-size: var(--text-lg, 1.125rem);
+            font-size: 1.125rem;
           }
         }
       `}</style>

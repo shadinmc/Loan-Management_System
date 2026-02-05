@@ -4,7 +4,7 @@ import { Wallet, GraduationCap, Briefcase, Car, ArrowRight, Check } from 'lucide
 
 /**
  * Loan Card Component
- * Displays individual loan type information with apply action
+ * Premium fintech design with solid colors
  */
 export default function LoanCard({ loan, index }) {
   const navigate = useNavigate();
@@ -28,12 +28,16 @@ export default function LoanCard({ loan, index }) {
 
   return (
     <div
-      className={`loan-card animate-fade-in-up stagger-${index + 1}`}
-      style={{ '--card-color': loan.color }}
+      className="loan-card"
+      style={{
+        '--card-color': loan.color,
+        '--card-bg-light': loan.bgColor || '#E9F8EF',
+        animationDelay: `${index * 0.1}s`
+      }}
     >
       <div className="card-header">
-        <div className="icon-wrapper" style={{ background: loan.gradient }}>
-          <IconComponent size={28} />
+        <div className="icon-wrapper">
+          <IconComponent size={24} />
         </div>
         <div className="rate-badge">
           {loan.interestRate}
@@ -53,7 +57,8 @@ export default function LoanCard({ loan, index }) {
         <div className="detail">
           <span className="label">Tenure</span>
           <span className="value">{loan.minTenure} - {loan.maxTenure} mo</span>
-        </div></div>
+        </div>
+      </div>
 
       <ul className="feature-list">
         {loan.features.slice(0, 3).map((feature, idx) => (
@@ -72,19 +77,31 @@ export default function LoanCard({ loan, index }) {
       <style>{`
         .loan-card {
           background: var(--card-bg);
-          border-radius: 20px;
-          padding: 28px;
+          border-radius: 16px;
+          padding: 24px;
           border: 1px solid var(--border-color);
-          transition: all 0.3s ease;
+          transition: all 0.25s ease;
           display: flex;
           flex-direction: column;
           gap: 16px;
           opacity: 0;
+          animation: cardFadeIn 0.35s ease forwards;
+        }
+
+        @keyframes cardFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(16px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .loan-card:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+          transform: translateY(-4px);
+          box-shadow: 0 12px 32px rgba(16, 42, 77, 0.12);
           border-color: var(--card-color);
         }
 
@@ -95,32 +112,34 @@ export default function LoanCard({ loan, index }) {
         }
 
         .icon-wrapper {
-          width: 56px;
-          height: 56px;
-          border-radius: 14px;
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
+          background: var(--card-color);
           color: white;
         }
 
         .rate-badge {
           padding: 6px 12px;
-          background: var(--bg-tertiary);
+          background: var(--card-bg-light);
           border-radius: 8px;
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           font-weight: 600;
-          color: var(--text-secondary);
+          color: var(--card-color);
         }
 
         .card-title {
-          font-size: 1.35rem;
+          font-size: 1.25rem;
           font-weight: 700;
           color: var(--text-primary);
+          letter-spacing: -0.01em;
         }
 
         .card-description {
-          font-size: 0.9rem;
+          font-size: 0.875rem;
           color: var(--text-secondary);
           line-height: 1.5;
         }
@@ -140,14 +159,14 @@ export default function LoanCard({ loan, index }) {
         }
 
         .detail .label {
-          font-size: 0.75rem;
+          font-size: 0.6875rem;
           color: var(--text-muted);
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
 
         .detail .value {
-          font-size: 0.95rem;
+          font-size: 0.9375rem;
           font-weight: 600;
           color: var(--text-primary);
         }
@@ -156,15 +175,15 @@ export default function LoanCard({ loan, index }) {
           list-style: none;
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 8px;
           flex: 1;
         }
 
         .feature-list li {
           display: flex;
           align-items: center;
-          gap: 10px;
-          font-size: 0.85rem;
+          gap: 8px;
+          font-size: 0.8125rem;
           color: var(--text-secondary);
         }
 
@@ -178,21 +197,22 @@ export default function LoanCard({ loan, index }) {
           align-items: center;
           justify-content: center;
           gap: 8px;
-          padding: 14px 24px;
-          background: var(--bg-tertiary);
+          padding: 12px 20px;
+          background: var(--card-bg-light);
           border: none;
-          border-radius: 12px;
-          font-size: 0.95rem;
+          border-radius: 10px;
+          font-size: 0.9375rem;
           font-weight: 600;
-          color: var(--text-primary);
+          color: var(--card-color);
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
           margin-top: auto;
         }
 
         .apply-button:hover {
           background: var(--card-color);
           color: white;
+          transform: scale(1.02);
         }
 
         .apply-button:focus-visible {

@@ -1,86 +1,167 @@
+// src/pages/loans/LoanDecision.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Clock, CheckCircle, XCircle, AlertCircle, FileText,
-  ArrowLeft, RefreshCw, Download, Phone, Mail
+  Clock, CheckCircle, XCircle, FileText, Download,
+  Phone, Mail, ChevronDown, ChevronUp, Filter, Search, AlertCircle, Banknote
 } from 'lucide-react';
 import Button from '../../components/Button';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { APPLICATION_STATUS } from '../../utils/constants';
 
-/**
- * Loan Decision / Status Page
- * Displays loan application status and timeline
- */
 export default function LoanDecision() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [applications, setApplications] = useState([]);
+  const [expandedCard, setExpandedCard] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Mock data - replace with actual API call
+  const statusOptions = [
+    { value: 'all', label: 'All Applications', icon: FileText, color: '#6B7280' },
+    { value: APPLICATION_STATUS.SUBMITTED, label: 'Submitted', icon: FileText, color: '#3B82F6' },
+    { value: APPLICATION_STATUS.UNDER_REVIEW, label: 'Under Review', icon: Clock, color: '#F59E0B' },
+    { value: APPLICATION_STATUS.APPROVED, label: 'Approved', icon: CheckCircle, color: '#2DBE60' },
+    { value: APPLICATION_STATUS.REJECTED, label: 'Rejected', icon: XCircle, color: '#EF4444' },
+    { value: APPLICATION_STATUS.DISBURSED, label: 'Disbursed', icon: Banknote, color: '#8B5CF6' }
+  ];
+
   useEffect(() => {
     const fetchApplications = async () => {
       setLoading(true);
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock applications data
       setApplications([
         {
-          id: 'LW12345678',
+          id: 'LW24789012',
           loanType: 'Personal Loan',
           amount: 500000,
           tenure: 36,
-          status: APPLICATION_STATUS.UNDER_REVIEW,
+          interestRate: 10.5,
+          emi: 16267,
+          status: APPLICATION_STATUS.APPROVED,
           appliedDate: '2024-01-15',
-          lastUpdated: '2024-01-16',
           timeline: [
-            { status: 'Submitted', date: '2024-01-15 10:30 AM', completed: true },
-            { status: 'Document Verification', date: '2024-01-15 02:45 PM', completed: true },
-            { status: 'Under Review', date: '2024-01-16 09:00 AM', completed: true, current: true },
-            { status: 'Approval', date: 'Pending', completed: false },
+            { status: 'Application Submitted', date: '2024-01-15', completed: true },
+            { status: 'Documents Verified', date: '2024-01-16', completed: true },
+            { status: 'Credit Assessment', date: '2024-01-17', completed: true },
+            { status: 'Loan Approved', date: '2024-01-18', completed: true },
             { status: 'Disbursement', date: 'Pending', completed: false }
           ]
         },
         {
-          id: 'LW87654321',
-          loanType: 'Vehicle Loan',
+          id: 'LW24789013',
+          loanType: 'Education Loan',
           amount: 800000,
           tenure: 60,
-          status: APPLICATION_STATUS.APPROVED,
-          appliedDate: '2024-01-10',
-          lastUpdated: '2024-01-14',
+          interestRate: 8.5,
+          emi: 16388,
+          status: APPLICATION_STATUS.UNDER_REVIEW,
+          appliedDate: '2024-01-20',
           timeline: [
-            { status: 'Submitted', date: '2024-01-10 11:00 AM', completed: true },
-            { status: 'Document Verification', date: '2024-01-11 03:30 PM', completed: true },
-            { status: 'Under Review', date: '2024-01-12 10:00 AM', completed: true },
-            { status: 'Approved', date: '2024-01-14 04:00 PM', completed: true, current: true },
-            { status: 'Disbursement', date: 'Processing', completed: false }
+            { status: 'Application Submitted', date: '2024-01-20', completed: true },
+            { status: 'Documents Verified', date: '2024-01-21', completed: true },
+            { status: 'Credit Assessment', date: 'In Progress', completed: false, current: true },
+            { status: 'Final Decision', date: 'Pending', completed: false },
+            { status: 'Disbursement', date: 'Pending', completed: false }
+          ]
+        },
+        {
+          id: 'LW24789014',
+          loanType: 'Business Loan',
+          amount: 1500000,
+          tenure: 48,
+          interestRate: 12.0,
+          emi: 39516,
+          status: APPLICATION_STATUS.SUBMITTED,
+          appliedDate: '2024-01-22',
+          timeline: [
+            { status: 'Application Submitted', date: '2024-01-22', completed: true },
+            { status: 'Document Verification', date: 'Pending', completed: false, current: true },
+            { status: 'Credit Assessment', date: 'Pending', completed: false },
+            { status: 'Final Decision', date: 'Pending', completed: false },
+            { status: 'Disbursement', date: 'Pending', completed: false }
+          ]
+        },
+        {
+          id: 'LW24789015',
+          loanType: 'Vehicle Loan',
+          amount: 600000,
+          tenure: 48,
+          interestRate: 9.5,
+          emi: 15089,
+          status: APPLICATION_STATUS.DISBURSED,
+          appliedDate: '2024-01-10',
+          timeline: [
+            { status: 'Application Submitted', date: '2024-01-10', completed: true },
+            { status: 'Documents Verified', date: '2024-01-11', completed: true },
+            { status: 'Credit Assessment', date: '2024-01-12', completed: true },
+            { status: 'Loan Approved', date: '2024-01-13', completed: true },
+            { status: 'Amount Disbursed', date: '2024-01-14', completed: true }
           ]
         }
       ]);
       setLoading(false);
     };
-
     fetchApplications();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.filter-dropdown')) {
+        setIsFilterOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   const getStatusConfig = (status) => {
     const configs = {
-      [APPLICATION_STATUS.SUBMITTED]: { icon: FileText, color: 'var(--accent-primary)', label: 'Submitted' },
-      [APPLICATION_STATUS.UNDER_REVIEW]: { icon: Clock, color: 'var(--accent-warning)', label: 'Under Review' },
-      [APPLICATION_STATUS.VERIFIED]: { icon: CheckCircle, color: 'var(--accent-primary)', label: 'Verified' },
-      [APPLICATION_STATUS.APPROVED]: { icon: CheckCircle, color: 'var(--accent-success)', label: 'Approved' },
-      [APPLICATION_STATUS.REJECTED]: { icon: XCircle, color: 'var(--accent-danger)', label: 'Rejected' },
-      [APPLICATION_STATUS.DISBURSED]: { icon: CheckCircle, color: 'var(--accent-success)', label: 'Disbursed' }
+      [APPLICATION_STATUS.SUBMITTED]: { icon: FileText, color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)', label: 'Submitted' },
+      [APPLICATION_STATUS.UNDER_REVIEW]: { icon: Clock, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)', label: 'Under Review' },
+      [APPLICATION_STATUS.APPROVED]: { icon: CheckCircle, color: '#2DBE60', bg: 'rgba(45, 190, 96, 0.1)', label: 'Approved' },
+      [APPLICATION_STATUS.REJECTED]: { icon: XCircle, color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)', label: 'Rejected' },
+      [APPLICATION_STATUS.DISBURSED]: { icon: Banknote, color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.1)', label: 'Disbursed' }
     };
     return configs[status] || configs[APPLICATION_STATUS.SUBMITTED];
+  };
+
+  const getSelectedOption = () => {
+    return statusOptions.find(opt => opt.value === filterStatus) || statusOptions[0];
+  };
+
+  const filteredApplications = applications.filter(app => {
+    const matchesSearch = app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.loanType.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === 'all' ? true : app.status === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
+
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
   };
 
   if (loading) {
     return (
       <div className="status-page loading-state">
-        <LoadingSpinner size="large" message="Loading applications..." />
+        <motion.div
+          className="loading-container"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <LoadingSpinner size="large" />
+          <p>Loading your applications...</p>
+        </motion.div>
         <style>{styles}</style>
       </div>
     );
@@ -88,142 +169,267 @@ export default function LoanDecision() {
 
   return (
     <div className="status-page">
+      <div className="page-background">
+        <div className="bg-gradient" />
+        <div className="bg-pattern" />
+      </div>
+
       <div className="status-container">
-        {/* Header */}
-        <header className="status-header animate-fade-in-down">
-          <button
-            className="back-button"
-            onClick={() => navigate('/dashboard')}
-            aria-label="Go back to dashboard"
-          >
-            <ArrowLeft size={20} />
-            <span>Back to Dashboard</span>
-          </button>
+        <motion.header
+          className="status-header"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="header-content">
-            <h1>Loan Applications</h1>
-            <p>Track the status of your loan applications</p>
+            <h1>My Applications</h1>
+            <p>Track and manage all your loan applications in one place</p>
           </div>
-          <Button
-            variant="outline"
-            size="small"
-            icon={RefreshCw}
-            onClick={() => window.location.reload()}
-          >
-            Refresh
-          </Button>
-        </header>
 
-        {/* Applications List */}
-        {applications.length === 0 ? (
-          <div className="empty-state animate-fade-in-up">
-            <FileText size={48} />
-            <h2>No Applications Found</h2>
-            <p>You haven't submitted any loan applications yet.</p>
-            <Button onClick={() => navigate('/')}>
-              Apply for a Loan
-            </Button>
-          </div>
-        ) : (
-          <div className="applications-list">
-            {applications.map((app, index) => {
-              const statusConfig = getStatusConfig(app.status);
-              const StatusIcon = statusConfig.icon;
-
-              return (
-                <article
-                  key={app.id}
-                  className="application-card animate-fade-in-up"
-                  style={{ animationDelay: `${index * 0.1}s` }}
+          <div className="header-controls">
+            <div className="search-box">
+              <Search size={18} />
+              <input
+                type="text"
+                placeholder="Search by ID or loan type..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Search applications"
+              />
+              {searchTerm && (
+                <button
+                  className="clear-search"
+                  onClick={() => setSearchTerm('')}
+                  aria-label="Clear search"
                 >
-                  {/* Card Header */}
-                  <div className="card-header">
-                    <div className="loan-info">
-                      <h3>{app.loanType}</h3>
-                      <span className="application-id">#{app.id}</span>
-                    </div>
-                    <div
-                      className="status-badge"
-                      style={{
-                        background: `${statusConfig.color}15`,
-                        color: statusConfig.color
-                      }}
-                    >
-                      <StatusIcon size={16} />
-                      <span>{statusConfig.label}</span>
-                    </div>
-                  </div>
+                  ×
+                </button>
+              )}
+            </div>
 
-                  {/* Loan Details */}
-                  <div className="loan-details">
-                    <div className="detail-item">
-                      <span className="detail-label">Amount</span>
-                      <span className="detail-value">₹{app.amount.toLocaleString()}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Tenure</span>
-                      <span className="detail-value">{app.tenure} Months</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Applied On</span>
-                      <span className="detail-value">{app.appliedDate}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Last Updated</span>
-                      <span className="detail-value">{app.lastUpdated}</span>
-                    </div>
-                  </div>
+            <div className="filter-dropdown">
+              <button
+                className={`filter-trigger ${isFilterOpen ? 'open' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFilterOpen(!isFilterOpen);
+                }}
+                aria-expanded={isFilterOpen}
+                aria-haspopup="listbox"
+              >
+                <Filter size={18} />
+                <span className="filter-label">Status:</span>
+                <span
+                  className="filter-value"
+                  style={{ color: getSelectedOption().color }}
+                >
+                  {(() => {
+                    const IconComponent = getSelectedOption().icon;
+                    return <IconComponent size={14} />;
+                  })()}{getSelectedOption().label}
+                </span>
+                <ChevronDown size={16} className="filter-arrow" />
+              </button>
 
-                  {/* Timeline */}
-                  <div className="timeline-section">
-                    <h4>Application Timeline</h4>
-                    <div className="timeline">
-                      {app.timeline.map((step, stepIdx) => (
-                        <div
-                          key={stepIdx}
-                          className={`timeline-item ${step.completed ? 'completed' : ''} ${step.current ? 'current' : ''}`}
+              <AnimatePresence>
+                {isFilterOpen && (
+                  <motion.div
+                    className="filter-menu"
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    role="listbox"
+                  >
+                    {statusOptions.map((option) => {
+                      const IconComponent = option.icon;
+                      return (
+                        <button
+                          key={option.value}
+                          className={`filter-option ${filterStatus === option.value ? 'selected' : ''}`}
+                          onClick={() => {
+                            setFilterStatus(option.value);
+                            setIsFilterOpen(false);
+                          }}
+                          role="option"
+                          aria-selected={filterStatus === option.value}
                         >
-                          <div className="timeline-marker">
-                            {step.completed ? <CheckCircle size={16} /> : <div className="marker-dot" />}
-                          </div>
-                          <div className="timeline-content">
-                            <span className="timeline-status">{step.status}</span>
-                            <span className="timeline-date">{step.date}</span>
-                          </div>
-                        </div>
-                      ))}
+                          <span
+                            className="option-icon"
+                            style={{ background: `${option.color}15`, color: option.color }}
+                          >
+                            <IconComponent size={14} />
+                          </span>
+                          <span className="option-label">{option.label}</span>
+                          {filterStatus === option.value && (
+                            <CheckCircle size={16} className="option-check" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </motion.header>
+
+        <AnimatePresence mode="wait">
+          {filteredApplications.length === 0 ? (
+            <motion.div
+              className="empty-state"
+              key="empty"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <div className="empty-icon">
+                <AlertCircle size={40} />
+              </div>
+              <h2>No applications found</h2>
+              <p>
+                {searchTerm || filterStatus !== 'all'
+                  ? 'Try adjusting your search or filter criteria'
+                  : 'Start by applying for a loan to see your applications here'}
+              </p>
+              <Button variant="primary" onClick={() => navigate('/loans')}>
+                Apply for a Loan
+              </Button>
+            </motion.div>
+          ) : (
+            <motion.div
+              className="applications-list"
+              key="list"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {filteredApplications.map((app, index) => {
+                const statusConfig = getStatusConfig(app.status);
+                const StatusIcon = statusConfig.icon;
+                const isExpanded = expandedCard === app.id;
+
+                return (
+                  <motion.div
+                    key={app.id}
+                    className={`application-card ${isExpanded ? 'expanded' : ''}`}
+                    variants={itemVariants}
+                    layout>
+                    <div
+                      className="card-header"
+                      onClick={() => setExpandedCard(isExpanded ? null : app.id)}
+                    >
+                      <div className="loan-info">
+                        <h3>{app.loanType}</h3>
+                        <span className="application-id">#{app.id}</span>
+                      </div>
+                      <div className="header-right">
+                        <span
+                          className="status-badge"
+                          style={{ background: statusConfig.bg, color: statusConfig.color }}
+                        >
+                          <StatusIcon size={14} />
+                          {statusConfig.label}
+                        </span>
+                        <button className="expand-btn" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+                          {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Actions */}
-                  <div className="card-actions">
-                    <Button variant="ghost" size="small" icon={Download}>
-                      Download
-                    </Button>
-                    <Button variant="ghost" size="small" icon={Phone}>
-                      Contact Support
-                    </Button>
-                  </div>
-                </article>
-              );
-            })}
+                    <div className="loan-details">
+                      <div className="detail-item">
+                        <span className="detail-label">Loan Amount</span>
+                        <span className="detail-value">₹{app.amount.toLocaleString()}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">Tenure</span>
+                        <span className="detail-value">{app.tenure} months</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">Interest Rate</span>
+                        <span className="detail-value">{app.interestRate}% p.a.</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">EMI</span>
+                        <span className="detail-value emi">₹{app.emi.toLocaleString()}/mo</span>
+                      </div>
+                    </div>
+
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          className="timeline-section"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <h4>Application Timeline</h4>
+                          <div className="timeline">
+                            {app.timeline.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className={`timeline-item ${item.completed ? 'completed' : ''} ${item.current ? 'current' : ''}`}
+                              >
+                                <div className="timeline-marker">
+                                  {item.completed ? (
+                                    <CheckCircle size={18} />
+                                  ) : item.current ? (
+                                    <Clock size={18} />
+                                  ) : (
+                                    <div className="marker-dot" />
+                                  )}
+                                </div>
+                                <div className="timeline-content">
+                                  <span className="timeline-status">{item.status}</span>
+                                  <span className="timeline-date">{item.date}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="card-actions">
+                            <Button variant="outline" size="small">
+                              <Download size={16} />
+                              Download Details
+                            </Button>
+                            <Button variant="outline" size="small">
+                              <Phone size={16} />
+                              Contact Support
+                            </Button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.div
+          className="help-section"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+        >
+          <div className="help-content">
+            <h3>Need Help?</h3>
+            <p>Our support team is available 24/7 to assist you</p>
           </div>
-        )}
-
-        {/* Help Section */}
-        <div className="help-section animate-fade-in-up">
-          <h3>Need Help?</h3>
-          <p>Our support team is available 24/7 to assist you</p>
           <div className="help-actions">
-            <a href="tel:1800123456" className="help-link">
+            <a href="tel:1800-123-4567" className="help-link">
               <Phone size={18} />
-              <span>1800-123-456</span>
+              1800-123-4567
             </a>
-            <a href="mailto:support@loanwise.com" className="help-link">
+            <a href="mailto:support@loanwiser.com" className="help-link">
               <Mail size={18} />
-              <span>support@loanwise.com</span>
+              support@loanwiser.com
             </a>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       <style>{styles}</style>
@@ -231,11 +437,11 @@ export default function LoanDecision() {
   );
 }
 
-const styles = `
-  .status-page {
+const styles = `.status-page {
     min-height: calc(100vh - 70px);
     background: var(--bg-secondary);
-    padding: var(--space-6) 0 var(--space-16);
+    padding: 32px 0 64px;
+    position: relative;
   }
 
   .status-page.loading-state {
@@ -244,278 +450,556 @@ const styles = `
     justify-content: center;
   }
 
-  .status-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0 var(--space-4);
-  }
-
-  /* Header */
-  .status-header {
-    margin-bottom: var(--space-8);
-  }
-
-  .back-button {
-    display: inline-flex;
+  .loading-container {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-4);
-    margin-bottom: var(--space-6);
-    font-size: var(--text-sm);
-    font-weight: var(--font-medium);
+    gap: 16px;
     color: var(--text-secondary);
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    cursor: pointer;
-    transition: all var(--transition-fast);
   }
 
-  .back-button:hover {
-    color: var(--accent-primary);
-    border-color: var(--accent-primary);
+  .page-background {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .bg-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 300px;
+    background: linear-gradient(180deg, rgba(45, 190, 96, 0.05) 0%, transparent 100%);
+  }
+
+  .bg-pattern {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.3;
+  }
+
+  .status-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .status-header {
+    margin-bottom: 32px;
   }
 
   .header-content {
-    margin-bottom: var(--space-4);
+    margin-bottom: 24px;
   }
 
   .header-content h1 {
-    font-size: var(--text-3xl);
-    margin-bottom: var(--space-2);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
   }
 
   .header-content p {
     color: var(--text-secondary);
   }
 
-  /* Empty State */
+  .header-controls {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    flex: 1;
+    min-width: 200px;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+  }
+
+  .search-box:focus-within {
+    border-color: #2DBE60;
+    box-shadow: 0 0 0 3px rgba(45, 190, 96, 0.1);
+  }
+
+  .search-box input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    outline: none;
+  }
+
+  .search-box input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .clear-search {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: var(--bg-secondary);
+    border: none;
+    border-radius: 50%;
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .clear-search:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+  }
+
+  /* Custom Dropdown Styles */
+  .filter-dropdown {
+    position: relative;
+  }
+
+  .filter-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 220px;
+  }
+
+  .filter-trigger:hover {
+    border-color: #2DBE60;
+  }
+
+  .filter-trigger.open {
+    border-color: #2DBE60;
+    box-shadow: 0 0 0 3px rgba(45, 190, 96, 0.1);
+  }
+
+  .filter-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .filter-value {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .filter-arrow {
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+  }
+
+  .filter-trigger.open .filter-arrow {
+    transform: rotate(180deg);
+    color: #2DBE60;
+  }
+
+  .filter-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    overflow: hidden;
+  }
+
+  .filter-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+  }
+
+  .filter-option:hover {
+    background: var(--bg-secondary);
+  }
+
+  .filter-option.selected {
+    background: rgba(45, 190, 96, 0.08);
+  }
+
+  .option-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .option-label {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .option-check {
+    color: #2DBE60;
+  }
+
   .empty-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--space-4);
-    padding: var(--space-16);
+    gap: 16px;
+    padding: 80px 24px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-2xl);
+    border-radius: 24px;
     text-align: center;
+  }
+
+  .empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: var(--bg-secondary);
     color: var(--text-muted);
+    border-radius: 50%;
   }
 
   .empty-state h2 {
+    font-size: 1.25rem;
     color: var(--text-primary);
   }
 
-  /* Application Cards */
+  .empty-state p {
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
   .applications-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-6);
+    gap: 20px;
   }
 
   .application-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-2xl);
-    padding: var(--space-6);
-    transition: all var(--transition-base);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
   }
 
   .application-card:hover {
-    border-color: var(--accent-primary);
-    box-shadow: var(--shadow-lg);
+    border-color: rgba(45, 190, 96, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .application-card.expanded {
+    border-color: #2DBE60;
   }
 
   .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--space-5);
-    padding-bottom: var(--space-5);
-    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+    padding: 24px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .card-header:hover {
+    background: var(--bg-secondary);
   }
 
   .loan-info h3 {
-    font-size: var(--text-xl);
-    margin-bottom: var(--space-1);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
   }
 
   .application-id {
-    font-size: var(--text-sm);
-    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-family: var(--font-mono, monospace);
     color: var(--text-muted);
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
   .status-badge {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
-    font-size: var(--text-sm);
-    font-weight: var(--font-medium);
-    border-radius: var(--radius-full);
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 100px;
   }
 
-  /* Loan Details */
+  .expand-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .expand-btn:hover {
+    color: #2DBE60;
+    border-color: #2DBE60;
+  }
+
   .loan-details {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-4);
-    margin-bottom: var(--space-6);
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 0 24px 24px;
   }
 
   .detail-item {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
+    gap: 4px;
   }
 
   .detail-label {
-    font-size: var(--text-sm);
+    font-size: 0.75rem;
     color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .detail-value {
-    font-weight: var(--font-semibold);
+    font-size: 0.95rem;
+    font-weight: 600;
     color: var(--text-primary);
   }
 
-  /* Timeline */
+  .detail-value.emi {
+    color: #2DBE60;
+  }
+
   .timeline-section {
-    margin-bottom: var(--space-6);
+    padding: 24px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    overflow: hidden;
   }
 
   .timeline-section h4 {
-    font-size: var(--text-base);
-    margin-bottom: var(--space-4);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 20px;
   }
 
   .timeline {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
+    gap: 0;
+    margin-bottom: 24px;
   }
 
   .timeline-item {
     display: flex;
     align-items: flex-start;
-    gap: var(--space-3);
+    gap: 16px;
     position: relative;
-    padding-left: var(--space-1);
+  }
+
+  .timeline-item:not(:last-child) {
+    padding-bottom: 20px;
   }
 
   .timeline-item:not(:last-child)::before {
     content: '';
     position: absolute;
-    left: 11px;
+    left: 8px;
     top: 24px;
-    bottom: -12px;
+    bottom: 0;
     width: 2px;
     background: var(--border-color);
   }
 
   .timeline-item.completed:not(:last-child)::before {
-    background: var(--accent-success);
+    background: #2DBE60;
   }
 
   .timeline-marker {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     flex-shrink: 0;
     color: var(--text-muted);
   }
 
   .timeline-item.completed .timeline-marker {
-    color: var(--accent-success);
+    color: #2DBE60;
   }
 
   .timeline-item.current .timeline-marker {
-    color: var(--accent-warning);
+    color: #F59E0B;
   }
 
   .marker-dot {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     background: var(--border-color);
-    border-radius: var(--radius-full);
+    border-radius: 50%;
   }
 
   .timeline-content {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
-    flex: 1;
+    gap: 2px;
   }
 
   .timeline-status {
-    font-size: var(--text-sm);
-    font-weight: var(--font-medium);
+    font-size: 0.9rem;
+    font-weight: 500;
     color: var(--text-primary);
   }
 
   .timeline-item.current .timeline-status {
-    color: var(--accent-warning);
+    color: #F59E0B;
   }
 
   .timeline-date {
-    font-size: var(--text-xs);
+    font-size: 0.8rem;
     color: var(--text-muted);
   }
 
-  /* Card Actions */
   .card-actions {
     display: flex;
-    gap: var(--space-2);
-    padding-top: var(--space-4);
+    gap: 12px;
+    padding-top: 20px;
     border-top: 1px solid var(--border-color);
   }
 
-  /* Help Section */
+  .card-actions button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .help-section {
-    margin-top: var(--space-12);
-    padding: var(--space-8);
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-2xl);
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 48px;
+    padding: 32px;
+    background: linear-gradient(135deg, #0B1E3C 0%, #1a365d 100%);
+    border-radius: 20px;
+    color: white;
   }
 
-  .help-section h3 {
-    font-size: var(--text-xl);
-    margin-bottom: var(--space-2);
+  .help-content h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 4px;
   }
 
-  .help-section p {
-    color: var(--text-secondary);
-    margin-bottom: var(--space-6);
+  .help-content p {
+    font-size: 0.9rem;
+    opacity: 0.7;
   }
 
   .help-actions {
     display: flex;
-    justify-content: center;
-    gap: var(--space-6);
-    flex-wrap: wrap;
+    gap: 24px;
   }
 
   .help-link {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    color: var(--accent-primary);
-    font-weight: var(--font-medium);
-    transition: opacity var(--transition-fast);
+    gap: 8px;
+    color: #2DBE60;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
   }
 
   .help-link:hover {
     opacity: 0.8;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
+    .loan-details {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .header-controls {
+      flex-direction: column;
+    }
+
+    .filter-trigger {
+      min-width: 100%;
+    }
+
+    .help-section {
+      flex-direction: column;
+      text-align: center;
+      gap: 20px;
+    }
+
+    .help-actions {
+      flex-direction: column;
+      gap: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
     .loan-details {
       grid-template-columns: 1fr;
     }
@@ -524,10 +1008,10 @@ const styles = `
       flex-direction: column;
     }
 
-    .help-actions {
+    .header-right {
       flex-direction: column;
-      align-items: center;
+      align-items: flex-end;
+      gap: 8px;
     }
   }
 `;
-

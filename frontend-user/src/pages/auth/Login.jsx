@@ -7,7 +7,7 @@ import { User, Wallet, CheckCircle, Shield, Zap } from 'lucide-react';
 
 /**
  * Login Page Component
- * Handles user authentication
+ * Premium fintech design with navy + green palette
  */
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -35,7 +35,7 @@ export default function Login() {
     try {
       await login(form);
       navigate(from, { replace: true });
-      window.location.reload(); // Refresh to update navbar state
+      window.location.reload();
     } catch (err) {
       setError('Invalid email or password');
     } finally {
@@ -45,27 +45,33 @@ export default function Login() {
 
   return (
     <div className="auth-page">
-      <div className="auth-container animate-fade-in-up">
+      <div className="auth-container">
         {/* Left Panel - Branding */}
         <div className="auth-branding">
           <div className="branding-content">
             <div className="brand-icon">
-              <Wallet size={48} />
+              <Wallet size={40} />
             </div>
             <h1>LoanWise</h1>
             <p>Your trusted partner for all financial needs</p>
 
             <div className="features">
               <div className="feature">
-                <Zap size={18} />
+                <div className="feature-icon">
+                  <Zap size={16} />
+                </div>
                 Quick loan approvals
               </div>
               <div className="feature">
-                <CheckCircle size={18} />
+                <div className="feature-icon">
+                  <CheckCircle size={16} />
+                </div>
                 Competitive interest rates
               </div>
               <div className="feature">
-                <Shield size={18} />
+                <div className="feature-icon">
+                  <Shield size={16} />
+                </div>
                 100% secure and paperless
               </div>
             </div>
@@ -83,7 +89,7 @@ export default function Login() {
           </div>
 
           {error && (
-            <div className="error-banner animate-fade-in">
+            <div className="error-banner" role="alert">
               {error}
             </div>
           )}
@@ -96,7 +102,8 @@ export default function Login() {
               value={form.email}
               onChange={handleChange}
               placeholder="Enter your email"
-              required/>
+              required
+            />
 
             <Input
               label="Password"
@@ -112,7 +119,7 @@ export default function Login() {
               type="submit"
               fullWidth
               loading={loading}
-              size="large"
+              size="lg"
             >
               Sign In
             </Button>
@@ -129,7 +136,7 @@ export default function Login() {
 
       <style>{`
         .auth-page {
-          min-height: calc(100vh - 70px);
+          min-height: calc(100vh - 72px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -140,17 +147,28 @@ export default function Login() {
         .auth-container {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          max-width: 900px;
+          max-width: 880px;
           width: 100%;
           background: var(--card-bg);
-          border-radius: 24px;
+          border-radius: 20px;
           overflow: hidden;
-          box-shadow: var(--shadow-xl);
-          opacity: 0;
+          box-shadow: 0 20px 50px rgba(16, 42, 77, 0.12);
+          animation: fadeInUp 0.4s ease;
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .auth-branding {
-          background: var(--gradient-primary);
+          background: #0B1E3C;
           padding: 48px;
           display: flex;
           align-items: center;
@@ -163,31 +181,34 @@ export default function Login() {
         }
 
         .brand-icon {
-          width: 80px;
-          height: 80px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 20px;
+          width: 72px;
+          height: 72px;
+          background: #2DBE60;
+          border-radius: 16px;
           display: flex;
           align-items: center;
           justify-content: center;
           margin: 0 auto 24px;
+          color: white;
         }
 
         .branding-content h1 {
-          font-size: 2rem;
+          font-size: 1.75rem;
           font-weight: 700;
           margin-bottom: 8px;
+          color: white;
         }
 
         .branding-content > p {
-          opacity: 0.9;
-          margin-bottom: 32px;
+          color: #A5B4CF;
+          margin-bottom: 40px;
+          font-size: 0.9375rem;
         }
 
         .features {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 16px;
           text-align: left;
         }
 
@@ -195,18 +216,20 @@ export default function Login() {
           display: flex;
           align-items: center;
           gap: 12px;
-          font-size: 0.95rem;
+          font-size: 0.9375rem;
+          color: #EAF2FF;
         }
 
-        .check {
-          width: 24px;
-          height: 24px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 50%;
+        .feature-icon {
+          width: 32px;
+          height: 32px;
+          background: rgba(45, 190, 96, 0.2);
+          border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 0.8rem;
+          color: #2DBE60;
+          flex-shrink: 0;
         }
 
         .auth-form-section {
@@ -219,15 +242,15 @@ export default function Login() {
         }
 
         .icon-circle {
-          width: 64px;
-          height: 64px;
-          background: var(--bg-tertiary);
+          width: 56px;
+          height: 56px;
+          background: #E9F8EF;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           margin: 0 auto 16px;
-          color: var(--accent-primary);
+          color: #2DBE60;
         }
 
         .form-header h2 {
@@ -239,16 +262,18 @@ export default function Login() {
 
         .form-header p {
           color: var(--text-secondary);
+          font-size: 0.9375rem;
         }
 
         .error-banner {
-          background: rgba(239, 68, 68, 0.1);
-          border: 1px solid var(--accent-danger);
-          color: var(--accent-danger);
+          background: #FEE2E2;
+          border: 1px solid #EF4444;
+          color: #EF4444;
           padding: 12px 16px;
           border-radius: 10px;
           margin-bottom: 24px;
-          font-size: 0.9rem;
+          font-size: 0.875rem;
+          font-weight: 500;
         }
 
         .auth-form {
@@ -261,11 +286,16 @@ export default function Login() {
           text-align: center;
           margin-top: 24px;
           color: var(--text-secondary);
+          font-size: 0.9375rem;
         }
 
         .auth-footer a {
-          color: var(--accent-primary);
-          font-weight: 500;
+          color: #2DBE60;
+          font-weight: 600;
+        }
+
+        .auth-footer a:hover {
+          color: #25A854;
         }
 
         @media (max-width: 768px) {

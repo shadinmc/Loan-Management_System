@@ -4,7 +4,7 @@ import AnimatedCard from './AnimatedCard';
 
 /**
  * Stats Card Component
- * Displays statistics with trend indicators
+ * Premium fintech design with solid colors
  */
 export default function StatsCard({
   title,
@@ -18,11 +18,14 @@ export default function StatsCard({
   const isPositive = trend === 'up';
 
   const colorMap = {
-    primary: 'var(--accent-primary)',
-    success: 'var(--accent-success)',
-    warning: 'var(--accent-warning)',
-    danger: 'var(--accent-danger)'
+    primary: { main: '#2DBE60', bg: '#E9F8EF' },
+    blue: { main: '#2F54EB', bg: '#E6ECFF' },
+    warning: { main: '#F59E0B', bg: '#FEF3C7' },
+    danger: { main: '#EF4444', bg: '#FEE2E2' },
+    purple: { main: '#8B5CF6', bg: '#F3E8FF' }
   };
+
+  const colors = colorMap[color] || colorMap.primary;
 
   return (
     <AnimatedCard delay={delay} glow>
@@ -31,15 +34,15 @@ export default function StatsCard({
           <div
             className="stats-icon"
             style={{
-              background: `linear-gradient(135deg, ${colorMap[color]}20, ${colorMap[color]}10)`,
-              color: colorMap[color]
+              background: colors.bg,
+              color: colors.main
             }}
           >
-            {Icon && <Icon size={24} />}
+            {Icon && <Icon size={22} />}
           </div>
           {trend && (
             <div className={`stats-trend ${isPositive ? 'positive' : 'negative'}`}>
-              {isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+              {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
               <span>{trendValue}</span>
             </div>
           )}
@@ -64,9 +67,9 @@ export default function StatsCard({
         }
 
         .stats-icon {
-          width: 52px;
-          height: 52px;
-          border-radius: 14px;
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -76,31 +79,32 @@ export default function StatsCard({
           display: flex;
           align-items: center;
           gap: 4px;
-          padding: 6px 10px;
-          border-radius: 20px;
-          font-size: 0.8rem;
+          padding: 5px 10px;
+          border-radius: 100px;
+          font-size: 0.75rem;
           font-weight: 600;
         }
 
         .stats-trend.positive {
-          background: rgba(16, 185, 129, 0.1);
-          color: var(--accent-success);
+          background: #E9F8EF;
+          color: #2DBE60;
         }
 
         .stats-trend.negative {
-          background: rgba(239, 68, 68, 0.1);
-          color: var(--accent-danger);
+          background: #FEE2E2;
+          color: #EF4444;
         }
 
         .stats-value {
-          font-size: 2rem;
+          font-size: 1.75rem;
           font-weight: 700;
           color: var(--text-primary);
           margin-bottom: 4px;
+          letter-spacing: -0.02em;
         }
 
         .stats-title {
-          font-size: 0.9rem;
+          font-size: 0.8125rem;
           color: var(--text-muted);
           text-transform: uppercase;
           letter-spacing: 0.5px;

@@ -1,32 +1,23 @@
+// src/pages/loans/LoanConfirmation.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle, Home, FileText, ArrowRight, Copy, Download } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { CheckCircle, Home, FileText, Copy, Download, Sparkles, ArrowRight } from 'lucide-react';
 import Button from '../../components/Button';
 import { LOAN_CONFIG } from '../../utils/constants';
 
-/**
- * Loan Confirmation Page
- * Displays success message and application summary after submission
- */
 export default function LoanConfirmation() {
   const navigate = useNavigate();
   const location = useLocation();
   const [copied, setCopied] = useState(false);
 
-  // Get application data from navigation state
   const { loanType, applicationData } = location.state || {};
   const config = loanType ? LOAN_CONFIG[loanType] : null;
-
-  // Generate a mock application ID
   const applicationId = `LW${Date.now().toString().slice(-8)}`;
 
-  // Redirect if no application data
   useEffect(() => {
-    if (!location.state) {
-      // For demo, don't redirect - show mock data
-      // navigate('/');
-    }
-  }, [location.state, navigate]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(applicationId);
@@ -34,61 +25,138 @@ export default function LoanConfirmation() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Calculate EMI if we have the data
   const calculateEMI = (principal, rate, months) => {
     if (!principal || !months) return 0;
     const monthlyRate = rate / 12 / 100;
-    const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, months)) /
-                (Math.pow(1 + monthlyRate, months) - 1);
-    return Math.round(emi);
+    return Math.round((principal * monthlyRate * Math.pow(1 + monthlyRate, months)) /
+      (Math.pow(1 + monthlyRate, months) - 1));
   };
 
   const mockData = {
     loanAmount: applicationData?.loanAmount || 500000,
     tenure: applicationData?.tenure || 36,
-    interestRate: 10.5,
-    name: applicationData?.fullName || 'John Doe'
+    interestRate: config?.interestRate || 10.5,
+    name: applicationData?.fullName || 'Applicant'
   };
 
   const estimatedEMI = calculateEMI(mockData.loanAmount, mockData.interestRate, mockData.tenure);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
   return (
     <div className="confirmation-page">
-      <div className="confirmation-container">
-        {/* Success Animation */}
-        <div className="success-icon animate-scale-in">
-          <div className="success-circle">
-            <CheckCircle size={48} />
-          </div>
-          <div className="success-ripple" />
-        </div>
+      <div className="page-background">
+        <div className="bg-gradient" />
+        <motion.div
+          className="confetti-container"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="confetti"
+              style={{
+                left: `${Math.random() * 100}%`,
+                background: ['#2DBE60', '#3B82F6', '#F59E0B', '#EC4899'][i % 4]
+              }}
+              initial={{ y: -20, opacity: 0, rotate: 0 }}
+              animate={{
+                y: ['0%', '100vh'],
+                opacity: [1, 0],
+                rotate: Math.random() * 360
+              }}
+              transition={{
+                duration: 3 + Math.random() * 2,
+                delay: Math.random() * 2,
+                repeat: Infinity,
+                repeatDelay: Math.random() * 3
+              }}
+            />
+          ))}
+        </motion.div>
+      </div>
 
-        {/* Success Message */}
-        <div className="success-content animate-fade-in-up stagger-1">
-          <h1>Application Submitted!</h1>
-          <p>Your {config?.name || 'loan'} application has been received. Our team will review it shortly.</p>
-        </div>
+      <motion.div
+        className="confirmation-container"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div className="success-icon" variants={itemVariants}>
+          <motion.div
+            className="success-circle"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+          >
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <CheckCircle size={48} strokeWidth={2.5} />
+            </motion.div>
+          </motion.div>
+          <motion.div
+            className="success-ripple"
+            animate={{ scale: [1, 1.5], opacity: [0.3, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          /><motion.div
+            className="success-ripple delay"
+            animate={{ scale: [1, 1.5], opacity: [0.3, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
+          />
+        </motion.div>
 
-        {/* Application ID */}
-        <div className="application-id animate-fade-in-up stagger-2">
+        <motion.div className="success-content" variants={itemVariants}>
+          <motion.div className="success-badge">
+            <Sparkles size={14} />
+            <span>Application Received</span>
+          </motion.div>
+          <h1>Congratulations!</h1>
+          <p>Your {config?.name || 'loan'} application has been successfully submitted.</p>
+        </motion.div>
+
+        <motion.div className="application-id" variants={itemVariants}>
           <span className="id-label">Application ID</span>
           <div className="id-value">
             <code>{applicationId}</code>
-            <button
+            <motion.button
               onClick={handleCopyId}
               className="copy-btn"
-              aria-label="Copy application ID"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
               <Copy size={16} />
-              {copied && <span className="copied-tooltip">Copied!</span>}
-            </button>
+              {copied && (
+                <motion.span
+                  className="copied-tooltip"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                >
+                  Copied!
+                </motion.span>
+              )}
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Summary Card */}
-        <div className="summary-card animate-fade-in-up stagger-3">
-          <h3>Application Summary</h3>
-
+        <motion.div className="summary-card" variants={itemVariants}>
+          <div className="summary-header">
+            <FileText size={20} />
+            <h3>Application Summary</h3>
+          </div>
           <div className="summary-grid">
             <div className="summary-item">
               <span className="summary-label">Loan Type</span>
@@ -102,49 +170,59 @@ export default function LoanConfirmation() {
               <span className="summary-label">Tenure</span>
               <span className="summary-value">{mockData.tenure} Months</span>
             </div>
-            <div className="summary-item highlight">
-              <span className="summary-label">Estimated EMI</span>
-              <span className="summary-value">₹{estimatedEMI.toLocaleString()}/month</span>
-            </div>
+            <div className="summary-item">
+              <span className="summary-label">Interest Rate</span>
+              <span className="summary-value">{mockData.interestRate}% p.a.</span>
+            </div></div>
+          <motion.div
+            className="emi-highlight"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.8 }}
+          >
+            <span className="emi-label">Estimated Monthly EMI</span>
+            <span className="emi-value">₹{estimatedEMI.toLocaleString()}</span>
+          </motion.div>
+        </motion.div>
+
+        <motion.div className="next-steps" variants={itemVariants}>
+          <h3>What Happens Next?</h3>
+          <div className="steps-timeline">
+            {[
+              { num: 1, title: 'Document Verification', desc: 'Our team will verify your documents within 24 hours' },
+              { num: 2, title: 'Credit Assessment', desc: 'We\'ll assess your eligibility and credit score' },
+              { num: 3, title: 'Approval & Disbursement', desc: 'Upon approval, funds will be transferred to your account' }
+            ].map((step, idx) => (
+              <motion.div
+                key={idx}
+                className="step-item"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1 + idx * 0.15 }}
+              >
+                <div className="step-marker">
+                  <span className="step-num">{step.num}</span>
+                  {idx < 2 && <div className="step-line" />}
+                </div>
+                <div className="step-content">
+                  <h4>{step.title}</h4>
+                  <p>{step.desc}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </div>
+        </motion.div>
 
-        {/* Next Steps */}
-        <div className="next-steps animate-fade-in-up stagger-4">
-          <h3>What's Next?</h3>
-          <ol className="steps-list">
-            <li>
-              <span className="step-num">1</span>
-              <span>Our team will verify your documents within 24 hours</span>
-            </li>
-            <li>
-              <span className="step-num">2</span>
-              <span>You'll receive an email with the verification status</span>
-            </li>
-            <li>
-              <span className="step-num">3</span>
-              <span>Upon approval, funds will be disbursed to your account</span>
-            </li>
-          </ol>
-        </div>
-
-        {/* Actions */}
-        <div className="confirmation-actions animate-fade-in-up stagger-5">
-          <Button
-            icon={FileText}
-            onClick={() => navigate('/loan/status')}
-          >
+        <motion.div className="confirmation-actions" variants={itemVariants}>
+          <Button icon={FileText} onClick={() => navigate('/loan/status')}>
             Track Application
+            <ArrowRight size={16} />
           </Button>
-          <Button
-            variant="outline"
-            icon={Home}
-            onClick={() => navigate('/dashboard')}
-          >
+          <Button variant="outline" icon={Home} onClick={() => navigate('/dashboard')}>
             Go to Dashboard
           </Button>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       <style>{styles}</style>
     </div>
@@ -157,104 +235,141 @@ const styles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--space-8) var(--space-4);
+    padding: 48px 24px;
     background: var(--bg-secondary);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page-background {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .bg-gradient {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 50%;
+    background: radial-gradient(ellipse at top, rgba(45, 190, 96, 0.08) 0%, transparent 60%);
+  }
+
+  .confetti-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .confetti {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
   }
 
   .confirmation-container {
     max-width: 560px;
     width: 100%;
     text-align: center;
-  }
-
-  /* Success Icon */
-  .success-icon {
-    position: relative;
-    display: inline-flex;
-    margin-bottom: var(--space-8);
-  }
-
-  .success-circle {
-    width: 96px;
-    height: 96px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--accent-success);
-    color: white;
-    border-radius: var(--radius-full);
     position: relative;
     z-index: 1;
   }
 
+  .success-icon {
+    position: relative;
+    display: inline-flex;
+    margin-bottom: 32px;
+  }
+
+  .success-circle {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #2DBE60 0%, #22a652 100%);
+    color: white;
+    border-radius: 50%;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 8px 32px rgba(45, 190, 96, 0.3);
+  }
+
   .success-ripple {
     position: absolute;
-    inset: -12px;
-    background: var(--accent-success);
-    border-radius: var(--radius-full);
-    opacity: 0.2;
-    animation: ripple 1.5s ease-out infinite;
+    inset: 0;
+    background: #2DBE60;
+    border-radius: 50%;
+    z-index: 0;
   }
 
-  @keyframes ripple {
-    0% {
-      transform: scale(1);
-      opacity: 0.2;
-    }
-    100% {
-      transform: scale(1.4);
-      opacity: 0;
-    }
+  .success-ripple.delay {
+    animation-delay: 0.5s;
   }
 
-  /* Content */
   .success-content {
-    margin-bottom: var(--space-6);
+    margin-bottom: 28px;
+  }
+
+  .success-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(45, 190, 96, 0.1);
+    color: #2DBE60;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 100px;
+    margin-bottom: 16px;
   }
 
   .success-content h1 {
-    font-size: var(--text-3xl);
+    font-size: 2.25rem;
+    font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: var(--space-3);
+    margin-bottom: 12px;
   }
 
   .success-content p {
-    font-size: var(--text-lg);
+    font-size: 1.05rem;
     color: var(--text-secondary);
   }
 
-  /* Application ID */
   .application-id {
     display: inline-flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-4) var(--space-6);
+    gap: 8px;
+    padding: 20px 32px;
     background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
-    margin-bottom: var(--space-8);
+    border: 2px dashed var(--border-color);
+    border-radius: 16px;
+    margin-bottom: 32px;
   }
 
   .id-label {
-    font-size: var(--text-sm);
+    font-size: 0.75rem;
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
   }
 
   .id-value {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
+    gap: 12px;
   }
 
   .id-value code {
-    font-family: var(--font-mono);
-    font-size: var(--text-lg);
-    font-weight: var(--font-semibold);
-    color: var(--accent-primary);
-    letter-spacing: 0.1em;
+    font-family: var(--font-mono, monospace);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2DBE60;
+    letter-spacing: 0.15em;
   }
 
   .copy-btn {
@@ -262,17 +377,19 @@ const styles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     color: var(--text-muted);
     background: var(--bg-secondary);
-    border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
 
   .copy-btn:hover {
-    color: var(--accent-primary);
-    background: var(--color-primary-50);
+    color: #2DBE60;
+    border-color: #2DBE60;
   }
 
   .copied-tooltip {
@@ -280,119 +397,161 @@ const styles = `
     top: -32px;
     left: 50%;
     transform: translateX(-50%);
-    padding: var(--space-1) var(--space-2);
-    background: var(--text-primary);
-    color: var(--bg-primary);
-    font-size: var(--text-xs);
-    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    background: #0B1E3C;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 6px;
     white-space: nowrap;
   }
 
-  /* Summary Card */
   .summary-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-2xl);
-    padding: var(--space-6);
-    margin-bottom: var(--space-8);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 28px;
     text-align: left;
   }
 
-  .summary-card h3 {
-    font-size: var(--text-lg);
-    margin-bottom: var(--space-5);
-    padding-bottom: var(--space-4);
+  .summary-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
     border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+  }
+
+  .summary-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
   }
 
   .summary-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-4);
+    gap: 20px;
+    margin-bottom: 20px;
   }
 
   .summary-item {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
+    gap: 4px;
   }
 
   .summary-label {
-    font-size: var(--text-sm);
+    font-size: 0.8rem;
     color: var(--text-muted);
   }
 
   .summary-value {
-    font-size: var(--text-base);
-    font-weight: var(--font-semibold);
+    font-size: 1rem;
+    font-weight: 600;
     color: var(--text-primary);
   }
 
-  .summary-item.highlight {
-    grid-column: 1 / -1;
-    padding: var(--space-4);
-    background: var(--color-primary-50);
-    border-radius: var(--radius-lg);
-    margin-top: var(--space-2);
+  .emi-highlight {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(45, 190, 96, 0.1) 0%, rgba(45, 190, 96, 0.05) 100%);
+    border: 1px solid rgba(45, 190, 96, 0.2);
+    border-radius: 12px;
   }
 
-  [data-theme="dark"] .summary-item.highlight {
-    background: rgba(59, 130, 246, 0.15);
+  .emi-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
   }
 
-  .summary-item.highlight .summary-value {
-    color: var(--accent-primary);
-    font-size: var(--text-lg);
+  .emi-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2DBE60;
   }
 
-  /* Next Steps */
   .next-steps {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-2xl);
-    padding: var(--space-6);
-    margin-bottom: var(--space-8);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 32px;
     text-align: left;
   }
 
   .next-steps h3 {
-    font-size: var(--text-lg);
-    margin-bottom: var(--space-5);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: var(--text-primary);
   }
 
-  .steps-list {
+  .steps-timeline {
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
+    gap: 0;
   }
 
-  .steps-list li {
+  .step-item {
     display: flex;
-    align-items: flex-start;
-    gap: var(--space-3);
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
+    gap: 16px;
+  }
+
+  .step-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .step-num {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
-    background: var(--accent-primary);
+    width: 28px;
+    height: 28px;
+    background: #2DBE60;
     color: white;
-    font-size: var(--text-xs);
-    font-weight: var(--font-bold);
-    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 50%;
     flex-shrink: 0;
   }
 
-  /* Actions */
+  .step-line {
+    width: 2px;
+    height: 100%;
+    min-height: 40px;
+    background: rgba(45, 190, 96, 0.3);
+    margin: 4px 0;
+  }
+
+  .step-content {
+    padding-bottom: 20px;
+  }
+
+  .step-content h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .step-content p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
   .confirmation-actions {
     display: flex;
     justify-content: center;
-    gap: var(--space-4);
+    gap: 16px;
     flex-wrap: wrap;
   }
 
@@ -405,6 +564,11 @@ const styles = `
       flex-direction: column;
       align-items: stretch;
     }
+
+    .emi-highlight {
+      flex-direction: column;
+      gap: 8px;
+      text-align: center;
+    }
   }
 `;
-

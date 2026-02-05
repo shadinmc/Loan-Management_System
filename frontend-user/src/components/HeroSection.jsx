@@ -1,13 +1,16 @@
 // src/components/HeroSection.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Sparkles, Shield, Clock, CheckCircle } from 'lucide-react';
+import { ArrowRight, Sparkles, Shield, Clock, CheckCircle, TrendingUp, Landmark } from 'lucide-react';
 import Button from './Button';
 import Carousel from './Carousel';
+import heroImg from '../assets/hero-finance.png';
+import transferImg from '../assets/laptrans.png'; // <-- already added
+import businessImg from '../assets/Business.png'; // <-- NEW (business slide image)
 
 /**
  * Hero Section Component
- * Main landing section with animated elements
+ * Premium fintech design with navy + green palette
  */
 export default function HeroSection() {
   const navigate = useNavigate();
@@ -35,31 +38,80 @@ export default function HeroSection() {
   }, [stats.length]);
 
   const carouselSlides = [
-    <div className="hero-slide" key="1">
+    // ✅ Slide 0 — Image on the right
+    <div className="hero-slide" key="0">
       <div className="slide-content">
-        <span className="slide-badge animate-fade-in-down">
-          <Sparkles size={16} />
-          New: Zero Processing Fee
+        <span className="slide-badge">
+          <Landmark size={14} />
+          Welcome to CredPort
         </span>
-        <h1 className="slide-title animate-fade-in-up">
-          Get Instant Loans<br />
-          <span className="gradient-text">Starting 10.5% p.a.</span>
+        <h1 className="slide-title">
+          Your Trusted Partner<br />
+          <span className="highlight-text">For Financial Solutions</span>
         </h1>
-        <p className="slide-description animate-fade-in-up stagger-2">
-          Quick approval, minimal documentation, and hassle-free process.
-          Your financial goals are just a click away.
+        <p className="slide-description">
+          CredPort is your one-stop destination for all lending needs.
+          We offer personal, business, and education loans with competitive rates and seamless digital experience.
         </p>
-        <div className="slide-actions animate-fade-in-up stagger-3">
+        <div className="slide-actions">
           <Button
             icon={ArrowRight}
             iconPosition="right"
-            size="large"
-            onClick={() => navigate('/loan/apply')}
+            size="lg"
+            onClick={() => navigate('/loans')}
+          >
+            Explore Loans
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/about')}
+          >
+            Learn More
+          </Button>
+        </div>
+      </div>
+
+      {/* Image visual */}
+      <div className="slide-visual">
+        <img
+          src={heroImg}
+          alt="Financial planning illustration with savings, cards, and analytics"
+          className="slide-image"
+          loading="eager"
+          decoding="async"
+          draggable="false"
+        />
+      </div>
+    </div>,
+
+    // Slide 1 — unchanged (floating cards)
+    <div className="hero-slide" key="1">
+      <div className="slide-content">
+        <span className="slide-badge">
+          <Sparkles size={14} />
+          New: Zero Processing Fee
+        </span>
+        <h1 className="slide-title">
+          Get Instant Personal Loans<br />
+          <span className="highlight-text">Starting 10.5% p.a.</span>
+        </h1>
+        <p className="slide-description">
+          Quick approval, minimal documentation, and hassle-free process.
+          Your financial goals are just a click away.
+        </p>
+        <div className="slide-actions">
+          <Button
+            icon={ArrowRight}
+            iconPosition="right"
+            size="lg"
+            onClick={() => navigate('/loan/apply/personal')}
           >
             Apply Now
-          </Button><Button
+          </Button>
+          <Button
             variant="outline"
-            size="large"
+            size="lg"
             onClick={() => navigate('/calculator')}
           >
             Calculate EMI
@@ -67,25 +119,34 @@ export default function HeroSection() {
         </div>
       </div>
       <div className="slide-visual">
-        <div className="floating-card card-1 animate-float">
-          <CheckCircle size={24} />
+        <div className="floating-card card-1">
+          <CheckCircle size={20} />
           <span>Approved!</span>
         </div>
-        <div className="floating-card card-2 animate-float" style={{ animationDelay: '0.5s' }}>
+        <div className="floating-card card-2">
           <span className="amount">₹5,00,000</span>
           <span className="label">Loan Amount</span>
         </div>
-        <div className="floating-card card-3 animate-float" style={{ animationDelay: '1s' }}>
-          <span className="emi">₹10,624</span>
-          <span className="label">/month EMI</span>
+        <div className="floating-card card-3">
+          <TrendingUp size={20} />
+          <div>
+            <span className="emi">₹10,624</span>
+            <span className="label">/month EMI</span>
+          </div>
         </div>
       </div>
     </div>,
+
+    // ✅ Slide 2 — Business Loans (now includes image on the right)
     <div className="hero-slide slide-2" key="2">
       <div className="slide-content">
+        <span className="slide-badge">
+          <TrendingUp size={14} />
+          Business Growth
+        </span>
         <h1 className="slide-title">
           Business Loans<br />
-          <span className="gradient-text">For Your Growth</span>
+          <span className="highlight-text">For Your Growth</span>
         </h1>
         <p className="slide-description">
           Fuel your business ambitions with loans up to ₹50 Lakhs.
@@ -94,18 +155,36 @@ export default function HeroSection() {
         <Button
           icon={ArrowRight}
           iconPosition="right"
-          size="large"
+          size="lg"
           onClick={() => navigate('/loan/apply/business')}
         >
           Explore Business Loans
         </Button>
       </div>
+
+      {/* Business image visual */}
+      <div className="slide-visual">
+        <img
+          src={businessImg}
+          alt="Business professional with laptop, approvals, and financial growth elements"
+          className="slide-image"
+          loading="lazy"
+          decoding="async"
+          draggable="false"
+        />
+      </div>
     </div>,
+
+    // Slide 3 — Education with image on the right
     <div className="hero-slide slide-3" key="3">
       <div className="slide-content">
+        <span className="slide-badge">
+          <Sparkles size={14} />
+          Education First
+        </span>
         <h1 className="slide-title">
           Education Loans<br />
-          <span className="gradient-text">Shape Your Future</span>
+          <span className="highlight-text">Shape Your Future</span>
         </h1>
         <p className="slide-description">
           Don't let finances hold back your dreams.
@@ -114,22 +193,29 @@ export default function HeroSection() {
         <Button
           icon={ArrowRight}
           iconPosition="right"
-          size="large"
+          size="lg"
           onClick={() => navigate('/loan/apply/education')}
         >
           Apply for Education Loan
         </Button>
+      </div>
+
+      <div className="slide-visual">
+        <img
+          src={transferImg}
+          alt="Digital banking and payments dashboard with secure money transfer"
+          className="slide-image"
+          loading="lazy"
+          decoding="async"
+          draggable="false"
+        />
       </div>
     </div>
   ];
 
   return (
     <section className="hero-section">
-      <div className="hero-bg">
-        <div className="gradient-orb orb-1" />
-        <div className="gradient-orb orb-2" />
-        <div className="grid-pattern" />
-      </div>
+      <div className="hero-bg" />
 
       <div className="hero-container">
         <Carousel
@@ -139,7 +225,7 @@ export default function HeroSection() {
         />
 
         {/* Highlights Bar */}
-        <div className="highlights-bar animate-fade-in-up">
+        <div className="highlights-bar">
           {highlights.map((item, index) => {
             const Icon = item.icon;
             return (
@@ -152,66 +238,50 @@ export default function HeroSection() {
         </div>
 
         {/* Stats Ticker */}
-        <div className="stats-ticker animate-fade-in-up">
-          {stats.map((stat, index) => (
-            <div
-              key={index}
-              className={`stat-item ${index === currentStat ? 'active' : ''}`}
-            >
-              <span className="stat-value">{stat.value}</span>
-              <span className="stat-label">{stat.label}</span>
-            </div>
-          ))}
-        </div>
+
       </div>
 
       <style>{`
         .hero-section {
           position: relative;
-          min-height: 90vh;
+          min-height: 85vh;
           display: flex;
           align-items: center;
-          padding: 80px 0 40px;
+          padding: 100px 0 60px;
           overflow: hidden;
+          background: #0B1E3C;
         }
-
+    .slide-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+    }
+        .slide-visual {
+          position: relative;
+          height: auto;
+          min-height: 300px;
+          max-height: 450px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
         .hero-bg {
           position: absolute;
           inset: 0;
-          pointer-events: none;
+          background: #0B1E3C;
+          opacity: 1;
         }
 
-        .gradient-orb {
+        .hero-bg::before {
+          content: '';
           position: absolute;
-          border-radius: 50%;
-          filter: blur(80px);
-          opacity: 0.5;
-        }
-
-        .orb-1 {
-          width: 600px;
-          height: 600px;
-          background: var(--accent-primary);
-          top: -200px;
-          right: -200px;
-          opacity: 0.15;
-        }
-
-        .orb-2 {
-          width: 400px;
-          height: 400px;
-          background: var(--accent-secondary);
-          bottom: -100px;
-          left: -100px;
-          opacity: 0.1;
-        }
-
-        .grid-pattern {
-          position: absolute;
-          inset: 0;
-          background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
-          background-size: 40px 40px;
-          opacity: 0.5;
+          top: 0;
+          right: 0;
+          width: 50%;
+          height: 100%;
+          background: #102A4D;
+          clip-path: polygon(20% 0, 100% 0, 100% 100%, 0% 100%);
         }
 
         .hero-container {
@@ -227,8 +297,8 @@ export default function HeroSection() {
           grid-template-columns: 1fr 1fr;
           gap: 60px;
           align-items: center;
-          min-height: 500px;
-          padding: 40px;
+          min-height: 450px;
+          padding: 40px 0;
         }
 
         .slide-badge {
@@ -236,37 +306,33 @@ export default function HeroSection() {
           align-items: center;
           gap: 8px;
           padding: 8px 16px;
-          background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-          border: 1px solid rgba(59, 130, 246, 0.2);
-          border-radius: 30px;
-          font-size: 0.85rem;
-          font-weight: 500;
-          color: var(--accent-primary);
-          margin-bottom: 20px;
+          background: rgba(45, 190, 96, 0.15);
+          border-radius: 100px;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          color: #2DBE60;
+          margin-bottom: 24px;
         }
 
         .slide-title {
-          font-size: 3.5rem;
+          font-size: 3rem;
           font-weight: 800;
-          line-height: 1.1;
-          color: var(--text-primary);
-          margin-bottom: 24px;
-          letter-spacing: -1px;
+          line-height: 1.15;
+          color: #8dc7a1;
+          margin-bottom: 20px;
+          letter-spacing: -0.02em;
         }
 
-        .gradient-text {
-          background: var(--gradient-primary);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+        .highlight-text {
+          color: #2DBE60;
         }
 
         .slide-description {
-          font-size: 1.15rem;
-          color: var(--text-secondary);
+          font-size: 1.0625rem;
+          color: #A5B4CF;
           line-height: 1.7;
           margin-bottom: 32px;
-          max-width: 500px;
+          max-width: 480px;
         }
 
         .slide-actions {
@@ -277,81 +343,103 @@ export default function HeroSection() {
 
         .slide-visual {
           position: relative;
-          height: 400px;
+          height: 380px;
         }
 
+        /* Image styles used by slides 0, 2, and 3 */
+        .slide-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 16px;
+          display: block;
+          user-select: none;
+          -webkit-user-drag: none;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+          background: #0B1E3C;
+        }
+
+        /* Floating cards (used on slide 1) */
         .floating-card {
           position: absolute;
-          background: var(--card-bg);
-          border: 1px solid var(--border-color);
-          border-radius: 16px;
-          padding: 16px 24px;
-          box-shadow: var(--shadow-lg);
+          background: #8dc7a1;
+          border-radius: 12px;
+          padding: 16px 20px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
           display: flex;
           align-items: center;
           gap: 12px;
+          animation: float 4s ease-in-out infinite;
         }
 
         .floating-card.card-1 {
-          top: 20%;
-          right: 10%;
-          color: var(--accent-success);
+          top: 15%;
+          right: 15%;
+          color: #2DBE60;
+          font-weight: 600;
+          animation-delay: 0s;
         }
 
         .floating-card.card-2 {
           top: 45%;
-          left: 5%;
+          left: 10%;
           flex-direction: column;
           align-items: flex-start;
+          animation-delay: 0.5s;
         }
 
         .floating-card.card-2 .amount {
           font-size: 1.5rem;
           font-weight: 700;
-          color: var(--accent-primary);
+          color: #0B1E3C;
         }
 
         .floating-card.card-3 {
-          bottom: 15%;
-          right: 20%;
-          flex-direction: column;
-          align-items: flex-start;
+          bottom: 20%;
+          right: 10%;
+          animation-delay: 1s;
         }
 
         .floating-card.card-3 .emi {
-          font-size: 1.25rem;
+          font-size: 1.125rem;
           font-weight: 700;
-          color: var(--text-primary);
+          color: #0B1E3C;
+          display: block;
         }
 
         .floating-card .label {
-          font-size: 0.8rem;
-          color: var(--text-muted);
+          font-size: 0.75rem;
+          color: #64748B;
+        }
+
+        .floating-card svg {
+          color: #2DBE60;
         }
 
         .highlights-bar {
           display: flex;
           justify-content: center;
           gap: 32px;
-          padding: 24px;
-          margin-top: 40px;
-          background: var(--card-bg);
-          border: 1px solid var(--border-color);
-          border-radius: 16px;
+          padding: 20px 32px;
+          margin-top: 48px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
           flex-wrap: wrap;
+          backdrop-filter: blur(8px);
         }
 
         .highlight-item {
           display: flex;
           align-items: center;
           gap: 8px;
-          color: var(--text-secondary);
-          font-size: 0.9rem;
+          color: #A5B4CF;
+          font-size: 0.875rem;
           font-weight: 500;
         }
 
         .highlight-item svg {
-          color: var(--accent-primary);
+          color: #2DBE60;
         }
 
         .stats-ticker {
@@ -364,69 +452,47 @@ export default function HeroSection() {
 
         .stat-item {
           text-align: center;
-          opacity: 0.6;
+          opacity: 0.5;
           transition: all 0.3s ease;
         }
 
         .stat-item.active {
           opacity: 1;
-          transform: scale(1.1);
+          transform: scale(1.05);
         }
 
         .stat-value {
           display: block;
-          font-size: 1.75rem;
+          font-size: 1.5rem;
           font-weight: 700;
-          color: var(--accent-primary);
+          color: #2DBE60;
         }
 
         .stat-label {
-          font-size: 0.85rem;
-          color: var(--text-muted);
-        }
-
-        /* Animations */
-        .animate-fade-in-up {
-          opacity: 0;
-          animation: fadeInUp 0.6s ease-out forwards;
-        }
-
-        .animate-fade-in-down {
-          opacity: 0;
-          animation: fadeInDown 0.6s ease-out forwards;
-        }
-
-        .animate-float {
-          animation: float 4s ease-in-out infinite;
-        }
-
-        .stagger-2 { animation-delay: 0.2s; }
-        .stagger-3 { animation-delay: 0.4s; }
-
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeInDown {
-          from { opacity: 0; transform: translateY(-20px); }
-          to { opacity: 1; transform: translateY(0); }
+          font-size: 0.8125rem;
+          color: #A5B4CF;
         }
 
         @keyframes float {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-15px); }
+          50% { transform: translateY(-10px); }
         }
 
         @media (max-width: 992px) {
+          .hero-section {
+            min-height: auto;
+            padding: 100px 0 60px;
+          }
+
           .hero-slide {
             grid-template-columns: 1fr;
             text-align: center;
-            padding: 20px;
+            min-height: auto;
+            padding: 20px 0;
           }
 
           .slide-title {
-            font-size: 2.5rem;
+            font-size: 2.25rem;
           }
 
           .slide-description {
@@ -437,12 +503,14 @@ export default function HeroSection() {
             justify-content: center;
           }
 
+          /* Hide visuals on mobile for a cleaner hero */
           .slide-visual {
             display: none;
           }
 
           .highlights-bar {
-            gap: 16px;
+            gap: 20px;
+            padding: 16px 24px;
           }
 
           .stats-ticker {
@@ -452,15 +520,24 @@ export default function HeroSection() {
 
         @media (max-width: 576px) {
           .slide-title {
-            font-size: 2rem;
+            font-size: 1.875rem;
           }
 
           .slide-actions {
             flex-direction: column;
+            width: 100%;
+          }
+
+          .slide-actions button {
+            width: 100%;
           }
 
           .highlight-item span {
             display: none;
+          }
+
+          .highlight-item {
+            padding: 8px;
           }
 
           .stats-ticker {

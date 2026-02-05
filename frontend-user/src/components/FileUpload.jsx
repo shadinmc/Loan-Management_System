@@ -140,13 +140,13 @@ const fileUploadStyles = `
   }
 
   .file-upload-label {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-primary);
   }
 
   .required {
-    color: var(--accent-danger);
+    color: #EF4444;
     margin-left: 2px;
   }
 
@@ -156,21 +156,30 @@ const fileUploadStyles = `
     border: 2px dashed var(--border-color);
     border-radius: 12px;
     background: var(--bg-secondary);
-    transition: all 0.3s ease;
-    cursor: pointer;}
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
 
   .file-upload-zone:hover {
-    border-color: var(--accent-primary);
-    background: rgba(59, 130, 246, 0.05);
+    border-color: #2DBE60;
+    background: #E9F8EF;
+  }
+
+  [data-theme="dark"] .file-upload-zone:hover {
+    background: rgba(45, 190, 96, 0.1);
   }
 
   .file-upload-zone.drag-active {
-    border-color: var(--accent-primary);
-    background: rgba(59, 130, 246, 0.1);
+    border-color: #2DBE60;
+    background: #E9F8EF;
+  }
+
+  [data-theme="dark"] .file-upload-zone.drag-active {
+    background: rgba(45, 190, 96, 0.15);
   }
 
   .file-upload-zone.error {
-    border-color: var(--accent-danger);
+    border-color: #EF4444;
   }
 
   .file-upload-input {
@@ -194,18 +203,18 @@ const fileUploadStyles = `
   }
 
   .file-upload-text {
-    font-size: 0.95rem;
+    font-size: 0.9375rem;
     color: var(--text-secondary);
     margin: 0;
   }
 
   .file-upload-highlight {
-    color: var(--accent-primary);
+    color: #2DBE60;
     font-weight: 600;
   }
 
   .file-upload-hint {
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     color: var(--text-muted);
     margin: 0;
   }
@@ -215,9 +224,13 @@ const fileUploadStyles = `
     align-items: center;
     justify-content: space-between;
     padding: 16px;
-    background: var(--bg-secondary);
-    border: 2px solid var(--border-color);
+    background: #E9F8EF;
+    border: 1px solid #2DBE60;
     border-radius: 12px;
+  }
+
+  [data-theme="dark"] .file-uploaded {
+    background: rgba(45, 190, 96, 0.1);
   }
 
   .file-info {
@@ -227,7 +240,7 @@ const fileUploadStyles = `
   }
 
   .file-icon {
-    color: var(--accent-primary);
+    color: #2DBE60;
   }
 
   .file-details {
@@ -237,13 +250,13 @@ const fileUploadStyles = `
   }
 
   .file-name {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-primary);
   }
 
   .file-size {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
   }
 
@@ -254,7 +267,7 @@ const fileUploadStyles = `
   }
 
   .file-success {
-    color: var(--accent-success);
+    color: #2DBE60;
   }
 
   .file-remove {
@@ -263,17 +276,17 @@ const fileUploadStyles = `
     color: var(--text-muted);
     cursor: pointer;
     padding: 4px;
-    border-radius: 4px;
-    transition: all 0.2s ease;
+    border-radius: 6px;
+    transition: all 0.15s ease;
   }
 
   .file-remove:hover {
-    color: var(--accent-danger);
-    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    background: #FEE2E2;
   }
 
   .error-text {
-    font-size: 0.85rem;
-    color: var(--accent-danger);
+    font-size: 0.8125rem;
+    color: #EF4444;
   }
 `;

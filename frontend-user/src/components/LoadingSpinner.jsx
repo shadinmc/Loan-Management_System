@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react';
 
 /**
  * Loading Spinner Component
- * Displays animated loading indicator with optional message
+ * Premium fintech design with solid colors
  */
 export default function LoadingSpinner({
   size = 'medium',
@@ -22,11 +22,11 @@ export default function LoadingSpinner({
 
   if (fullScreen) {
     return (
-      <div className="loading-fullscreen">
-        <div className="loading-content animate-scale-in">
+      <div className="loading-fullscreen" role="status" aria-live="polite">
+        <div className="loading-content">
           <div className="spinner-wrapper">
             <Loader2 size={spinnerSize} className="spinner-icon" />
-            <div className="spinner-ring" />
+            <div className="spinner-ring" style={{ width: spinnerSize + 20, height: spinnerSize + 20 }} />
           </div>
           {message && <p className="loading-message">{message}</p>}
         </div>
@@ -47,6 +47,12 @@ export default function LoadingSpinner({
             flex-direction: column;
             align-items: center;
             gap: 24px;
+            animation: fadeIn 0.3s ease;
+          }
+
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
           }
 
           .spinner-wrapper {
@@ -57,16 +63,14 @@ export default function LoadingSpinner({
           }
 
           .spinner-icon {
-            color: var(--accent-primary);
+            color: #2DBE60;
             animation: spin 1s linear infinite;
           }
 
           .spinner-ring {
             position: absolute;
-            width: ${spinnerSize + 20}px;
-            height: ${spinnerSize + 20}px;
-            border: 3px solid var(--bg-tertiary);
-            border-top-color: var(--accent-primary);
+            border: 3px solid var(--border-color);
+            border-top-color: #2DBE60;
             border-radius: 50%;
             animation: spin 1.5s linear infinite reverse;
           }
@@ -87,7 +91,7 @@ export default function LoadingSpinner({
   }
 
   return (
-    <div className={`loading-inline ${variant}`}>
+    <div className={`loading-inline ${variant}`} role="status" aria-live="polite">
       <Loader2 size={spinnerSize} className="spinner-icon" />
       {message && <span className="loading-text">{message}</span>}
 
@@ -105,15 +109,15 @@ export default function LoadingSpinner({
         }
 
         .loading-inline.primary .spinner-icon {
-          color: var(--accent-primary);
+          color: #2DBE60;
         }
 
         .loading-inline.success .spinner-icon {
-          color: var(--accent-success);
+          color: #2DBE60;
         }
 
         .loading-inline .loading-text {
-          font-size: 0.9rem;
+          font-size: 0.9375rem;
           color: var(--text-secondary);
         }
 

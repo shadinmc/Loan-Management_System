@@ -7,7 +7,7 @@ import { UserPlus, Wallet, CheckCircle, Shield, Zap } from 'lucide-react';
 
 /**
  * Signup Page Component
- * Handles new user registration
+ * Premium fintech design with navy + green palette
  */
 export default function Signup() {
   const [form, setForm] = useState({
@@ -31,7 +31,6 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic validation
     if (Object.values(form).some(val => !val)) {
       setError('Please fill in all fields');
       return;
@@ -60,27 +59,33 @@ export default function Signup() {
 
   return (
     <div className="auth-page">
-      <div className="auth-container signup-container animate-fade-in-up">
+      <div className="auth-container signup-container">
         {/* Left Panel - Branding */}
         <div className="auth-branding">
           <div className="branding-content">
             <div className="brand-icon">
-              <Wallet size={48} />
+              <Wallet size={40} />
             </div>
             <h1>Join LoanWise</h1>
             <p>Create your account and start your financial journey</p>
 
             <div className="features">
               <div className="feature">
-                <Zap size={18} />
+                <div className="feature-icon">
+                  <Zap size={16} />
+                </div>
                 Free account creation
               </div>
               <div className="feature">
-                <CheckCircle size={18} />
+                <div className="feature-icon">
+                  <CheckCircle size={16} />
+                </div>
                 Track all your loans
               </div>
               <div className="feature">
-                <Shield size={18} />
+                <div className="feature-icon">
+                  <Shield size={16} />
+                </div>
                 Get personalized offers
               </div>
             </div>
@@ -98,7 +103,7 @@ export default function Signup() {
           </div>
 
           {error && (
-            <div className="error-banner animate-fade-in">
+            <div className="error-banner" role="alert">
               {error}
             </div>
           )}
@@ -177,7 +182,7 @@ export default function Signup() {
               type="submit"
               fullWidth
               loading={loading}
-              size="large"
+              size="lg"
             >
               Create Account
             </Button>
@@ -194,7 +199,7 @@ export default function Signup() {
 
       <style>{`
         .auth-page {
-          min-height: calc(100vh - 70px);
+          min-height: calc(100vh - 72px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -205,17 +210,28 @@ export default function Signup() {
         .auth-container {
           display: grid;
           grid-template-columns: 1fr 1.2fr;
-          max-width: 1000px;
+          max-width: 960px;
           width: 100%;
           background: var(--card-bg);
-          border-radius: 24px;
+          border-radius: 20px;
           overflow: hidden;
-          box-shadow: var(--shadow-xl);
-          opacity: 0;
+          box-shadow: 0 20px 50px rgba(16, 42, 77, 0.12);
+          animation: fadeInUp 0.4s ease;
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .auth-branding {
-          background: var(--gradient-secondary);
+          background: #0B1E3C;
           padding: 48px;
           display: flex;
           align-items: center;
@@ -228,31 +244,34 @@ export default function Signup() {
         }
 
         .brand-icon {
-          width: 80px;
-          height: 80px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 20px;
+          width: 72px;
+          height: 72px;
+          background: #2DBE60;
+          border-radius: 16px;
           display: flex;
           align-items: center;
           justify-content: center;
           margin: 0 auto 24px;
+          color: white;
         }
 
         .branding-content h1 {
-          font-size: 2rem;
+          font-size: 1.75rem;
           font-weight: 700;
           margin-bottom: 8px;
+          color: white;
         }
 
         .branding-content > p {
-          opacity: 0.9;
-          margin-bottom: 32px;
+          color: #A5B4CF;
+          margin-bottom: 40px;
+          font-size: 0.9375rem;
         }
 
         .features {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 16px;
           text-align: left;
         }
 
@@ -260,18 +279,20 @@ export default function Signup() {
           display: flex;
           align-items: center;
           gap: 12px;
-          font-size: 0.95rem;
+          font-size: 0.9375rem;
+          color: #EAF2FF;
         }
 
-        .check {
-          width: 24px;
-          height: 24px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 50%;
+        .feature-icon {
+          width: 32px;
+          height: 32px;
+          background: rgba(45, 190, 96, 0.2);
+          border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 0.8rem;
+          color: #2DBE60;
+          flex-shrink: 0;
         }
 
         .auth-form-section {
@@ -286,15 +307,15 @@ export default function Signup() {
         }
 
         .icon-circle {
-          width: 64px;
-          height: 64px;
-          background: var(--bg-tertiary);
+          width: 56px;
+          height: 56px;
+          background: #E9F8EF;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           margin: 0 auto 16px;
-          color: var(--accent-primary);
+          color: #2DBE60;
         }
 
         .form-header h2 {
@@ -306,16 +327,18 @@ export default function Signup() {
 
         .form-header p {
           color: var(--text-secondary);
+          font-size: 0.9375rem;
         }
 
         .error-banner {
-          background: rgba(239, 68, 68, 0.1);
-          border: 1px solid var(--accent-danger);
-          color: var(--accent-danger);
+          background: #FEE2E2;
+          border: 1px solid #EF4444;
+          color: #EF4444;
           padding: 12px 16px;
           border-radius: 10px;
           margin-bottom: 24px;
-          font-size: 0.9rem;
+          font-size: 0.875rem;
+          font-weight: 500;
         }
 
         .auth-form {
@@ -334,11 +357,16 @@ export default function Signup() {
           text-align: center;
           margin-top: 24px;
           color: var(--text-secondary);
+          font-size: 0.9375rem;
         }
 
         .auth-footer a {
-          color: var(--accent-primary);
-          font-weight: 500;
+          color: #2DBE60;
+          font-weight: 600;
+        }
+
+        .auth-footer a:hover {
+          color: #25A854;
         }
 
         @media (max-width: 768px) {

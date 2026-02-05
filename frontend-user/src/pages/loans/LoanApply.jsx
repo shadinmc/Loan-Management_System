@@ -1,108 +1,78 @@
+// src/pages/loans/LoanApply.jsx
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
 import { LOAN_TYPES, LOAN_CONFIG } from '../../utils/constants';
 import Button from '../../components/Button';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
-// Lazy load form components for better performance
 const PersonalLoanForm = lazy(() => import('./forms/PersonalLoanForm'));
 const EducationLoanForm = lazy(() => import('./forms/EducationLoanForm'));
 const BusinessLoanForm = lazy(() => import('./forms/BusinessLoanForm'));
 const VehicleLoanForm = lazy(() => import('./forms/VehicleLoanForm'));
 
-/**
- * Loan Application Page
- * Routes to the appropriate loan form based on URL parameter
- */
 export default function LoanApply() {
   const { loanType } = useParams();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  // Normalize loan type from URL
   const normalizedType = loanType?.toUpperCase() || 'PERSONAL';
   const config = LOAN_CONFIG[normalizedType] || LOAN_CONFIG[LOAN_TYPES.PERSONAL];
-
-  // Validate loan type
   const isValidType = Object.values(LOAN_TYPES).includes(normalizedType);
 
   useEffect(() => {
-    // Scroll to top on mount
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [loanType]);
 
-  // Handle form submission
   const handleSubmit = async (formData) => {
     setIsSubmitting(true);
     setSubmitError(null);
-
     try {
-      // Simulate API call - replace with actual API
       await new Promise(resolve => setTimeout(resolve, 2000));
-
-      console.log('Loan Application Submitted:', {
-        loanType: normalizedType,
-        ...formData
+      navigate('/loan/confirmation', {
+        state: { loanType: normalizedType, applicationData: formData }
       });
-
-      setSubmitSuccess(true);
-
-      // Navigate to confirmation page after short delay
-      setTimeout(() => {
-        navigate('/loan/confirm', {
-          state: {
-            loanType: normalizedType,
-            applicationData: formData
-          }
-        });
-      }, 1500);
-
     } catch (error) {
-      console.error('Submission error:', error);
       setSubmitError('Failed to submit application. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Render appropriate form based on loan type
   const renderForm = () => {
-    const formProps = {
-      onSubmit: handleSubmit,
-      loading: isSubmitting,
-      config: config
+    const formProps = { onSubmit: handleSubmit, loading: isSubmitting, config };
+    const forms = {
+      [LOAN_TYPES.PERSONAL]: <PersonalLoanForm {...formProps} />,
+      [LOAN_TYPES.EDUCATION]: <EducationLoanForm {...formProps} />,
+      [LOAN_TYPES.BUSINESS]: <BusinessLoanForm {...formProps} />,
+      [LOAN_TYPES.VEHICLE]: <VehicleLoanForm {...formProps} />
     };
-
-    switch (normalizedType) {
-      case LOAN_TYPES.PERSONAL:
-        return <PersonalLoanForm {...formProps} />;
-      case LOAN_TYPES.EDUCATION:
-        return <EducationLoanForm {...formProps} />;
-      case LOAN_TYPES.BUSINESS:
-        return <BusinessLoanForm {...formProps} />;
-      case LOAN_TYPES.VEHICLE:
-        return <VehicleLoanForm {...formProps} />;
-      default:
-        return <PersonalLoanForm {...formProps} />;
-    }
+    return forms[normalizedType] || forms[LOAN_TYPES.PERSONAL];
   };
 
-  // Show error for invalid loan type
   if (!isValidType && loanType) {
     return (
       <div className="loan-apply-page">
         <div className="loan-apply-container">
-          <div className="error-state">
-            <AlertCircle size={48} />
+          <motion.div
+            className="error-state"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <motion.div
+              className="error-icon"
+              animate={{ rotate: [0, -10, 10, 0] }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <AlertCircle size={48} />
+            </motion.div>
             <h2>Invalid Loan Type</h2>
-            <p>The loan type "{loanType}" is not valid. Please select a valid loan type.</p>
-            <Button onClick={() => navigate('/')}>
-              Browse Loan Types
-            </Button>
-          </div>
+            <p>The loan type "{loanType}" is not available.</p>
+            <Button onClick={() => navigate('/')}>View Available Loans</Button>
+          </motion.div>
         </div>
         <style>{styles}</style>
       </div>
@@ -111,80 +81,95 @@ export default function LoanApply() {
 
   return (
     <div className="loan-apply-page">
-      {/* Skip to main content for accessibility */}
-      <a href="#loan-form" className="skip-to-content">
-        Skip to form
-      </a>
+      <div className="page-background">
+        <div className="bg-gradient-1" />
+        <div className="bg-gradient-2" />
+        <div className="bg-pattern" />
+      </div>
 
       <div className="loan-apply-container">
-        {/* Header */}
-        <header className="loan-apply-header animate-fade-in-down">
-          <button
+        <motion.header
+          className="loan-apply-header"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.button
             className="back-button"
             onClick={() => navigate('/')}
-            aria-label="Go back to loan types"
+            whileHover={{ x: -4 }}
+            whileTap={{ scale: 0.95 }}
           >
             <ArrowLeft size={20} />
             <span>Back to Loans</span>
-          </button>
+          </motion.button>
 
-          <div
-            className="loan-type-badge"
-            style={{ background: config.gradient }}
+          <div className="header-content">
+            <motion.div
+              className="header-badge"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Sparkles size={14} />
+              <span>Quick Application</span>
+            </motion.div>
+            <h1>Apply for {config?.name || 'Loan'}</h1>
+            <p>Complete the form below to submit your application</p>
+          </div>
+
+          <motion.div
+            className="loan-highlights"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
           >
-            <h1>{config.name}</h1>
-            <p>{config.description}</p>
-          </div>
-
-          <div className="loan-highlights">
             <div className="highlight-item">
+              <span className="highlight-value">{config?.interestRate || '10.5'}%</span>
               <span className="highlight-label">Interest Rate</span>
-              <span className="highlight-value">{config.interestRate}</span>
             </div>
+            <div className="highlight-divider" />
             <div className="highlight-item">
-              <span className="highlight-label">Amount Range</span>
-              <span className="highlight-value">
-                ₹{(config.minAmount / 100000).toFixed(1)}L - ₹{(config.maxAmount / 100000).toFixed(1)}L
-              </span>
+              <span className="highlight-value">₹{((config?.maxAmount || 5000000) / 100000).toFixed(0)}L</span>
+              <span className="highlight-label">Max Amount</span>
             </div>
+            <div className="highlight-divider" />
             <div className="highlight-item">
-              <span className="highlight-label">Tenure</span>
-              <span className="highlight-value">
-                {config.minTenure} - {config.maxTenure} months
-              </span>
+              <span className="highlight-value">{config?.maxTenure || 60}mo</span>
+              <span className="highlight-label">Max Tenure</span>
             </div>
-          </div>
-        </header>
+          </motion.div>
+        </motion.header>
 
-        {/* Error Banner */}
-        {submitError && (
-          <div className="error-banner animate-fade-in" role="alert">
-            <AlertCircle size={20} />
-            <span>{submitError}</span>
-            <button onClick={() => setSubmitError(null)} aria-label="Dismiss error">
-              ×
-            </button>
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {submitError && (
+            <motion.div
+              className="error-banner"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <AlertCircle size={18} />
+              <span>{submitError}</span>
+              <button onClick={() => setSubmitError(null)}>×</button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Success Message */}
-        {submitSuccess && (
-          <div className="success-banner animate-scale-in" role="status">
-            <div className="success-icon">✓</div>
-            <span>Application submitted successfully! Redirecting...</span>
-          </div>
-        )}
-
-        {/* Form Container */}
-        <main id="loan-form" className="loan-form-wrapper animate-fade-in-up">
+        <motion.div
+          className="form-wrapper"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           <Suspense fallback={
             <div className="form-loading">
-              <LoadingSpinner size="large" message="Loading form..." />
+              <LoadingSpinner size="large" />
+              <p>Loading application form...</p>
             </div>
           }>
-            {renderForm()}
-          </Suspense>
-        </main>
+            {renderForm()}</Suspense>
+        </motion.div>
       </div>
 
       <style>{styles}</style>
@@ -194,154 +179,192 @@ export default function LoanApply() {
 
 const styles = `
   .loan-apply-page {
-    min-height: 100vh;
+    min-height: calc(100vh - 70px);
     background: var(--bg-secondary);
-    padding: var(--space-6) 0 var(--space-16);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page-background {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .bg-gradient-1 {
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 50%;
+    height: 60%;
+    background: radial-gradient(ellipse, var(--hero-gradient-start, rgba(45, 190, 96, 0.08)) 0%, transparent 70%);
+  }
+
+  .bg-gradient-2 {
+    position: absolute;
+    bottom: -10%;
+    left: -5%;
+    width: 40%;
+    height: 50%;
+    background: radial-gradient(ellipse, var(--hero-accent-gradient, rgba(11, 30, 60, 0.05)) 0%, transparent 70%);
+  }
+
+  .bg-pattern {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.3;
   }
 
   .loan-apply-container {
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto;
-    padding: 0 var(--space-4);
+    padding: 32px 24px 64px;
+    position: relative;z-index: 1;
   }
 
   .loan-apply-header {
-    margin-bottom: var(--space-8);
+    margin-bottom: 32px;
   }
 
   .back-button {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-4);
-    margin-bottom: var(--space-6);
-    font-size: var(--text-sm);
-    font-weight: var(--font-medium);
+    gap: 8px;
+    padding: 10px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    font-weight: 500;
     color: var(--text-secondary);
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    border-radius: 12px;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all 0.2s ease;
   }
 
   .back-button:hover {
     color: var(--accent-primary);
     border-color: var(--accent-primary);
-    background: var(--color-primary-50);
+    background: var(--bg-primary);
   }
 
-  [data-theme="dark"] .back-button:hover {
-    background: rgba(59, 130, 246, 0.1);
+  .header-content {
+    text-align: center;
+    margin-bottom: 28px;
   }
 
-  .loan-type-badge {
-    padding: var(--space-8);
-    border-radius: var(--radius-2xl);
-    color: white;
-    margin-bottom: var(--space-6);
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(45, 190, 96, 0.1);
+    color: #2DBE60;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 100px;
+    margin-bottom: 16px;
   }
 
-  .loan-type-badge h1 {
-    font-size: var(--text-2xl);
-    font-weight: var(--font-bold);
-    color: white;
-    margin-bottom: var(--space-2);
+  .header-content h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
   }
 
-  .loan-type-badge p {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: var(--text-base);
+  .header-content p {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
   }
 
   .loan-highlights {
     display: flex;
-    gap: var(--space-6);
-    flex-wrap: wrap;
-    padding: var(--space-5);
+    justify-content: center;
+    align-items: center;
+    gap: 32px;
+    padding: 20px 40px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
+    border-radius: 16px;
+    max-width: 500px;
+    margin: 0 auto;
   }
 
   .highlight-item {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
-  }
-
-  .highlight-label {
-    font-size: var(--text-xs);
-    font-weight: var(--font-medium);
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    align-items: center;
+    gap: 4px;
   }
 
   .highlight-value {
-    font-size: var(--text-lg);
-    font-weight: var(--font-semibold);
-    color: var(--accent-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2DBE60;
+  }
+
+  .highlight-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .highlight-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border-color);
   }
 
   .error-banner {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-4);
-    margin-bottom: var(--space-6);
-    background: var(--accent-danger-light);
-    border: 1px solid var(--accent-danger);
-    border-radius: var(--radius-lg);
-    color: var(--accent-danger);
+    gap: 12px;
+    padding: 14px 20px;
+    margin-bottom: 24px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    color: #EF4444;
+    font-size: 0.9rem;
+    overflow: hidden;
   }
 
   .error-banner button {
     margin-left: auto;
-    font-size: var(--text-xl);
-    color: var(--accent-danger);
-    line-height: 1;
+    font-size: 1.25rem;
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
+    background: none;
+    border: none;
   }
 
-  .success-banner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-3);
-    padding: var(--space-5);
-    margin-bottom: var(--space-6);
-    background: var(--accent-success-light);
-    border: 1px solid var(--accent-success);
-    border-radius: var(--radius-lg);
-    color: var(--accent-success);
-    font-weight: var(--font-medium);
+  .error-banner button:hover {
+    opacity: 1;
   }
 
-  .success-icon {
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--accent-success);
-    color: white;
-    border-radius: var(--radius-full);
-    font-weight: var(--font-bold);
-  }
-
-  .loan-form-wrapper {
+  .form-wrapper {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-2xl);
-    padding: var(--space-8);
-    box-shadow: var(--shadow-lg);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   }
 
   .form-loading {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 400px;
+    gap: 16px;
+    padding: 80px 24px;
+    color: var(--text-secondary);
   }
 
   .error-state {
@@ -349,38 +372,51 @@ const styles = `
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--space-4);
-    padding: var(--space-16);
+    gap: 16px;
+    padding: 80px 24px;
     text-align: center;
-    color: var(--text-muted);
+    background: var(--card-bg);
+    border-radius: 24px;
   }
 
+  .error-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    border-radius: 50%;}
+
   .error-state h2 {
+    font-size: 1.5rem;
     color: var(--text-primary);
   }
 
-  @media (max-width: 768px) {
-    .loan-apply-page {
-      padding: var(--space-4) 0 var(--space-12);
+  .error-state p {
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  @media (max-width: 640px) {
+    .loan-apply-container {
+      padding: 20px 16px 48px;
     }
 
-    .loan-form-wrapper {
-      padding: var(--space-5);
-      border-radius: var(--radius-xl);
+    .header-content h1 {
+      font-size: 1.75rem;
     }
 
     .loan-highlights {
       flex-direction: column;
-      gap: var(--space-4);
+      gap: 16px;
+      padding: 20px;
     }
 
-    .loan-type-badge {
-      padding: var(--space-6);
-    }
-
-    .loan-type-badge h1 {
-      font-size: var(--text-xl);
+    .highlight-divider {
+      width: 60px;
+      height: 1px;
     }
   }
 `;
-
