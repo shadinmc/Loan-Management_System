@@ -16,6 +16,8 @@ import { logout } from "../../utils/auth";
 import { login } from "../../utils/auth";
 
 import "./AdminDashboard.css";
+import { NavLink } from "react-router-dom";
+
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -35,12 +37,22 @@ const AdminDashboard = () => {
         </div>
 
         <nav>
-          <a className="active"><FiHome /> Dashboard</a>
-          <a><FiFileText /> Loan Applications</a>
-          <a><FiDollarSign /> Disbursements</a>
-          <a><FiRepeat /> Repayments</a>
-          <a><FiCheckCircle /> Loan Closure</a>
-        </nav>
+                  <NavLink to="/admin/dashboard" className="nav-link">
+                    <FiHome /> Dashboard
+                  </NavLink>
+                  <NavLink to="#" className="nav-link">
+                    <FiFileText /> Loan Applications
+                  </NavLink>
+                  <NavLink to="#" className="nav-link">
+                    <FiDollarSign /> Disbursements
+                  </NavLink>
+                  <NavLink to="#" className="nav-link">
+                    <FiRepeat /> Repayments
+                  </NavLink>
+                  <NavLink to="#" className="nav-link">
+                    <FiCheckCircle /> Loan Closure
+                  </NavLink>
+                </nav>
       </aside>
 
       {/* RIGHT SIDE */}

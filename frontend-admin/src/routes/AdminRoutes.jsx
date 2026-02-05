@@ -5,6 +5,10 @@ import AdminDashboard from "../pages/dashboard/AdminDashboard";
 // import LoanReview from "../pages/loans/LoanReview";
 import RegionalDashboard from "../pages/dashboard/RegionalDashboard";
 import Login from "../pages/auth/AdminLogin";
+import AuthGuard from "../utils/AuthGuard";
+
+
+
 
 
 
@@ -26,8 +30,16 @@ const AdminRoutes = () => {
           <Route path="/login" element={<AdminLogin />} />
 
           {/* DASHBOARDS */}
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/regional/dashboard" element={<RegionalDashboard />} />
+          <Route path="/admin/dashboard" element={
+               <AuthGuard allowedRoles={["BRANCH_MANAGER"]}>
+              <AdminDashboard />
+              </AuthGuard>
+              } />
+          <Route path="/regional/dashboard" element={
+              <AuthGuard allowedRoles={["REGIONAL_MANAGER"]}>
+              <RegionalDashboard />
+              </AuthGuard>
+              } />
 
           {/* DEFAULT */}
           <Route path="*" element={<AdminLogin />} />
