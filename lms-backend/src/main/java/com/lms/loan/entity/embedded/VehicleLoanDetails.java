@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -15,7 +17,7 @@ public class VehicleLoanDetails {
     private String vehicleBrand;
     private String vehicleModel;
 
-    private Double downPaymentAmount;
+    private BigDecimal downPaymentAmount;
     private String dealerName;
 
     private String proofOfIdentity;

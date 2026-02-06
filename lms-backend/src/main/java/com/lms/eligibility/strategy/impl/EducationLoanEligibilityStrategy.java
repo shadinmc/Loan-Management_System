@@ -1,4 +1,4 @@
-package com.lms.eligibility.strategy.impl;
+/*package com.lms.eligibility.strategy.impl;
 
 import com.lms.eligibility.context.EligibilityContext;
 import com.lms.eligibility.dto.EligibilityResult;
@@ -41,7 +41,7 @@ public class EducationLoanEligibilityStrategy
                 "Eligible for education loan"
         );
     }
-}
+}*/
 
 /*
 Mandatory checks

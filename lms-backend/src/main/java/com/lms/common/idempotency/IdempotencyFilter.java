@@ -4,26 +4,19 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
 @Component
-@RequiredArgsConstructor
-@Order(2) // ✅ AFTER JWT filter
+@Order(2) // after JWT filter
 public class IdempotencyFilter extends OncePerRequestFilter {
-
-    private final IdempotencyKeyService service;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-
-        return path.startsWith("/api/auth/")
+        return request.getServletPath().startsWith("/api/auth/")
                 || "GET".equalsIgnoreCase(request.getMethod());
     }
 
@@ -34,24 +27,7 @@ public class IdempotencyFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String key = request.getHeader("X-Idempotency-Key");
-
-        if (key == null || key.isBlank()) {
-            response.sendError(
-                    HttpStatus.BAD_REQUEST.value(),
-                    "Missing X-Idempotency-Key header"
-            );
-            return;
-        }
-
-        if (service.existsByKey(key)) {
-            response.sendError(
-                    HttpStatus.CONFLICT.value(),
-                    "Duplicate request (Idempotency-Key already used)"
-            );
-            return;
-        }
-
+        // ✅ Do NOT validate idempotency here
         filterChain.doFilter(request, response);
     }
 }
