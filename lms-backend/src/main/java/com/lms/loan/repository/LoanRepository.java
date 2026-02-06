@@ -13,6 +13,7 @@ public interface LoanRepository extends MongoRepository<Loan, String> {
     List<Loan> findAll();
 
     Optional<Loan>  findByLoanId(String loanId);
+    List<Loan> findByUserId(String userId);
 
 //    <T> ScopedValue<T> findByLoanId(String loanId);
 }

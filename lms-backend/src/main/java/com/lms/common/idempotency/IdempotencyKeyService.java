@@ -1,3 +1,4 @@
+/*
 package com.lms.common.idempotency;
 
 import lombok.RequiredArgsConstructor;
@@ -30,5 +31,44 @@ public class IdempotencyKeyService {
         entity.setCreatedAt(LocalDateTime.now());
 
         repository.save(entity);
+    }
+}
+*/
+
+
+package com.lms.common.idempotency;
+
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Service
+public class IdempotencyKeyService {
+
+    private final IdempotencyKeyRepository idempotencyKeyRepository;
+
+    public IdempotencyKeyService(IdempotencyKeyRepository idempotencyKeyRepository) {
+        this.idempotencyKeyRepository = idempotencyKeyRepository;
+    }
+
+    public Optional<IdempotencyRecord> findByKey(String key) {
+        return idempotencyKeyRepository.findByIdempotencyKey(key);
+    }
+
+    public IdempotencyRecord saveKey(String key, String resourceId, String resourceType) {
+        IdempotencyRecord record = new IdempotencyRecord();
+        record.setIdempotencyKey(key);
+        record.setResourceId(resourceId);
+        record.setResourceType(resourceType);
+        record.setCreatedAt(LocalDateTime.now());
+        record.setExpiresAt(LocalDateTime.now().plusHours(24)); // 24-hour expiry
+        return idempotencyKeyRepository.save(record);
+    }
+
+
+
+    public boolean existsByKey(String key) {
+        return idempotencyKeyRepository.existsByIdempotencyKey(key);
     }
 }

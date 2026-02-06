@@ -32,9 +32,8 @@ public class JwtTokenProvider {
                 .collect(Collectors.joining(","));
 
         return Jwts.builder()
-                .setSubject(user.getId())
-                .claim("username", user.getUsername())
-                .claim("email", user.getEmail())
+                .setSubject(user.getEmail()) // ✅ email is principal
+                .claim("userId", user.getId())
                 .claim("roles", roles)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
@@ -42,21 +41,17 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String getUserIdFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
+    public Claims extractClaims(String token) {
+        return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-        return claims.getSubject();
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token);
+            extractClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;

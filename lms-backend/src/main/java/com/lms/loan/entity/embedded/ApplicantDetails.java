@@ -1,3 +1,4 @@
+/*
 package com.lms.loan.entity.embedded;
 
 import lombok.Data;
@@ -21,3 +22,4 @@ public class ApplicantDetails {
     private BigDecimal existingEmi;
     private Integer creditScore;
 }
+*/
