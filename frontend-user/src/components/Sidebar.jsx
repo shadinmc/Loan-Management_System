@@ -1,10 +1,12 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, User, LogOut, Home, LayoutDashboard,
   FileText, Clock, Settings, HelpCircle, Sun, Moon
 } from 'lucide-react';
+import LottieAnimation from './LottieAnimation';
 
 export default function Sidebar({ isOpen, onClose }) {
   const { user, isLoggedIn, logout } = useAuth();
@@ -25,202 +27,265 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const isActive = (path) => location.pathname === path;
 
-  return (
-    <><div
-        className={`sidebar-overlay ${isOpen ? 'active' : ''}`}
-        onClick={onClose}
-        aria-hidden="true"
-      />
+  const sidebarVariants = {
+    closed: { x: '100%', transition: { type: 'spring', stiffness: 300, damping: 30 } },
+    open: { x: 0, transition: { type: 'spring', stiffness: 300, damping: 30 } }
+  };
 
-      <aside
-        className={`sidebar ${isOpen ? 'open' : ''}`}
+  const itemVariants = {
+    closed: { opacity: 0, x: 20 },
+    open: (i) => ({
+      opacity: 1,
+      x: 0,
+      transition: { delay: i * 0.05, type: 'spring', stiffness: 300, damping: 25 }
+    })
+  };
+
+  const navItems = isLoggedIn
+    ? [
+        { icon: Home, label: 'Home', path: '/', index: 0 },
+        { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', index: 1 },
+        { icon: FileText, label: 'Apply for Loan', path: '/loan/apply', index: 2 },
+        { icon: Clock, label: 'Loan Status', path: '/loan/status', index: 3 },
+        { type: 'divider', index: 4 },
+        { icon: Settings, label: 'Settings', path: '/settings', index: 5 },
+        { icon: HelpCircle, label: 'Help & Support', path: '/help', index: 6 },
+        { type: 'divider', index: 7 },
+        { icon: LogOut, label: 'Logout', action: handleLogout, isLogout: true, index: 8 }
+      ]
+    : [
+        { icon: Home, label: 'Home', path: '/', index: 0 },
+        { icon: User, label: 'Login', path: '/login', index: 1 },
+        { icon: FileText, label: 'Sign Up', path: '/signup', index: 2 }
+      ];
+
+  return (
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="sidebar-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.aside
+        className="sidebar"
+        variants={sidebarVariants}
+        initial="closed"
+        animate={isOpen ? 'open' : 'closed'}
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"
       >
         <div className="sidebar-header">
-          <h3>Menu</h3>
-          <button className="close-btn" onClick={onClose} aria-label="Close menu">
+          <motion.h3
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            Menu
+          </motion.h3>
+          <motion.button
+            className="close-btn"
+            onClick={onClose}
+            aria-label="Close menu"
+            whileHover={{ scale: 1.05, borderColor: '#EF4444' }}
+            whileTap={{ scale: 0.95 }}
+          >
             <X size={24} />
-          </button>
+          </motion.button>
         </div>
 
         {isLoggedIn && (
-          <div className="user-profile">
-            <div className="avatar" aria-hidden="true">
+          <motion.div
+            className="user-profile"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <motion.div
+              className="avatar"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+            >
               {user?.username?.charAt(0).toUpperCase() || 'U'}
-            </div>
+            </motion.div>
             <div className="user-info">
               <h4>{user?.username || 'User'}</h4>
               <p>{user?.email || 'user@example.com'}</p>
             </div>
-          </div>
+            <div className="user-lottie">
+              <LottieAnimation
+                src="https://lottie.host/embed/verified-badge.json"
+                style={{ width: 24, height: 24 }}
+              />
+            </div>
+          </motion.div>
         )}
 
-        {/* Theme Toggle */}
-        <div className="theme-toggle-section">
+        {/* Theme Toggle with Lottie */}
+        <motion.div
+          className="theme-toggle-section"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
           <span className="theme-label">Appearance</span>
-          <button
+          <motion.button
             className="theme-toggle-btn"
             onClick={toggleTheme}
             aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            whileTap={{ scale: 0.98 }}
           >
-            <span className={`toggle-option ${theme === 'light' ? 'active' : ''}`}>
-              <Sun size={16} /> Light
-            </span>
-            <span className={`toggle-option ${theme === 'dark' ? 'active' : ''}`}>
-              <Moon size={16} /> Dark
-            </span>
-          </button>
-        </div>
+            <motion.span
+              className={`toggle-option ${theme === 'light' ? 'active' : ''}`}
+              whileHover={{ scale: theme !== 'light' ? 1.02 : 1 }}
+            >
+              {theme === 'light' ? (
+                <LottieAnimation
+                  src="https://lottie.host/embed/sun-animation.json"
+                  style={{ width: 18, height: 18 }}
+                />
+              ) : (
+                <Sun size={16} />
+              )}
+              Light
+            </motion.span>
+            <motion.span
+              className={`toggle-option ${theme === 'dark' ? 'active' : ''}`}
+              whileHover={{ scale: theme !== 'dark' ? 1.02 : 1 }}
+            >
+              {theme === 'dark' ? (
+                <LottieAnimation
+                  src="https://lottie.host/embed/moon-animation.json"
+                  style={{ width: 18, height: 18 }}
+                />
+              ) : (
+                <Moon size={16} />
+              )}
+              Dark
+            </motion.span>
+          </motion.button>
+        </motion.div>
 
         <nav className="sidebar-nav" aria-label="Sidebar navigation">
-          <button
-            className={`nav-item ${isActive('/') ? 'active' : ''}`}
-            onClick={() => handleNavigation('/')}
-          >
-            <Home size={20} />
-            <span>Home</span>
-          </button>
+          <AnimatePresence>
+            {isOpen && navItems.map((item) => {
+              if (item.type === 'divider') {
+                return (
+                  <motion.div
+                    key={`divider-${item.index}`}
+                    className="nav-divider"
+                    custom={item.index}
+                    variants={itemVariants}
+                    initial="closed"
+                    animate="open"
+                  />
+                );
+              }
 
-          {isLoggedIn ? (
-            <>
-              <button
-                className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`}
-                onClick={() => handleNavigation('/dashboard')}
-              >
-                <LayoutDashboard size={20} />
-                <span>Dashboard</span>
-              </button>
-
-              <button
-                className={`nav-item ${location.pathname.includes('/loan/apply') ? 'active' : ''}`}
-                onClick={() => handleNavigation('/loan/apply')}
-              >
-                <FileText size={20} />
-                <span>Apply for Loan</span>
-              </button>
-
-              <button
-                className={`nav-item ${isActive('/loan/status') ? 'active' : ''}`}
-                onClick={() => handleNavigation('/loan/status')}
-              >
-                <Clock size={20} />
-                <span>Loan Status</span>
-              </button>
-
-              <div className="nav-divider" />
-
-              <button className="nav-item" onClick={() => handleNavigation('/settings')}>
-                <Settings size={20} />
-                <span>Settings</span>
-              </button>
-
-              <button className="nav-item" onClick={() => handleNavigation('/help')}>
-                <HelpCircle size={20} />
-                <span>Help & Support</span>
-              </button>
-
-              <div className="nav-divider" />
-
-              <button className="nav-item logout" onClick={handleLogout}>
-                <LogOut size={20} />
-                <span>Logout</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                className={`nav-item ${isActive('/login') ? 'active' : ''}`}
-                onClick={() => handleNavigation('/login')}
-              >
-                <User size={20} />
-                <span>Login</span>
-              </button>
-
-              <button
-                className={`nav-item ${isActive('/signup') ? 'active' : ''}`}
-                onClick={() => handleNavigation('/signup')}
-              >
-                <FileText size={20} />
-                <span>Sign Up</span>
-              </button>
-            </>
-          )}
+              const Icon = item.icon;
+              return (
+                <motion.button
+                  key={item.label}
+                  className={`nav-item ${item.path && isActive(item.path) ? 'active' : ''} ${item.isLogout ? 'logout' : ''}`}
+                  onClick={() => item.action ? item.action() : handleNavigation(item.path)}
+                  custom={item.index}
+                  variants={itemVariants}
+                  initial="closed"
+                  animate="open"
+                  whileHover={{ x: 4, backgroundColor: item.isLogout ? 'rgba(239, 68, 68, 0.1)' : 'var(--bg-secondary)' }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Icon size={20} />
+                  <span>{item.label}</span>
+                  {item.path && isActive(item.path) && (
+                    <motion.div
+                      className="active-indicator"
+                      layoutId="activeNav"
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                </motion.button>
+              );
+            })}
+          </AnimatePresence>
         </nav>
 
-        <div className="sidebar-footer">
+        <motion.div
+          className="sidebar-footer"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="footer-lottie">
+            <LottieAnimation
+              src="https://lottie.host/embed/secure-badge.json"
+              style={{ width: 32, height: 32 }}
+            />
+          </div>
           <p>LoanWise v1.0</p>
           <p className="copyright">© 2024 All rights reserved</p>
-        </div>
-      </aside>
+        </motion.div>
+      </motion.aside>
 
       <style>{`
         .sidebar-overlay {
           position: fixed;
           inset: 0;
-          background: rgba(11, 30, 60, 0.6);
-          opacity: 0;
-          visibility: hidden;
-          transition: all 0.25s ease;
+          background: rgba(11, 30, 60, 0.7);
+          backdrop-filter: blur(4px);
           z-index: 400;
-        }
-
-        .sidebar-overlay.active {
-          opacity: 1;
-          visibility: visible;
         }
 
         .sidebar {
           position: fixed;
           top: 0;
           right: 0;
-          width: 320px;
+          width: 340px;
           max-width: 90vw;
           height: 100vh;
           background: var(--card-bg);
-          box-shadow: -10px 0 40px rgba(16, 42, 77, 0.15);
-          transform: translateX(100%);
-          transition: transform 0.3s ease;
+          box-shadow: -10px 0 50px rgba(16, 42, 77, 0.2);
           z-index: 500;
           display: flex;
           flex-direction: column;
-        }
-
-        .sidebar.open {
-          transform: translateX(0);
+          overflow: hidden;
         }
 
         .sidebar-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 20px 24px;
+          padding: 24px;
           border-bottom: 1px solid var(--border-color);
         }
 
         .sidebar-header h3 {
-          font-size: 1.25rem;
+          font-size: 1.35rem;
           font-weight: 600;
           color: var(--text-primary);
         }
 
         .close-btn {
-          width: 40px;
-          height: 40px;
+          width: 44px;
+          height: 44px;
           border: 1px solid var(--border-color);
           background: var(--bg-primary);
-          border-radius: 10px;
+          border-radius: 12px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
           color: var(--text-primary);
-          transition: all 0.15s ease;
+          transition: all 0.2s ease;
         }
 
         .close-btn:hover {
-          border-color: #EF4444;
           color: #EF4444;
         }
 
@@ -229,45 +294,51 @@ export default function Sidebar({ isOpen, onClose }) {
           align-items: center;
           gap: 16px;
           padding: 20px;
-          background: #E9F8EF;
-          margin: 16px;
-          border-radius: 12px;
-        }
-
-        [data-theme="dark"] .user-profile {
-          background: rgba(45, 190, 96, 0.1);
+          background: linear-gradient(135deg, rgba(45, 190, 96, 0.1) 0%, rgba(45, 190, 96, 0.05) 100%);
+          margin: 20px;
+          border-radius: 16px;
+          border: 1px solid rgba(45, 190, 96, 0.15);
+          position: relative;
         }
 
         .avatar {
-          width: 48px;
-          height: 48px;
-          background: #2DBE60;
+          width: 52px;
+          height: 52px;
+          background: linear-gradient(135deg, #2DBE60 0%, #22a652 100%);
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
-          font-size: 1.125rem;
+          font-size: 1.25rem;
           font-weight: 700;
+          box-shadow: 0 4px 12px rgba(45, 190, 96, 0.3);
         }
 
         .user-info h4 {
-          font-size: 1rem;
+          font-size: 1.05rem;
           font-weight: 600;
           color: var(--text-primary);
           margin-bottom: 4px;
         }
 
         .user-info p {
-          font-size: 0.8125rem;
+          font-size: 0.85rem;
           color: var(--text-muted);
         }
 
+        .user-lottie {
+          position: absolute;
+          top: 12px;
+          right: 12px;
+        }
+
         .theme-toggle-section {
-          padding: 16px;
-          margin: 0 16px 8px;
+          padding: 20px;
+          margin: 0 20px 12px;
           background: var(--bg-secondary);
-          border-radius: 12px;
+          border-radius: 16px;
+          border: 1px solid var(--border-color);
         }
 
         .theme-label {
@@ -277,103 +348,113 @@ export default function Sidebar({ isOpen, onClose }) {
           color: var(--text-muted);
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          margin-bottom: 12px;
+          margin-bottom: 14px;
         }
 
         .theme-toggle-btn {
           width: 100%;
           display: flex;
-          padding: 4px;
+          padding: 5px;
           background: var(--bg-primary);
           border: 1px solid var(--border-color);
-          border-radius: 10px;
-          cursor: pointer;
-        }
+          border-radius: 12px;
+          cursor: pointer;}
 
         .toggle-option {
           flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
-          padding: 10px;
-          font-size: 0.875rem;
+          gap: 8px;
+          padding: 12px;
+          font-size: 0.9rem;
           font-weight: 500;
           color: var(--text-secondary);
-          border-radius: 8px;
-          transition: all 0.2s ease;
+          border-radius: 10px;
+          transition: all 0.25s ease;
         }
 
         .toggle-option.active {
-          background: #2DBE60;
+          background: linear-gradient(135deg, #2DBE60 0%, #22a652 100%);
           color: white;
-          box-shadow: 0 2px 8px rgba(45, 190, 96, 0.3);
+          box-shadow: 0 4px 12px rgba(45, 190, 96, 0.35);
         }
 
         .sidebar-nav {
           flex: 1;
-          padding: 8px 16px;
+          padding: 8px 20px;
           overflow-y: auto;
         }
 
         .nav-item {
+          position: relative;
           width: 100%;
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 12px 16px;
+          gap: 14px;
+          padding: 14px 18px;
           border: none;
           background: transparent;
           color: var(--text-secondary);
-          font-size: 0.9375rem;
+          font-size: 0.975rem;
           font-weight: 500;
-          border-radius: 10px;
+          border-radius: 12px;
           cursor: pointer;
-          transition: all 0.15s ease;
           text-align: left;
+          transition: color 0.2s ease;
+          margin-bottom: 4px;
         }
 
         .nav-item:hover {
-          background: var(--bg-secondary);
           color: var(--text-primary);
         }
 
         .nav-item.active {
-          background: #E9F8EF;
+          background: rgba(45, 190, 96, 0.1);
           color: #2DBE60;
         }
 
-        [data-theme="dark"] .nav-item.active {
-          background: rgba(45, 190, 96, 0.15);
+        .active-indicator {
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 4px;
+          height: 24px;
+          background: #2DBE60;
+          border-radius: 0 4px 4px 0;
         }
 
         .nav-item.logout {
           color: #EF4444;
         }
 
-        .nav-item.logout:hover {
-          background: #FEE2E2;
-        }
-
-        [data-theme="dark"] .nav-item.logout:hover {
-          background: rgba(239, 68, 68, 0.15);
-        }
-
         .nav-divider {
           height: 1px;
           background: var(--border-color);
-          margin: 12px 0;
+          margin: 16px 0;
         }
 
         .sidebar-footer {
-          padding: 16px 24px;
+          padding: 20px 24px;
           border-top: 1px solid var(--border-color);
           text-align: center;
         }
 
+        .footer-lottie {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 12px;
+        }
+
         .sidebar-footer p {
-          font-size: 0.75rem;
+          font-size: 0.8rem;
           color: var(--text-muted);
+        }
+
+        .sidebar-footer .copyright {
+          margin-top: 4px;
+          font-size: 0.7rem;
         }
 
         @media (max-width: 480px) {

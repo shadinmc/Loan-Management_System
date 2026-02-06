@@ -280,6 +280,18 @@ textarea::placeholder {
 @media (min-width: 1024px) {
   .container { padding: 0 var(--space-4); }
 }
+.lottie-loader {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(45, 190, 96, 0.2);
+  border-top-color: #2DBE60;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
 .section {
   padding: var(--space-5) 0;
