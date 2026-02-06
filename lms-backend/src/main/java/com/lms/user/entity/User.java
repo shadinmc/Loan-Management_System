@@ -32,6 +32,8 @@ public class User {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private Role role;
+
     public enum Role {
         USER,
         BRANCH_MANAGER,
