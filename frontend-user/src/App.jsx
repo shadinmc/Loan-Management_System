@@ -1,35 +1,63 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Login from './pages/auth/Login';
+import Signup from './pages/auth/Signup';
+import Dashboard from './pages/dashboard/Dashboard';
+import LoanTypes from './pages/loans/LoanTypes';
+import LoanApply from './pages/loans/LoanApply';
+import LoanConfirmation from './pages/loans/LoanConfirmation';
+import LoanDecision from './pages/loans/LoanDecision';
+import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+import ProtectedRoute from './components/ProtectedRoute';
+import { useState } from 'react';
 
-function App() {
-  const [count, setCount] = useState(0)
+/**
+ * Main Application Component
+ * Handles routing and global layout structure
+ */
+export default function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const closeSidebar = () => setSidebarOpen(false);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <BrowserRouter>
+      <div className="app-container">
+        <Navbar onMenuClick={toggleSidebar} />
+        <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
-export default App
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<LoanTypes />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/loan/apply" element={<LoanApply />} />
+              <Route path="/loan/apply/:loanType" element={<LoanApply />} />
+              <Route path="/loan/confirm" element={<LoanConfirmation />} />
+              <Route path="/loan/decision" element={<LoanDecision />} />
+              <Route path="/loan/status" element={<LoanDecision />} />
+            </Route>
+          </Routes>
+        </main>
+
+        <style>{`
+          .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+          }
+
+          .main-content {
+            flex: 1;
+            padding-top: 70px;
+            min-height: calc(100vh - 70px);
+          }
+        `}</style>
+      </div>
+    </BrowserRouter>
+  );
+}

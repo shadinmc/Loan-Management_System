@@ -1,0 +1,1056 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ArrowRight, Sparkles, Shield, Clock, CheckCircle,
+  TrendingUp, Landmark, Calculator, Home, Car, GraduationCap, Briefcase
+} from 'lucide-react';
+import Button from './Button';
+import Carousel from './Carousel';
+import EMICalculator from './EMICalculator';
+import LottieAnimation from './LottieAnimation';
+
+/**
+ * Enhanced Hero Section with Lottie Animations
+ */
+export default function HeroSection() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [currentStat, setCurrentStat] = useState(0);
+  const [hoveredLoan, setHoveredLoan] = useState(null);
+
+  const stats = [
+    { value: '₹500Cr+', label: 'Loans Disbursed', icon: 'growth' },
+    { value: '50,000+', label: 'Happy Customers', icon: 'check' },
+    { value: '4.8★', label: 'Customer Rating', icon: 'shield' },
+    { value: '24hrs', label: 'Quick Approval', icon: 'clock' }
+  ];
+
+  const highlights = [
+    { icon: Sparkles, text: 'Instant Eligibility Check', animation: 'sparkle' },
+    { icon: Shield, text: '100% Secure Process', animation: 'shield' },
+    { icon: Clock, text: 'Quick Disbursement', animation: 'clock' },
+    { icon: CheckCircle, text: 'Minimal Documentation', animation: 'check' }
+  ];
+
+  const loanTypes = [
+    {
+      id: 'home',
+      icon: Home,
+      title: 'Home Loan',
+      description: 'Make your dream home a reality',
+      rate: '8.5%',
+      amount: 'Up to ₹5 Cr',
+      color: '#2DBE60',
+      path: '/loan/apply/home',
+      lottieUrl: 'https://assets3.lottiefiles.com/packages/lf20_ynqzqlpo.json'
+    },
+    {
+      id: 'vehicle',
+      icon: Car,
+      title: 'Vehicle Loan',
+      description: 'Drive your dream vehicle today',
+      rate: '9.5%',
+      amount: 'Up to ₹50 L',
+      color: '#3B82F6',
+      path: '/loan/apply/vehicle',
+      lottieUrl: 'https://assets6.lottiefiles.com/packages/lf20_2omr5gpu.json'
+    },
+    {
+      id: 'education',
+      icon: GraduationCap,
+      title: 'Education Loan',
+      description: 'Invest in your future success',
+      rate: '10.5%',
+      amount: 'Up to ₹75 L',
+      color: '#8B5CF6',
+      path: '/loan/apply/education',
+      lottieUrl: 'https://assets1.lottiefiles.com/packages/lf20_swnrn2oy.json'
+    },
+    {
+      id: 'business',
+      icon: Briefcase,
+      title: 'Business Loan',
+      description: 'Fuel your business growth',
+      rate: '12%',
+      amount: 'Up to ₹1 Cr',
+      color: '#F59E0B',
+      path: '/loan/apply/business',
+      lottieUrl: 'https://assets5.lottiefiles.com/packages/lf20_xvrofzfk.json'
+    }
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentStat((prev) => (prev + 1) % stats.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [stats.length]);
+
+  useEffect(() => {
+    if (location.state?.scrollToLoans) {
+      setTimeout(() => {
+        const loansSection = document.getElementById('loans-section');
+        if (loansSection) {
+          loansSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);window.history.replaceState({}, document.title);
+    }
+
+    if (location.state?.scrollToCalculator) {
+      setTimeout(() => {
+        const calculator = document.getElementById('emi-calculator');
+        if (calculator) {
+          calculator.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  const carouselSlides = [
+    // Slide 0 - Main Hero with Lottie
+    <div className="hero-slide" key="0">
+      <div className="slide-content">
+        <motion.span
+          className="slide-badge"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Sparkles size={16} />
+          Quick & Easy Loans
+        </motion.span>
+        <motion.h1
+          className="slide-title"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          Your Dreams,<br />
+          <span className="highlight">Our Finance</span>
+        </motion.h1>
+        <motion.p
+          className="slide-description"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          Get instant loans with competitive rates. From personal needs to business growth,
+          we've got you covered with AI-powered approvals.
+        </motion.p>
+        <motion.div
+          className="slide-actions"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Button onClick={() => navigate('/loan/apply/personal')} size="lg">
+            Apply Now <ArrowRight size={18} />
+          </Button><Button variant="outline" onClick={() => {
+            const calculator = document.getElementById('emi-calculator');
+            calculator?.scrollIntoView({ behavior: 'smooth' });
+          }}>
+            <Calculator size={18} />
+            Calculate EMI
+          </Button>
+        </motion.div>
+      </div>
+      <div className="slide-visual">
+        <LottieAnimation
+          src="https://assets2.lottiefiles.com/packages/lf20_06a6pf9i.json"
+          className="hero-lottie"
+          style={{ width: '100%', maxWidth: 500, height: 'auto' }}
+        />
+        <div className="visual-glow" />
+      </div>
+    </div>,
+
+    // Slide 1 - Floating Cards with Lottie Icons
+    <div className="hero-slide" key="1">
+      <div className="slide-content">
+        <motion.span className="slide-badge">
+          <TrendingUp size={14} />
+          Smart Financing
+        </motion.span>
+        <h1 className="slide-title">
+          Grow Your<br />
+          <span className="highlight">Business Today</span>
+        </h1>
+        <p className="slide-description">
+          Flexible business loans with quick disbursement. Fuel your growth ambitions
+          with our customized solutions.
+        </p>
+        <div className="slide-actions">
+          <Button onClick={() => navigate('/loan/apply/business')} size="lg">
+            Get Started <ArrowRight size={18} />
+          </Button></div>
+      </div>
+      <div className="slide-visual floating-cards-container">
+        <motion.div
+          className="floating-card card-1"
+          animate={{ y: [0, -15, 0], rotate: [0, 2, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <LottieAnimation
+            src="https://assets9.lottiefiles.com/packages/lf20_ysas4vcp.json"
+            style={{ width: 40, height: 40 }}
+          />
+          <span>₹10L - 1Cr</span>
+          <small>Business Loan</small>
+        </motion.div>
+        <motion.div
+          className="floating-card card-2"
+          animate={{ y: [0, 12, 0], rotate: [0, -2, 0] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+        >
+          <LottieAnimation
+            src="https://assets2.lottiefiles.com/packages/lf20_jtbfg2nb.json"
+            style={{ width: 32, height: 32 }}
+          />
+          <span>12% p.a.</span>
+          <small>Starting Rate</small>
+        </motion.div>
+        <motion.div
+          className="floating-card card-3"
+          animate={{ y: [0, -10, 0], rotate: [0, 1, 0] }}
+          transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        >
+          <LottieAnimation
+            src="https://assets2.lottiefiles.com/packages/lf20_sz94mu4k.json"
+            style={{ width: 32, height: 32 }}
+          />
+          <span>24 Hours</span>
+          <small>Approval Time</small>
+        </motion.div>
+        <motion.div
+          className="floating-card card-4"
+          animate={{ y: [0, 8, 0], rotate: [0, -1, 0] }}
+          transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+        >
+          <LottieAnimation
+            src="https://assets5.lottiefiles.com/packages/lf20_l5qvxwtf.json"
+            style={{ width: 36, height: 36 }}
+          />
+          <span>Fast Track</span>
+          <small>Processing</small>
+        </motion.div>
+      </div>
+    </div>,
+
+    // Slide 2 - Education Focus
+    <div className="hero-slide slide-education" key="2">
+      <div className="slide-content">
+        <motion.span className="slide-badge education-badge">
+          <GraduationCap size={14} />
+          Education First
+        </motion.span>
+        <h1 className="slide-title">
+          Invest in Your<br />
+          <span className="highlight purple">Future</span>
+        </h1>
+        <p className="slide-description">
+          Education loans with moratorium period. EMI starts after course completion.
+          Study abroad or in India with ease.
+        </p>
+        <Button onClick={() => navigate('/loan/apply/education')} size="lg" className="purple-btn">
+          Apply for Education Loan <ArrowRight size={18} />
+        </Button>
+      </div>
+      <div className="slide-visual">
+        <LottieAnimation
+          src="https://assets7.lottiefiles.com/packages/lf20_svy4ivvy.json"
+          className="hero-lottie"
+          style={{ width: '100%', maxWidth: 450, height: 'auto' }}
+        />
+      </div>
+    </div>
+  ];
+
+  return (
+    <section className="hero-section">
+      <div className="hero-bg">
+        <div className="bg-gradient-orb orb-1" />
+        <div className="bg-gradient-orb orb-2" />
+        <div className="bg-pattern" />
+      </div>
+
+      <div className="hero-container">
+        <Carousel
+          items={carouselSlides}
+          autoPlay
+          interval={7000}
+        />
+
+        {/* Animated Highlights Bar */}
+        <motion.div
+          className="highlights-bar"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {highlights.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <motion.div
+                key={index}
+                className="highlight-item"
+                variants={itemVariants}
+                whileHover={{ scale: 1.05, y: -2 }}
+              >
+                <div className="highlight-icon-wrapper">
+                  <Icon size={18} className="highlight-icon" />
+                </div>
+                <span>{item.text}</span>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+
+        {/* Animated Stats Ticker */}
+        <motion.div
+          className="stats-ticker"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+        >
+          {stats.map((stat, index) => (
+            <motion.div
+              key={index}
+              className={`stat-item ${index === currentStat ? 'active' : ''}`}
+              whileHover={{ scale: 1.05 }}
+            >
+              <AnimatePresence mode="wait">
+                {index === currentStat && (
+                  <motion.div
+                    className="stat-indicator"
+                    layoutId="statIndicator"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  />
+                )}
+              </AnimatePresence>
+              <span className="stat-value">{stat.value}</span>
+              <span className="stat-label">{stat.label}</span>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Loan Types Section */}
+      <section id="loans-section" className="loans-section">
+        <div className="loans-container">
+          <motion.div
+            className="section-header"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <span className="section-badge">
+              <LottieAnimation
+                src="https://assets4.lottiefiles.com/packages/lf20_qwl4gi2d.json"
+                style={{ width: 18, height: 18 }}
+              />
+              Loan Products
+            </span>
+            <h2>Choose Your Loan</h2>
+            <p>Select from our range of customized loan products designed for your needs</p>
+          </motion.div>
+
+          <motion.div
+            className="loan-cards-grid"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            {loanTypes.map((loan, index) => {
+              const Icon = loan.icon;
+              return (
+                <motion.div
+                  key={loan.id}
+                  className={`loan-card ${hoveredLoan === loan.id ? 'hovered' : ''}`}
+                  variants={itemVariants}
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  onHoverStart={() => setHoveredLoan(loan.id)}
+                  onHoverEnd={() => setHoveredLoan(null)}
+                  onClick={() => navigate(loan.path)}
+                  style={{ '--accent-color': loan.color }}
+                >
+                  <div className="loan-card-glow" />
+
+                  <div className="loan-card-header">
+                    <div className="loan-icon-wrapper" style={{ background: `${loan.color}15` }}>
+                      <Icon size={28} style={{ color: loan.color }} />
+                    </div>
+                    <AnimatePresence>
+                      {hoveredLoan === loan.id && (
+                        <motion.div
+                          className="lottie-overlay"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                        >
+                          <LottieAnimation
+                            src={loan.lottieUrl}
+                            style={{ width: 60, height: 60 }}
+                            loop
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  <h3 className="loan-card-title">{loan.title}</h3>
+                  <p className="loan-card-description">{loan.description}</p>
+
+                  <div className="loan-card-details">
+                    <div className="detail-item">
+                      <span className="detail-label">Interest Rate</span>
+                      <span className="detail-value" style={{ color: loan.color }}>{loan.rate}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Amount</span>
+                      <span className="detail-value">{loan.amount}</span>
+                    </div>
+                  </div>
+
+                  <motion.button
+                    className="loan-card-btn"
+                    style={{ background: loan.color }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Apply Now
+                    <ArrowRight size={16} />
+                  </motion.button>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* EMI Calculator Section */}
+      <div id="emi-calculator" className="calculator-section">
+        <div className="calculator-container">
+          <motion.div
+            className="section-header"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="section-badge calculator-badge">
+              <LottieAnimation
+                src="https://assets8.lottiefiles.com/packages/lf20_4fuy5t7m.json"
+                style={{ width: 18, height: 18 }}
+              />
+              Smart Tool
+            </span>
+            <h2>EMI Calculator</h2>
+            <p>Plan your loan with our intelligent EMI calculator. Get instant estimates for all loan types.</p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <EMICalculator />
+          </motion.div>
+        </div>
+      </div><style>{`
+        .hero-section {
+          position: relative;
+          overflow: hidden;
+          background: var(--hero-bg, #0B1E3C);
+        }
+
+        .hero-bg {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, #0B1E3C 0%, #102A4D 50%, #0B1E3C 100%);
+          overflow: hidden;
+        }
+
+        .bg-gradient-orb {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          opacity: 0.4;
+        }
+
+        .bg-gradient-orb.orb-1 {
+          width: 600px;
+          height: 600px;
+          background: radial-gradient(circle, rgba(45, 190, 96, 0.3) 0%, transparent 70%);
+          top: -200px;
+          right: -100px;
+          animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-gradient-orb.orb-2 {
+          width: 400px;
+          height: 400px;
+          background: radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, transparent 70%);
+          bottom: -100px;
+          left: -100px;
+          animation: float 15s ease-in-out infinite reverse;
+        }
+
+        .bg-pattern {
+          position: absolute;
+          inset: 0;
+          background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+          background-size: 40px 40px;
+        }
+
+        @keyframes float {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(30px, -30px) scale(1.05); }
+          66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        .hero-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 120px 24px 80px;
+          position: relative;
+          z-index: 1;
+          min-height: 90vh;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        .hero-slide {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 60px;
+          align-items: center;
+          min-height: 500px;
+        }
+
+        .slide-content {
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+
+        .slide-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 20px;
+          background: rgba(45, 190, 96, 0.15);
+          color: #2DBE60;
+          font-size: 0.875rem;
+          font-weight: 600;
+          border-radius: 100px;
+          width: fit-content;
+          border: 1px solid rgba(45, 190, 96, 0.2);
+          backdrop-filter: blur(10px);
+        }
+
+        .slide-badge.education-badge {
+          background: rgba(139, 92, 246, 0.15);
+          color: #8B5CF6;
+          border-color: rgba(139, 92, 246, 0.2);
+        }
+
+        .slide-title {
+          font-size: 3.75rem;
+          font-weight: 800;
+          color: white;
+          line-height: 1.1;
+          letter-spacing: -0.03em;
+        }
+
+        .slide-title .highlight {
+          background: linear-gradient(135deg, #2DBE60 0%, #22a652 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .slide-title .highlight.purple {
+          background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .slide-description {
+          font-size: 1.2rem;
+          color: rgba(165, 180, 207, 0.9);
+          line-height: 1.7;
+          max-width: 500px;
+        }
+
+        .slide-actions {
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .slide-visual {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .hero-lottie {
+          filter: drop-shadow(0 20px 60px rgba(45, 190, 96, 0.2));
+        }
+
+        .visual-glow {
+          position: absolute;
+          width: 300px;
+          height: 300px;
+          background: radial-gradient(circle, rgba(45, 190, 96, 0.3) 0%, transparent 70%);
+          filter: blur(60px);
+          z-index: -1;
+        }
+
+        .floating-cards-container {
+          position: relative;
+          min-height: 400px;
+        }
+
+        .floating-card {
+          position: absolute;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          padding: 24px 32px;
+          background: rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 20px;
+          color: white;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .floating-card span {
+          font-size: 1.35rem;
+          font-weight: 700;
+        }
+
+        .floating-card small {
+          font-size: 0.8rem;
+          opacity: 0.7;
+        }
+
+        .floating-card.card-1 {
+          top: 5%;
+          right: 15%;
+        }
+
+        .floating-card.card-2 {
+          top: 40%;
+          left: 5%;
+        }
+
+        .floating-card.card-3 {
+          bottom: 20%;
+          right: 5%;
+        }
+
+        .floating-card.card-4 {
+          bottom: 5%;
+          left: 20%;
+        }
+
+        /* Highlights Bar */
+        .highlights-bar {
+          display: flex;
+          gap: 40px;
+          justify-content: center;
+          flex-wrap: wrap;
+          padding: 40px 0;
+          margin-top: 50px;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .highlight-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          color: rgba(255, 255, 255, 0.85);
+          font-size: 0.95rem;
+          font-weight: 500;
+          cursor: default;
+        }
+
+        .highlight-icon-wrapper {
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(45, 190, 96, 0.15);
+          border-radius: 10px;
+        }
+
+        .highlight-icon {
+          color: #2DBE60;
+        }
+
+        /* Stats Ticker */
+        .stats-ticker {
+          display: flex;
+          justify-content: center;
+          gap: 60px;
+          flex-wrap: wrap;
+          margin-top: 24px;
+        }
+
+        .stat-item {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          padding: 16px 24px;
+          opacity: 0.5;
+          transition: opacity 0.4s ease;
+          cursor: default;
+        }
+
+        .stat-item.active {
+          opacity: 1;
+        }
+
+        .stat-indicator {
+          position: absolute;
+          inset: 0;
+          background: rgba(45, 190, 96, 0.1);
+          border: 1px solid rgba(45, 190, 96, 0.2);
+          border-radius: 16px;
+        }
+
+        .stat-value {
+          font-size: 2rem;
+          font-weight: 800;
+          color: #2DBE60;
+          position: relative;
+          z-index: 1;
+        }
+
+        .stat-label {
+          font-size: 0.9rem;
+          color: rgba(165, 180, 207, 0.8);
+          position: relative;
+          z-index: 1;
+        }
+
+        /* Loans Section */
+        .loans-section {
+          background: var(--bg-primary);
+          padding: 120px 0;
+          position: relative;
+        }
+
+        .loans-section::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 200px;
+          background: linear-gradient(180deg, #0B1E3C 0%, transparent 100%);
+          pointer-events: none;
+        }
+
+        .loans-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 24px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .section-header {
+          text-align: center;
+          margin-bottom: 60px;
+        }
+
+        .section-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 18px;
+          background: rgba(45, 190, 96, 0.1);
+          color: #2DBE60;
+          font-size: 0.8rem;
+          font-weight: 600;
+          border-radius: 100px;
+          margin-bottom: 20px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          border: 1px solid rgba(45, 190, 96, 0.15);
+        }
+
+        .section-badge.calculator-badge {
+          background: rgba(139, 92, 246, 0.1);
+          color: #8B5CF6;
+          border-color: rgba(139, 92, 246, 0.15);
+        }
+
+        .section-header h2 {
+          font-size: 2.75rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          margin-bottom: 16px;
+          letter-spacing: -0.02em;
+        }
+
+        .section-header p {
+          font-size: 1.15rem;
+          color: var(--text-secondary);
+          max-width: 550px;
+          margin: 0 auto;
+          line-height: 1.6;
+        }
+
+        /* Loan Cards Grid */
+        .loan-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 24px;
+        }
+
+        .loan-card {
+          position: relative;
+          background: var(--card-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 24px;
+          padding: 32px 24px;
+          cursor: pointer;
+          overflow: hidden;
+          transition: border-color 0.3s ease;
+        }
+
+        .loan-card:hover {
+          border-color: var(--accent-color);
+        }
+
+        .loan-card-glow {
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%);
+          opacity: 0;
+          transition: opacity 0.4s ease;
+          pointer-events: none;
+        }
+
+        .loan-card.hovered .loan-card-glow {
+          opacity: 0.05;
+        }
+
+        .loan-card-header {
+          position: relative;
+          margin-bottom: 20px;
+        }
+
+        .loan-icon-wrapper {
+          width: 60px;
+          height: 60px;
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform 0.3s ease;
+        }
+
+        .loan-card:hover .loan-icon-wrapper {
+          transform: scale(1.05);
+        }
+
+        .lottie-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+        }
+
+        .loan-card-title {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin-bottom: 8px;
+        }
+
+        .loan-card-description {
+          font-size: 0.9rem;
+          color: var(--text-secondary);
+          line-height: 1.5;
+          margin-bottom: 24px;
+        }
+
+        .loan-card-details {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-bottom: 24px;
+          padding: 16px;
+          background: var(--bg-secondary);
+          border-radius: 12px;
+        }
+
+        .detail-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;}
+
+        .detail-label {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+        }
+
+        .detail-value {
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: var(--text-primary);
+        }
+
+        .loan-card-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 14px;
+          border: none;
+          border-radius: 12px;
+          color: white;
+          font-weight: 600;
+          font-size: 0.95rem;
+          cursor: pointer;
+          transition: filter 0.2s ease;
+        }
+
+        .loan-card-btn:hover {
+          filter: brightness(1.1);
+        }
+
+        /* Calculator Section */
+        .calculator-section {
+          background: var(--bg-primary);
+          padding: 100px 0 120px;
+          position: relative;
+        }
+
+        .calculator-container {
+          max-width: 1000px;
+          margin: 0 auto;
+          padding: 0 24px;
+          position: relative;
+          z-index: 1;
+        }
+
+        /* Purple button variant */
+        .purple-btn {
+          background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%) !important;
+        }
+
+        .purple-btn:hover {
+          background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%) !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+          .loan-cards-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .hero-container {
+            padding: 100px 20px 60px;
+            min-height: auto;
+          }
+
+          .hero-slide {
+            grid-template-columns: 1fr;
+            gap: 40px;
+            text-align: center;
+          }
+
+          .slide-content {
+            align-items: center;
+          }
+
+          .slide-title {
+            font-size: 2.5rem;
+          }
+
+          .slide-description {
+            font-size: 1rem;
+          }
+
+          .slide-actions {
+            justify-content: center;
+          }
+
+          .floating-cards-container {
+            display: none;
+          }
+
+          .highlights-bar {
+            gap: 24px;
+          }
+
+          .highlight-item span {
+            display: none;
+          }
+
+          .stats-ticker {
+            gap: 20px;
+          }
+
+          .stat-value {
+            font-size: 1.5rem;
+          }
+
+          .loans-section {
+            padding: 80px 0;
+          }
+
+          .loan-cards-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+
+          .section-header h2 {
+            font-size: 2rem;
+          }
+
+          .calculator-section {
+            padding: 60px 0 80px;
+          }
+        }
+      `}</style>
+    </section>
+  );
+}
