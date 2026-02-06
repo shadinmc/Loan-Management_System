@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -43,16 +44,19 @@ public class LoanController {
     }
 
     @PostMapping("/apply")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Loan> applyLoan(
-            @RequestHeader("X-Idempotency-Key") String idempotencyKey,
-            @Valid @RequestBody LoanApplicationRequest request
+            @RequestBody LoanApplicationRequest request,
+            @RequestHeader("X-Idempotency-Key") String idempotencyKey
     ) {
-        String userId = securityUtils.getCurrentUserId();
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(loanService.applyForLoan(userId, request, idempotencyKey));
+        String userId = securityUtils.getCurrentUser().getId();
+
+        Loan loan = loanService.applyForLoan(userId, request, idempotencyKey);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(loan);
     }
+
+
+
     @GetMapping("/my-loans")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Loan>> getAllLoans() {

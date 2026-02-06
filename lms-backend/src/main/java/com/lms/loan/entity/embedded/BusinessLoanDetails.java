@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -14,11 +16,11 @@ public class BusinessLoanDetails {
     private String businessName;
     private String businessType;
 
-    private Double gstAnnualTurnover;
+    private BigDecimal gstAnnualTurnover;
     private Integer businessVintageYears;
 
     private String proofOfBusiness;
     private String proofOfIncome;
 
-    private Double calculatedEligibleAmount;
+    private BigDecimal calculatedEligibleAmount;
 }

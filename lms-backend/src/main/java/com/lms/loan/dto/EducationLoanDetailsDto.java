@@ -2,6 +2,8 @@ package com.lms.loan.dto;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
 public class EducationLoanDetailsDto {
 
@@ -9,7 +11,7 @@ public class EducationLoanDetailsDto {
     private Integer courseDurationMonths;
 
     private String coApplicantName;
-    private Double coApplicantIncome;
+    private BigDecimal coApplicantIncome;
     private String relationship;
 
     private String proofOfAdmission;

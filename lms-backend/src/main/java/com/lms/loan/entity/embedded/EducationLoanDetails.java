@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -15,7 +17,7 @@ public class EducationLoanDetails {
     private Integer courseDurationMonths;
 
     private String coApplicantName;
-    private Double coApplicantIncome;
+    private BigDecimal coApplicantIncome;
     private String relationship;
 
     private String proofOfAdmission;

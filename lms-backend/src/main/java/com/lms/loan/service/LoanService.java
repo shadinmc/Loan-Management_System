@@ -188,7 +188,9 @@ import com.lms.loan.entity.embedded.*;
 import com.lms.loan.repository.LoanRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -228,13 +230,16 @@ public class LoanService {
                 .loanId(generateLoanId())
                 .userId(userId)
                 .loanType(request.getLoanType())
-                .loanAmount(request.getLoanAmount())
+                .loanAmount(BigDecimal.valueOf(request.getLoanAmount()))
                 .tenureMonths(request.getTenureMonths())
-                .interestRate(request.getInterestRate())
+                .interestRate(BigDecimal.valueOf(request.getInterestRate()))
+                .cibilScore(request.getCibilScore())
                 .status(LoanStatus.APPLIED)
                 .appliedDate(LocalDate.now())
-                .outstandingPrincipal(request.getLoanAmount())
+                .outstandingPrincipal(BigDecimal.valueOf(request.getLoanAmount()))
                 .emiEligible(false)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
         // ✅ Step 4: Attach loan-type specific details
@@ -262,6 +267,24 @@ public class LoanService {
 
     public List<Loan> getLoansByUserId(String userId) {
         return loanRepository.findByUserId(userId);
+    }
+
+    public Loan getLoanByIdAndUserId(String loanId, String userId) {
+        return loanRepository.findByLoanIdAndUserId(loanId, userId)
+                .orElseThrow(() -> new RuntimeException("Loan not found or access denied"));
+    }
+
+    public List<Loan> getLoansForBranchReview() {
+        return loanRepository.findByStatus(LoanStatus.ELIGIBILITY_CHECK_PASSED);
+    }
+
+    public List<Loan> getLoansByStatus(LoanStatus status) {
+        return loanRepository.findByStatus(status);
+    }
+
+    public Loan updateLoan(Loan loan) {
+        loan.setUpdatedAt(LocalDateTime.now());
+        return loanRepository.save(loan);
     }
 
     // ... keep all your existing private methods (validateLoanRequest, mappers) ...

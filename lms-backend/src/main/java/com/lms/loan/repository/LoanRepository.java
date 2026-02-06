@@ -14,6 +14,10 @@ public interface LoanRepository extends MongoRepository<Loan, String> {
 
     Optional<Loan>  findByLoanId(String loanId);
     List<Loan> findByUserId(String userId);
+    Optional<Loan> findByLoanIdAndUserId(String loanId, String userId);
+    List<Loan> findByStatus(LoanStatus status);
+    List<Loan> findByStatusIn(List<LoanStatus> statuses);
+
 
 //    <T> ScopedValue<T> findByLoanId(String loanId);
 }

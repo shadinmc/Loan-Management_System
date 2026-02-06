@@ -2,6 +2,8 @@ package com.lms.loan.dto;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
 public class VehicleLoanDetailsDto {
 
@@ -9,7 +11,7 @@ public class VehicleLoanDetailsDto {
     private String vehicleBrand;
     private String vehicleModel;
 
-    private Double downPaymentAmount;
+    private BigDecimal downPaymentAmount;
     private String dealerName;
 
     private String proofOfIdentity;

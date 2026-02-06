@@ -1,16 +1,17 @@
 package com.lms.common.enums;
 
 public enum LoanStatus {
-    APPLIED,
-    DRAFT,
-    PENDING_ELIGIBILITY,
+    APPLIED,                    // Initial submission
+    ELIGIBILITY_CHECK_PASSED,   // Eligible for review
+    NOT_ELIGIBLE,               // Failed eligibility
     ELIGIBLE,
-    NOT_ELIGIBLE,
-    SUBMITTED,
-    UNDER_REVIEW,
-    RESUBMISSION_REQUIRED,
-    APPROVED,
-    REJECTED,
-    DISBURSED,
-    CLOSED
+    PENDING_BRANCH_REVIEW,      // Waiting for Branch Manager
+    UNDER_BRANCH_REVIEW,        // Branch Manager reviewing
+    BRANCH_APPROVED,            // Approved by Branch Manager
+    BRANCH_REJECTED,            // Rejected by Branch Manager
+    PENDING_REGIONAL_REVIEW,    // Waiting for Regional Manager
+    APPROVED,                   // Final approval
+    REJECTED,                   // Final rejection
+    DISBURSED,                  // Money sent
+    CLOSED                      // Loan completed
 }

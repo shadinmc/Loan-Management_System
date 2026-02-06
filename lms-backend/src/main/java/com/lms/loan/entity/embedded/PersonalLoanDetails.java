@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -12,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class PersonalLoanDetails {
 
     private String employmentType; // SALARIED / SELF_EMPLOYED
-    private Double monthlyIncome;
+    private BigDecimal monthlyIncome;
     private String employerName;
 
     private String proofOfIdentity;
