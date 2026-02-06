@@ -109,16 +109,7 @@ export default function Navbar({ onMenuClick }) {
         {/* Right Section */}
         <div className="navbar-actions">
           {/* Calculator Quick Access Button */}
-          <motion.button
-            className="calculator-btn"
-            onClick={scrollToCalculator}
-            aria-label="Open EMI Calculator"
-            title="EMI Calculator"
-            whileHover={{ scale: 1.05, borderColor: '#8B5CF6' }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Calculator size={18} />
-          </motion.button>
+
 
           {/* Auth Buttons or User Info */}
           {!isLoggedIn ? (
@@ -147,13 +138,7 @@ export default function Navbar({ onMenuClick }) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <motion.div
-                className="user-avatar"
-                aria-hidden="true"
-                whileHover={{ scale: 1.1 }}
-              >
-                {user?.username?.charAt(0).toUpperCase() || 'U'}
-              </motion.div>
+
               <span className="welcome-text">
                 Hi, <strong>{user?.username || 'User'}</strong>
               </span>
