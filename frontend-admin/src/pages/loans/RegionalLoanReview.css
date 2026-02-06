@@ -1,0 +1,258 @@
+/* ===========================
+   OVERLAY
+=========================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* ===========================
+   MODAL CONTAINER
+=========================== */
+.modal {
+  width: 720px;
+  max-height: 85vh;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow-y: auto;
+  animation: scaleIn 0.22s ease;
+}
+
+/* Animation */
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ===========================
+   HEADER
+=========================== */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modal-header p {
+  font-size: 12px;
+  color: #64748b;
+  margin: 2px 0 0;
+}
+
+.modal-header button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/* ===========================
+   CARD SECTIONS
+=========================== */
+.card {
+  margin: 14px 16px;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.soft-blue {
+  background: #f1f7ff;
+}
+
+.soft-green {
+  background: #ecfdf5;
+}
+
+.soft-purple {
+  background: #faf5ff;
+}
+
+.soft-violet {
+  background: #f5f3ff;
+}
+
+.card h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* ===========================
+   GRID LAYOUT (PERFECT ALIGNMENT)
+=========================== */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: 14px;
+}
+
+/* Each field behaves like a vertical block */
+.grid-2 > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* ===========================
+   TEXT STYLES
+=========================== */
+label {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Notes / comments */
+.notes {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.65);
+  padding: 10px 12px;
+  border-radius: 8px;
+  line-height: 1.4;
+}
+
+/* ===========================
+   BADGES / PILLS
+=========================== */
+.pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.pill.success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge.info {
+  align-self: flex-start;
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ===========================
+   DECISION ACTIONS
+=========================== */
+.decision-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.decision-actions button {
+  flex: 1;
+  height: 46px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  border: none;
+}
+
+.approve {
+  background: #16a34a;
+  color: white;
+}
+
+.reject {
+  background: #dc2626;
+  color: white;
+}
+
+/* ===========================
+   REJECT BOX
+=========================== */
+.reject-box {
+  margin-top: 14px;
+}
+
+.reject-box label {
+  font-size: 12px;
+}
+
+.reject-box textarea {
+  width: 100%;
+  min-height: 80px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  resize: none;
+  outline: none;
+}
+
+.reject-box textarea:focus {
+  border-color: #6366f1;
+}
+
+/* ===========================
+   REJECT ACTIONS
+=========================== */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.actions button {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: none;
+}
+
+.actions .cancel {
+  background: #e5e7eb;
+}
+
+.actions .confirm-reject {
+  background: #dc2626;
+  color: white;
+}

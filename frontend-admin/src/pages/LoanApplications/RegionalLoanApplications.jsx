@@ -1,112 +1,107 @@
 import { useState } from "react";
-import {
-  CreditCard,
-  Car,
-  Briefcase,
-  GraduationCap,
-  Search,
-  Filter,
-  Eye
-} from "lucide-react";
-import { MOCK_LOANS } from "../../constants/mockLoans";
+import { Search } from "lucide-react";
 import StatusBadge from "../../components/StatusBadge";
+import RegionalLoanReview from "../loans/RegionalLoanReview";
 import "./RegionalLoanApplications.css";
 
-const types = [
-  { name: "Personal Loan", icon: CreditCard, color: "blue" },
-  { name: "Vehicle Loan", icon: Car, color: "green" },
-  { name: "Business Loan", icon: Briefcase, color: "purple" },
-  { name: "Education Loan", icon: GraduationCap, color: "orange" }
+/* ===========================
+   DUMMY DATA (TEMPORARY)
+   =========================== */
+const REGIONAL_LOANS = [
+  {
+    id: "LN-2026-002",
+    applicant: "Sneha Reddy",
+    email: "sneha.r@email.com",
+    type: "Vehicle Loan",
+    amount: 750000,
+    status: "PENDING_REGIONAL_REVIEW"
+  },
+  {
+    id: "LN-2026-003",
+    applicant: "Arjun Rao",
+    email: "arjun.rao@email.com",
+    type: "Personal Loan",
+    amount: 500000,
+    status: "APPROVED"
+  },
+  {
+    id: "LN-2026-004",
+    applicant: "Meena Patel",
+    email: "meena.p@email.com",
+    type: "Business Loan",
+    amount: 1200000,
+    status: "REJECTED"
+  }
+];
+
+const LOAN_TYPES = [
+  "Personal Loan",
+  "Vehicle Loan",
+  "Business Loan",
+  "Education Loan"
 ];
 
 const RegionalLoanApplications = () => {
+  const [selectedLoan, setSelectedLoan] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
 
-  const filteredLoans = MOCK_LOANS.filter(loan => {
-    const allowed = [
-      "PENDING_REGIONAL_REVIEW",
-      "APPROVED",
-      "ACTIVE",
-      "CLOSED"
-    ];
-
-    if (!allowed.includes(loan.status)) return false;
-
+  /* ===========================
+     FILTER LOGIC (SAFE)
+     =========================== */
+  const filteredLoans = REGIONAL_LOANS.filter((loan) => {
+    // Card filter
     if (selectedType && loan.type !== selectedType) return false;
 
-    if (statusFilter !== "ALL" && loan.status !== statusFilter) return false;
+    // Search filter
+    if (search) {
+      const text = search.toLowerCase();
+      const applicant = loan.applicant?.toLowerCase() || "";
+      const id = loan.id?.toLowerCase() || "";
 
-    if (
-      search &&
-      !loan.applicant.toLowerCase().includes(search.toLowerCase())
-    ) return false;
+      if (!applicant.includes(text) && !id.includes(text)) {
+        return false;
+      }
+    }
 
     return true;
   });
 
   return (
-    <div className="loan-app-page">
-      <h2>Loan Applications</h2>
-      <p>Review and manage loan applications by type</p>
-
-      {/* CARDS */}
-      <div className="loan-type-grid">
-        {types.map(t => {
-          const Icon = t.icon;
-          return (
-            <div
-              key={t.name}
-              className={`loan-type-card ${t.color} ${
-                selectedType === t.name ? "active" : ""
-              }`}
-              onClick={() =>
-                setSelectedType(selectedType === t.name ? null : t.name)
-              }
-            >
-              <Icon />
-              <h3>{t.name}</h3>
-              <span>
-                {
-                  MOCK_LOANS.filter(
-                    l =>
-                      l.type === t.name &&
-                      [
-                        "PENDING_REGIONAL_REVIEW",
-                        "APPROVED",
-                        "ACTIVE",
-                        "CLOSED"
-                      ].includes(l.status)
-                  ).length
-                }
-              </span>
-              <small>applications</small>
-            </div>
-          );
-        })}
+    <>
+      {/* PAGE TITLE */}
+      <div className="page-title">
+        <h2>Loan Applications</h2>
+        <p>Final approval by Regional Manager</p>
       </div>
 
-      {/* SEARCH + FILTER */}
+      {/* LOAN TYPE CARDS */}
+      <div className="loan-card-grid">
+        {LOAN_TYPES.map((type) => (
+          <div
+            key={type}
+            className={`loan-type-card ${
+              selectedType === type ? "active" : ""
+            }`}
+            onClick={() =>
+              setSelectedType(selectedType === type ? null : type)
+            }
+          >
+            {type}
+          </div>
+        ))}
+      </div>
+
+      {/* SEARCH BAR */}
       <div className="filter-bar">
         <div className="search-box">
-          <Search size={16} />
+          <Search size={18} />
           <input
-            placeholder="Search by application #, name, or email..."
+            type="text"
+            placeholder="Search by application # or applicant"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
           />
-        </div>
-
-        <div className="status-filter">
-          <Filter size={16} />
-          <select onChange={e => setStatusFilter(e.target.value)}>
-            <option value="ALL">All Status</option>
-            <option value="PENDING_REGIONAL_REVIEW">Pending Review</option>
-            <option value="APPROVED">Approved</option>
-            <option value="ACTIVE">Active</option>
-            <option value="CLOSED">Closed</option>
-          </select>
         </div>
       </div>
 
@@ -118,42 +113,57 @@ const RegionalLoanApplications = () => {
               <th>Application #</th>
               <th>Loan Type</th>
               <th>Applicant</th>
-              <th>Amount</th>
-              <th>Eligibility</th>
+              <th className="amount">Amount</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th>Action</th>
             </tr>
           </thead>
 
           <tbody>
-            {filteredLoans.map(loan => (
-              <tr key={loan.id}>
-                <td>{loan.id}</td>
-                <td>{loan.type}</td>
-                <td>
-                  <strong>{loan.applicant}</strong>
-                  <div className="email">{loan.email}</div>
-                </td>
-                <td>₹{loan.amount.toLocaleString()}</td>
-                <td>
-                  <span className={`eligibility ${loan.eligibility}`}>
-                    {loan.eligibility}
-                  </span>
-                </td>
-                <td>
-                  <StatusBadge status={loan.status} />
-                </td>
-                <td>
-                  <button className="review-btn">
-                    <Eye size={16} /> Review
-                  </button>
+            {filteredLoans.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="empty-state">
+                  No applications found
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredLoans.map((loan) => (
+                <tr key={loan.id}>
+                  <td>{loan.id}</td>
+                  <td>{loan.type}</td>
+                  <td>
+                    <strong>{loan.applicant}</strong>
+                    <div className="email">{loan.email}</div>
+                  </td>
+                  <td className="amount">
+                    ₹{loan.amount.toLocaleString()}
+                  </td>
+                  <td>
+                    <StatusBadge status={loan.status} />
+                  </td>
+                  <td>
+                    <button
+                      className="review-btn"
+                      onClick={() => setSelectedLoan(loan)}
+                    >
+                      👁 Review
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
-    </div>
+
+      {/* REVIEW MODAL */}
+      {selectedLoan && (
+        <RegionalLoanReview
+          loan={selectedLoan}
+          onClose={() => setSelectedLoan(null)}
+        />
+      )}
+    </>
   );
 };
 

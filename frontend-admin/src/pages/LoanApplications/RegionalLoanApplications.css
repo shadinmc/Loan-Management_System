@@ -128,3 +128,102 @@ tbody tr:hover {
 .eligibility.Good { background:#dcfce7; color:#166534; }
 .eligibility.Bad { background:#fee2e2; color:#991b1b; }
 .eligibility.Average { background:#fef3c7; color:#92400e; }
+
+/* ========================= */
+/* LOAN TYPE CARD GRID */
+/* ========================= */
+
+.loan-type-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin: 24px 0 28px;
+}
+
+/* ========================= */
+/* LOAN TYPE CARD */
+/* ========================= */
+
+.loan-type-card {
+  height: 72px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  color: #ffffff;
+  transition: all 0.35s ease;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+/* COLORS */
+.loan-type-card:nth-child(1) {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.loan-type-card:nth-child(2) {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.loan-type-card:nth-child(3) {
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+}
+
+.loan-type-card:nth-child(4) {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+/* ========================= */
+/* HOVER ANIMATION */
+/* ========================= */
+
+.loan-type-card:hover {
+  transform: translateY(-6px) scale(1.04);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+}
+
+/* ========================= */
+/* ACTIVE STATE */
+/* ========================= */
+
+.loan-type-card.active {
+  outline: 3px solid #ffffff;
+  outline-offset: -6px;
+  transform: scale(1.06);
+}
+
+/* ========================= */
+/* ACTIVE GLOW */
+/* ========================= */
+
+.loan-type-card.active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.12);
+  animation: pulse 1.4s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+.empty-state {
+  text-align: center;
+  padding: 32px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  background: #f8fafc;
+}
