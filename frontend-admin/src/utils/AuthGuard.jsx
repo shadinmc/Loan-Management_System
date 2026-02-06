@@ -1,16 +1,23 @@
 import { Navigate } from "react-router-dom";
 import { getCurrentUser } from "./auth";
 
-const AuthGuard = ({ children, allowedRoles }) => {
+const AuthGuard = ({ children, role }) => {
   const user = getCurrentUser();
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login/admin" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/login" replace />;
-  }
+ if (role && user.role !== role) {
+     return (
+       <Navigate
+         to={user.role === "BRANCH_MANAGER"
+           ? "/admin/dashboard"
+           : "/regional/dashboard"}
+         replace
+       />
+     );
+   }
 
   return children;
 };

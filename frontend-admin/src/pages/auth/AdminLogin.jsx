@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AdminLogin.css";
 
-// MOCK USERS (temporary – backend/JWT will replace this)
+// MOCK USERS
 const mockUsers = [
   {
     email: "admin@example.com",
@@ -25,64 +25,61 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // ⭐ Clear previous session when login page loads
+  useEffect(() => {
+    localStorage.removeItem("adminAuth");
+  }, []);
 
-    // find user from mock list
-    const user = mockUsers.find(
-      (u) => u.email === email && u.password === password
-    );
+ const handleSubmit = (e) => {
+   e.preventDefault();
+   setError("");
 
-    if (!user) {
-      setError("Invalid username or password");
-      return;
-    }
+   localStorage.removeItem("adminAuth");
 
-    // store auth (JWT-ready structure)
-    localStorage.setItem(
-      "adminAuth",
-      JSON.stringify({
-        email: user.email,
-        role: user.role,
-        name: user.name
-      })
-    );
+   const user = mockUsers.find(
+     (u) =>
+       u.email.trim().toLowerCase() === email.trim().toLowerCase() &&
+       u.password.trim() === password.trim()
+   );
 
-    // role-based navigation
-    if (user.role === "BRANCH_MANAGER") {
-      navigate("/admin/dashboard");
-    } else if (user.role === "REGIONAL_MANAGER") {
-      navigate("/regional/dashboard");
-    }
-  };
+   if (!user) {
+     setError("Invalid username or password");
+     return;
+   }
+
+   localStorage.setItem("adminAuth", JSON.stringify(user));
+
+   if (user.role === "BRANCH_MANAGER") {
+     navigate("/admin/dashboard");
+   } else {
+     navigate("/regional/dashboard");
+   }
+ };
 
   return (
     <div className="login-page">
       {/* LEFT SIDE */}
-     <div className="login-left">
-       <div className="brand-header">
-         <div className="logo-circle">LMS</div>
-         <span>Loan Management System</span>
-       </div>
+      <div className="login-left">
+        <div className="brand-header">
+          <div className="logo-circle">LMS</div>
+          <span>Loan Management System</span>
+        </div>
 
-       {/* HANDSHAKE IMAGE */}
-       <div className="login-illustration">
-         <img
-           src="/src/assets/customer-vendor2.png"
-           alt="Customer and manager handshake"
-         />
-       </div>
+        <div className="login-illustration">
+          <img
+            src="/src/assets/customer-vendor2.png"
+            alt="Customer and manager handshake"
+          />
+        </div>
 
-       <div className="illustration-text">
-         <h2>Secure Admin Access</h2>
-         <p>
-           Authorized personnel only. All activities are monitored and logged
-           for compliance and audit purposes.
-         </p>
-       </div>
-     </div>
-
-
+        <div className="illustration-text">
+          <h2>Secure Admin Access</h2>
+          <p>
+            Authorized personnel only. All activities are monitored and logged
+            for compliance and audit purposes.
+          </p>
+        </div>
+      </div>
 
       {/* RIGHT SIDE */}
       <div className="login-right">
@@ -100,7 +97,10 @@ const AdminLogin = () => {
               type="email"
               placeholder="Enter email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError("");
+              }}
               required
             />
 
@@ -109,7 +109,10 @@ const AdminLogin = () => {
               type="password"
               placeholder="Enter password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
               required
             />
 
@@ -120,9 +123,7 @@ const AdminLogin = () => {
                 href="#"
                 onClick={(e) => {
                   e.preventDefault();
-                  alert(
-                    "Password reset will be enabled after backend integration."
-                  );
+                  alert("Password reset will be enabled after backend integration.");
                 }}
               >
                 Forgot Password?
@@ -130,7 +131,6 @@ const AdminLogin = () => {
             </div>
           </form>
 
-          {/* MOCK CREDENTIALS INFO (REMOVE LATER) */}
           <div style={{ marginTop: "16px", fontSize: "12px", color: "#64748b" }}>
             <strong>Mock Logins:</strong>
             <br />

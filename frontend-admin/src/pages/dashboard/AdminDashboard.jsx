@@ -1,174 +1,197 @@
 import {
-  FiHome,
-  FiFileText,
-  FiDollarSign,
-  FiRepeat,
-  FiCheckCircle,
-  FiLogOut
-} from "react-icons/fi";
-import {
   MdOutlinePendingActions,
   MdOutlineCancel,
   MdOutlineTrendingUp
 } from "react-icons/md";
-import { useNavigate } from "react-router-dom";
-import { logout } from "../../utils/auth";
-import { login } from "../../utils/auth";
-
+import { FiCheckCircle } from "react-icons/fi";
 import "./AdminDashboard.css";
-import { NavLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
 
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+  // MOCK DATA (temporary until backend API)
+  const mockLoans = [
+    {
+      id: "LN-2026-006",
+      applicant: "Meera Nair",
+      type: "Vehicle Loan",
+      amount: 600000,
+      status: "PENDING_BRANCH"
+    },
+    {
+      id: "LN-2026-008",
+      applicant: "Kavita Shah",
+      type: "Business Loan",
+      amount: 1500000,
+      status: "PENDING_BRANCH"
+    },
+    {
+      id: "LN-2026-001",
+      applicant: "Amit Patel",
+      type: "Personal Loan",
+      amount: 500000,
+      status: "PENDING_BRANCH"
+    },
+    {
+      id: "LN-2026-005",
+      applicant: "Rahul Verma",
+      type: "Personal Loan",
+      amount: 300000,
+      status: "BRANCH_REJECTED"
+    },
+    {
+      id: "LN-2026-002",
+      applicant: "Sneha Reddy",
+      type: "Vehicle Loan",
+      amount: 750000,
+      status: "ACTIVE"
+    }
+  ];
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login/admin");
+  // KPI Calculations
+  const pending = mockLoans.filter(l => l.status === "PENDING_BRANCH").length;
+  const rejected = mockLoans.filter(l => l.status === "BRANCH_REJECTED").length;
+  const active = mockLoans.filter(l => l.status === "ACTIVE").length;
+  const approved = 0;
+
+  // Loan type counts
+  const loanTypes = {
+    personal: mockLoans.filter(l => l.type === "Personal Loan").length,
+    vehicle: mockLoans.filter(l => l.type === "Vehicle Loan").length,
+    business: mockLoans.filter(l => l.type === "Business Loan").length,
+    education: 2
+  };
+
+  const getBadgeClass = (status) => {
+    if (status === "PENDING_BRANCH") return "badge warning";
+    if (status === "BRANCH_REJECTED") return "badge danger";
+    if (status === "ACTIVE") return "badge success";
+    return "badge";
+  };
+
+  const getStatusText = (status) => {
+    if (status === "PENDING_BRANCH") return "Pending Branch Review";
+    if (status === "BRANCH_REJECTED") return "Branch Rejected";
+    if (status === "ACTIVE") return "Active Loan";
+    return status;
   };
 
   return (
-    <div className="admin-layout">
-      {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-logo">LMS</div>
-          <span className="brand-text">Loan System</span>
+    <>
+      {/* PAGE TITLE */}
+      <section className="page-title">
+        <h2>Branch Manager Dashboard</h2>
+        <p>Review and approve loan applications.</p>
+      </section>
+
+      {/* KPI CARDS */}
+      <section className="stats-grid">
+        <div className="stat-card warning">
+          <MdOutlinePendingActions />
+          <div>
+            <p>Pending Review</p>
+            <h3>{pending}</h3>
+          </div>
         </div>
 
-        <nav>
-                  <NavLink to="/admin/dashboard" className="nav-link">
-                    <FiHome /> Dashboard
-                  </NavLink>
-                  <NavLink to="#" className="nav-link">
-                    <FiFileText /> Loan Applications
-                  </NavLink>
-                  <NavLink to="#" className="nav-link">
-                    <FiDollarSign /> Disbursements
-                  </NavLink>
-                  <NavLink to="#" className="nav-link">
-                    <FiRepeat /> Repayments
-                  </NavLink>
-                  <NavLink to="#" className="nav-link">
-                    <FiCheckCircle /> Loan Closure
-                  </NavLink>
-                </nav>
-      </aside>
-
-      {/* RIGHT SIDE */}
-      <section className="content-area">
-        {/* TOP BAR */}
-        <header className="topbar">
-          <h1>Loan Management System</h1>
-          <div className="user-info">
-            <div>
-              <strong>Rajesh Kumar</strong>
-              <span>Branch Manager</span>
-            </div>
-            <button className="logout" onClick={handleLogout}>
-              <FiLogOut /> Logout
-            </button>
+        <div className="stat-card success">
+          <FiCheckCircle />
+          <div>
+            <p>Branch Approved</p>
+            <h3>{approved}</h3>
           </div>
-        </header>
+        </div>
 
-        {/* MAIN */}
-        <main className="main-content">
-          <section className="page-title">
-            <h2>Branch Manager Dashboard</h2>
-            <p>Review and approve loan applications.</p>
-          </section>
+        <div className="stat-card danger">
+          <MdOutlineCancel />
+          <div>
+            <p>Branch Rejected</p>
+            <h3>{rejected}</h3>
+          </div>
+        </div>
 
-          {/* KPI */}
-          <section className="stats-grid">
-            <div className="stat-card warning">
-              <MdOutlinePendingActions />
-              <div>
-                <p>Pending Review</p>
-                <h3>3</h3>
-              </div>
-            </div>
-
-            <div className="stat-card success">
-              <FiCheckCircle />
-              <div>
-                <p>Branch Approved</p>
-                <h3>0</h3>
-              </div>
-            </div>
-
-            <div className="stat-card danger">
-              <MdOutlineCancel />
-              <div>
-                <p>Branch Rejected</p>
-                <h3>1</h3>
-              </div>
-            </div>
-
-            <div className="stat-card info">
-              <MdOutlineTrendingUp />
-              <div>
-                <p>Active Loans</p>
-                <h3>1</h3>
-              </div>
-            </div>
-          </section>
-
-          {/* LOAN TYPES */}
-          <section className="card">
-            <h3>Loan Types Overview</h3>
-            <div className="loan-types">
-              <div><span>Personal Loan</span><strong>3</strong></div>
-              <div><span>Vehicle Loan</span><strong>2</strong></div>
-              <div><span>Business Loan</span><strong>2</strong></div>
-              <div><span>Education Loan</span><strong>2</strong></div>
-            </div>
-          </section>
-
-          {/* TABLE */}
-          <section className="card">
-            <div className="card-header">
-              <h3>Recent Applications</h3>
-              <span className="link">View all →</span>
-            </div>
-
-            <table>
-              <thead>
-                <tr>
-                  <th>Application #</th>
-                  <th>Applicant</th>
-                  <th>Loan Type</th>
-                  <th className="amount">Amount</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>LN-2026-006</td>
-                  <td>Meera Nair</td>
-                  <td>Vehicle Loan</td>
-                  <td className="amount">₹6,00,000</td>
-                  <td><span className="badge warning">Pending Branch Review</span></td>
-                </tr>
-                <tr>
-                  <td>LN-2026-008</td>
-                  <td>Kavita Shah</td>
-                  <td>Business Loan</td>
-                  <td className="amount">₹15,00,000</td>
-                  <td><span className="badge warning">Pending Branch Review</span></td>
-                </tr>
-                <tr>
-                  <td>LN-2026-005</td>
-                  <td>Rahul Verma</td>
-                  <td>Personal Loan</td>
-                  <td className="amount">₹3,00,000</td>
-                  <td><span className="badge danger">Branch Rejected</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </section>
-        </main>
+        <div className="stat-card info">
+          <MdOutlineTrendingUp />
+          <div>
+            <p>Active Loans</p>
+            <h3>{active}</h3>
+          </div>
+        </div>
       </section>
-    </div>
+
+      {/* LOAN TYPES OVERVIEW */}
+      <section className="card">
+        <h3>Loan Types Overview</h3>
+
+        <div className="loan-types">
+          <div>
+            <span>Personal Loan</span>
+            <strong>{loanTypes.personal}</strong>
+          </div>
+
+          <div>
+            <span>Vehicle Loan</span>
+            <strong>{loanTypes.vehicle}</strong>
+          </div>
+
+          <div>
+            <span>Business Loan</span>
+            <strong>{loanTypes.business}</strong>
+          </div>
+
+          <div>
+            <span>Education Loan</span>
+            <strong>{loanTypes.education}</strong>
+          </div>
+        </div>
+      </section>
+
+      {/* RECENT APPLICATIONS */}
+      <section className="card">
+        <div className="card-header">
+          <h3>Recent Applications</h3>
+          <span
+            className="link"
+            onClick={() => navigate("/admin/loan-applications")}
+            style={{ cursor: "pointer" }}
+          >
+            View all →
+          </span>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Application #</th>
+              <th>Applicant</th>
+              <th>Loan Type</th>
+              <th className="amount">Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {mockLoans.slice(0, 3).map((loan) => (
+              <tr key={loan.id}>
+                <td>{loan.id}</td>
+                <td>{loan.applicant}</td>
+                <td>{loan.type}</td>
+                <td className="amount">
+                  ₹{loan.amount.toLocaleString()}
+                </td>
+                <td>
+                  <span className={getBadgeClass(loan.status)}>
+                    {getStatusText(loan.status)}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </>
   );
 };
 

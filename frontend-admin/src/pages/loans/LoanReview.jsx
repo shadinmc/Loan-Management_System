@@ -1,18 +1,25 @@
-// const LoanReview = () => {
-//   return (
-//     <div>
-//       <h2>Loan Review</h2>
-//
-//       <p>Loan ID: LN001</p>
-//       <p>Applicant: John Doe</p>
-//       <p>Amount: ₹500,000</p>
-//       <p>Status: SUBMITTED</p>
-//
-//       <button>Approve</button>
-//       <button>Reject</button>
-//       <button>Manual Review</button>
-//     </div>
-//   );
-// };
-//
-// export default LoanReview;
+import DecisionPanel from "../../components/DecisionPanel";
+
+const LoanReview = ({ loan, onClose }) => {
+  return (
+    <div className="modal-backdrop">
+      <div className="modal">
+        <h2>Application Review</h2>
+        <p><strong>{loan.id}</strong> – {loan.type}</p>
+
+        <h4>Applicant Info</h4>
+        <p>{loan.applicant}</p>
+        <p>{loan.email}</p>
+
+        <h4>Loan Amount</h4>
+        <p>₹{loan.amount.toLocaleString()}</p>
+
+        <DecisionPanel loanId={loan.id} />
+
+        <button onClick={onClose}>Close</button>
+      </div>
+    </div>
+  );
+};
+
+export default LoanReview;
