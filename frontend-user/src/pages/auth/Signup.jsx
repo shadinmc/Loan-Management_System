@@ -25,17 +25,20 @@ import {
   Fingerprint,
   Gift,
   Check,
-  AlertCircle
+  AlertCircle,
+  FileText,
+  IdCard
 } from 'lucide-react';
 
 export default function Signup() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     username: '',
-    firstName: '',
-    lastName: '',
+    fullName: '',
     email: '',
-    mobile: '',
+    phone: '',
+    aadharNumber: '',
+    panNumber: '',
     password: '',
     confirmPassword: ''
   });
@@ -50,8 +53,20 @@ export default function Signup() {
   const totalSteps = 3;
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setError('');
+    const { name, value } = e.target;
+
+    if (name === 'aadharNumber') {
+      const cleaned = value.replace(/\D/g, '').slice(0, 12);
+      const formatted = cleaned.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+      setForm({ ...form, [name]: formatted });
+    } else if (name === 'panNumber') {
+      setForm({ ...form, [name]: value.toUpperCase().slice(0, 10) });
+    } else if (name === 'phone') {
+      const cleaned = value.replace(/\D/g, '').slice(0, 10);
+      setForm({ ...form, [name]: cleaned });
+    } else {
+      setForm({ ...form, [name]: value });
+    }setError('');
   };
 
   const validateStep = (currentStep) => {
@@ -61,12 +76,12 @@ export default function Signup() {
           setError('Username is required');
           return false;
         }
-        if (!form.firstName.trim()) {
-          setError('First name is required');
+        if (form.username.length < 3) {
+          setError('Username must be at least 3 characters');
           return false;
         }
-        if (!form.lastName.trim()) {
-          setError('Last name is required');
+        if (!form.fullName.trim()) {
+          setError('Full name is required');
           return false;
         }
         break;
@@ -79,12 +94,28 @@ export default function Signup() {
           setError('Please enter a valid email');
           return false;
         }
-        if (!form.mobile.trim()) {
-          setError('Mobile number is required');
+        if (!form.phone.trim()) {
+          setError('Phone number is required');
           return false;
         }
-        if (!/^\d{10}$/.test(form.mobile.replace(/\D/g, ''))) {
-          setError('Please enter a valid 10-digit mobile number');
+        if (form.phone.length !== 10) {
+          setError('Phone number must be 10 digits');
+          return false;
+        }
+        if (!form.aadharNumber.trim()) {
+          setError('Aadhar number is required');
+          return false;
+        }
+        if (form.aadharNumber.replace(/\s/g, '').length !== 12) {
+          setError('Aadhar number must be 12 digits');
+          return false;
+        }
+        if (!form.panNumber.trim()) {
+          setError('PAN number is required');
+          return false;
+        }
+        if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.panNumber)) {
+          setError('Invalid PAN format (e.g., ABCDE1234F)');
           return false;
         }
         break;
@@ -93,8 +124,8 @@ export default function Signup() {
           setError('Password is required');
           return false;
         }
-        if (form.password.length < 8) {
-          setError('Password must be at least 8 characters');
+        if (form.password.length < 6) {
+          setError('Password must be at least 6 characters');
           return false;
         }
         if (form.password !== form.confirmPassword) {
@@ -130,17 +161,11 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      await signup({
-        username: form.username,
-        firstName: form.firstName,
-        lastName: form.lastName,
-        email: form.email,
-        mobile: form.mobile,
-        password: form.password
-      });
-      navigate('/login', { state: { registered: true } });
+      const response = await signup(form);
+      console.log('Signup successful:', response);
+      navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError(err.message || 'Signup failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -150,19 +175,19 @@ export default function Signup() {
     { icon: Gift, text: 'Get ₹500 welcome bonus', color: '#F59E0B' },
     { icon: Shield, text: '100% secure registration', color: '#3B82F6' },
     { icon: Zap, text: 'Instant account activation', color: '#10B981' },
-    { icon: CreditCard, text: 'Access all loan products', color: '#8B5CF6' }
+    { icon: TrendingUp, text: 'Access to all loan products', color: '#8B5CF6' }
   ];
 
   const floatingIcons = [
     { icon: PiggyBank, top: '12%', left: '8%', delay: 0 },
     { icon: CreditCard, top: '22%', right: '12%', delay: 0.2 },
-    { icon: TrendingUp, bottom: '28%', left: '6%', delay: 0.4 },
+    { icon: TrendingUp, bottom: '28%', left: '10%', delay: 0.4 },
     { icon: BadgeCheck, bottom: '18%', right: '8%', delay: 0.6 }
   ];
 
   const stepInfo = {
     1: { title: 'Personal Details', icon: User, desc: 'Tell us about yourself' },
-    2: { title: 'Contact Info', icon: Mail, desc: 'How can we reach you?' },
+    2: { title: 'Identity & Contact', icon: IdCard, desc: 'Verify your identity' },
     3: { title: 'Secure Your Account', icon: Lock, desc: 'Create a strong password' }
   };
 
@@ -194,21 +219,16 @@ export default function Signup() {
     return (
       <motion.div
         key={step}
-        className="step-content"
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}
         transition={{ duration: 0.3 }}
+        className="step-content"
       >
         <div className="step-header">
-          <motion.div
-            className="step-icon-wrapper"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-          >
+          <div className="step-icon-wrapper">
             <CurrentIcon size={22} />
-          </motion.div>
+          </div>
           <div>
             <h3>{stepInfo[step].title}</h3>
             <p>{stepInfo[step].desc}</p>
@@ -218,13 +238,8 @@ export default function Signup() {
         <div className="form-fields">
           {step === 1 && (
             <>
-              <motion.div
-                className={`input-wrapper ${focusedField === 'username' ? 'focused' : ''}`}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <label><User size={15} /> Username</label>
+              <div className="input-wrapper">
+                <label><User size={16} /> Username</label>
                 <div className="input-field">
                   <input
                     type="text"
@@ -236,61 +251,28 @@ export default function Signup() {
                     placeholder="Choose a username"
                   />
                 </div>
-              </motion.div>
-
-              <div className="field-row">
-                <motion.div
-                  className={`input-wrapper ${focusedField === 'firstName' ? 'focused' : ''}`}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <label><User size={15} /> First Name</label>
-                  <div className="input-field">
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={form.firstName}
-                      onChange={handleChange}
-                      onFocus={() => setFocusedField('firstName')}
-                      onBlur={() => setFocusedField(null)}
-                      placeholder="John"
-                    />
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  className={`input-wrapper ${focusedField === 'lastName' ? 'focused' : ''}`}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <label><User size={15} /> Last Name</label>
-                  <div className="input-field">
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={form.lastName}
-                      onChange={handleChange}
-                      onFocus={() => setFocusedField('lastName')}
-                      onBlur={() => setFocusedField(null)}
-                      placeholder="Doe"
-                    />
-                  </div>
-                </motion.div>
+              </div>
+              <div className="input-wrapper">
+                <label><User size={16} /> Full Name</label>
+                <div className="input-field">
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={form.fullName}
+                    onChange={handleChange}
+                    onFocus={() => setFocusedField('fullName')}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder="Enter your full name"
+                  />
+                </div>
               </div>
             </>
           )}
 
           {step === 2 && (
             <>
-              <motion.div
-                className={`input-wrapper ${focusedField === 'email' ? 'focused' : ''}`}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <label><Mail size={15} /> Email Address</label>
+              <div className="input-wrapper">
+                <label><Mail size={16} /> Email Address</label>
                 <div className="input-field">
                   <input
                     type="email"
@@ -299,44 +281,61 @@ export default function Signup() {
                     onChange={handleChange}
                     onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="john@example.com"
+                    placeholder="Enter your email"
                   />
                 </div>
-              </motion.div>
-
-              <motion.div
-                className={`input-wrapper ${focusedField === 'mobile' ? 'focused' : ''}`}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <label><Phone size={15} /> Mobile Number</label>
+              </div>
+              <div className="input-wrapper">
+                <label><Phone size={16} /> Phone Number</label>
                 <div className="input-field phone-input">
                   <span className="country-code">+91</span>
                   <input
                     type="tel"
-                    name="mobile"
-                    value={form.mobile}
+                    name="phone"
+                    value={form.phone}
                     onChange={handleChange}
-                    onFocus={() => setFocusedField('mobile')}
+                    onFocus={() => setFocusedField('phone')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="9876543210"
-                    maxLength={10}
+                    placeholder="10-digit mobile number"
                   />
                 </div>
-              </motion.div>
+              </div><div className="input-wrapper">
+                <label><Fingerprint size={16} /> Aadhar Number</label>
+                <div className="input-field">
+                  <input
+                    type="text"
+                    name="aadharNumber"
+                    value={form.aadharNumber}
+                    onChange={handleChange}
+                    onFocus={() => setFocusedField('aadharNumber')}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder="1234 5678 9012"
+                  />
+                </div>
+                <span className="field-hint">12-digit Aadhar number</span>
+              </div>
+              <div className="input-wrapper">
+                <label><FileText size={16} /> PAN Number</label>
+                <div className="input-field">
+                  <input
+                    type="text"
+                    name="panNumber"
+                    value={form.panNumber}
+                    onChange={handleChange}
+                    onFocus={() => setFocusedField('panNumber')}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder="ABCDE1234F"
+                  />
+                </div>
+                <span className="field-hint">Format: ABCDE1234F</span>
+              </div>
             </>
           )}
 
           {step === 3 && (
             <>
-              <motion.div
-                className={`input-wrapper ${focusedField === 'password' ? 'focused' : ''}`}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <label><Lock size={15} /> Password</label>
+              <div className="input-wrapper">
+                <label><Lock size={16} /> Password</label>
                 <div className="input-field">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -345,50 +344,35 @@ export default function Signup() {
                     onChange={handleChange}
                     onFocus={() => setFocusedField('password')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="Create a strong password"
+                    placeholder="Create a password"
                   />
                   <button
                     type="button"
                     className="toggle-password"
                     onClick={() => setShowPassword(!showPassword)}
-                    tabIndex={-1}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
                 {form.password && (
-                  <motion.div
-                    className="password-strength"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                  >
+                  <div className="password-strength">
                     <div className="strength-bars">
                       {[1, 2, 3, 4].map((level) => (
-                        <motion.div
+                        <div
                           key={level}
                           className="strength-bar"
-                          initial={{ scaleX: 0 }}
-                          animate={{
-                            scaleX: 1,
-                            background: level <= pwdStrength.strength ? pwdStrength.color : 'var(--border-color)'
+                          style={{
+                            background: level <= pwdStrength.strength ? pwdStrength.color : undefined
                           }}
-                          transition={{ delay: level * 0.1 }}
-                          style={{ transformOrigin: 'left' }}
                         />
                       ))}
                     </div>
                     <span style={{ color: pwdStrength.color }}>{pwdStrength.label}</span>
-                  </motion.div>
+                  </div>
                 )}
-              </motion.div>
-
-              <motion.div
-                className={`input-wrapper ${focusedField === 'confirmPassword' ? 'focused' : ''}`}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <label><Lock size={15} /> Confirm Password</label>
+              </div>
+              <div className="input-wrapper">
+                <label><Lock size={16} /> Confirm Password</label>
                 <div className="input-field">
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
@@ -403,28 +387,16 @@ export default function Signup() {
                     type="button"
                     className="toggle-password"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    tabIndex={-1}
                   >
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
                 {form.confirmPassword && form.password === form.confirmPassword && (
-                  <motion.div
-                    className="match-indicator"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                  >
+                  <div className="match-indicator">
                     <Check size={14} /> Passwords match
-                  </motion.div>
+                  </div>
                 )}
-              </motion.div>
-
-              <motion.label
-                className="terms-checkbox"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
+              </div><label className="terms-checkbox">
                 <input
                   type="checkbox"
                   checked={agreedToTerms}
@@ -432,20 +404,18 @@ export default function Signup() {
                 />
                 <span className="checkmark" />
                 <span>
-                  I agree to the <Link to="/terms">Terms of Service</Link> and{' '}
-                  <Link to="/privacy">Privacy Policy</Link>
+                  I agree to the <a href="/terms">Terms of Service</a> and{' '}
+                  <a href="/privacy">Privacy Policy</a>
                 </span>
-              </motion.label>
+              </label>
             </>
           )}
-        </div>
-      </motion.div>
+        </div></motion.div>
     );
   };
 
   return (
     <div className="auth-page">
-      {/* Animated Background */}
       <div className="auth-bg">
         <div className="bg-gradient" />
         <div className="bg-pattern" />
@@ -471,13 +441,14 @@ export default function Signup() {
             }}
           />
         ))}
-      </div><motion.div
+      </div>
+
+      <motion.div
         className="auth-container signup-container"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Left Panel - Branding */}
         <div className="auth-branding">
           <div className="branding-content">
             {floatingIcons.map((item, index) => {
@@ -520,7 +491,7 @@ export default function Signup() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              Join LoanWise
+              LoanWise
             </motion.h1>
 
             <motion.p
@@ -584,7 +555,6 @@ export default function Signup() {
           </div>
         </div>
 
-        {/* Right Panel - Form */}
         <div className="auth-form-section">
           <motion.div
             className="form-content"
@@ -606,89 +576,32 @@ export default function Signup() {
                 <UserPlus size={28} />
               </motion.div>
               <h2>Create Account</h2>
-              <p>Join thousands of happy customers</p>
+              <p>Join thousands of satisfied users</p>
             </motion.div>
 
-            {/* Enhanced Progress Steps */}
-            <motion.div
-              className="progress-container"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.45 }}
-            >
-              {/* Progress Bar Background */}
+            <div className="progress-container">
               <div className="progress-bar-bg">
                 <motion.div
                   className="progress-bar-fill"
                   initial={{ width: '0%' }}
                   animate={{ width: `${((step - 1) / (totalSteps - 1)) * 100}%` }}
-                  transition={{ duration: 0.4, ease: 'easeInOut' }}
+                  transition={{ duration: 0.3 }}
                 />
               </div>
-
-              {/* Step Indicators */}
               <div className="progress-steps">
-                {[1, 2, 3].map((stepNum) => {
-                  const StepIcon = stepInfo[stepNum].icon;
-                  const isActive = step === stepNum;
-                  const isCompleted = step > stepNum;
-
-                  return (
-                    <motion.div
-                      key={stepNum}
-                      className={`step-indicator ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.5 + stepNum * 0.1, type: 'spring' }}
-                    >
-                      <motion.div
-                        className="step-circle"
-                        animate={{
-                          scale: isActive ? 1.1 : 1,
-                          boxShadow: isActive
-                            ? '0 0 0 4px rgba(45, 190, 96, 0.2), 0 4px 12px rgba(45, 190, 96, 0.3)'
-                            : 'none'
-                        }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <AnimatePresence mode="wait">
-                          {isCompleted ? (
-                            <motion.div
-                              key="check"
-                              initial={{ scale: 0, rotate: -180 }}
-                              animate={{ scale: 1, rotate: 0 }}
-                              exit={{ scale: 0 }}
-                              transition={{ type: 'spring', stiffness: 300 }}
-                            >
-                              <Check size={18} strokeWidth={3} />
-                            </motion.div>
-                          ) : (
-                            <motion.div
-                              key="icon"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                            >
-                              <StepIcon size={16} />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-
-                      <motion.span
-                        className="step-label"
-                        animate={{
-                          color: isActive || isCompleted ? '#2DBE60' : 'var(--text-muted)',
-                          fontWeight: isActive ? 600 : 500
-                        }}
-                      >
-                        {stepInfo[stepNum].title.split(' ')[0]}
-                      </motion.span>
-                    </motion.div>
-                  );
-                })}
+                {[1, 2, 3].map((s) => (
+                  <div
+                    key={s}
+                    className={`step-indicator ${step === s ? 'active' : ''} ${step > s ? 'completed' : ''}`}
+                  >
+                    <div className="step-circle">
+                      {step > s ? <Check size={18} /> : s}
+                    </div>
+                    <span className="step-label">Step {s}</span>
+                  </div>
+                ))}
               </div>
-            </motion.div>
+            </div>
 
             <AnimatePresence mode="wait">
               {error && (
@@ -697,7 +610,6 @@ export default function Signup() {
                   initial={{ opacity: 0, y: -10, height: 0 }}
                   animate={{ opacity: 1, y: 0, height: 'auto' }}
                   exit={{ opacity: 0, y: -10, height: 0 }}
-                  role="alert"
                 >
                   <AlertCircle size={18} />
                   {error}
@@ -710,12 +622,7 @@ export default function Signup() {
                 {renderStepContent()}
               </AnimatePresence>
 
-              <motion.div
-                className="form-actions"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
+              <div className="form-actions">
                 {step > 1 && (
                   <motion.button
                     type="button"
@@ -762,14 +669,14 @@ export default function Signup() {
                     )}
                   </motion.button>
                 )}
-              </motion.div>
+              </div>
             </form>
 
             <motion.div
               className="auth-footer"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 1.1 }}
             >
               <p>
                 Already have an account?{' '}
@@ -829,9 +736,7 @@ export default function Signup() {
           background: var(--card-bg);
           border-radius: 28px;
           overflow: hidden;
-          box-shadow:
-            0 25px 80px rgba(0, 0, 0, 0.4),
-            0 0 0 1px rgba(255, 255, 255, 0.05);
+          box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
           position: relative;
           z-index: 1;
         }
@@ -1022,7 +927,6 @@ export default function Signup() {
           font-size: 0.9375rem;
         }
 
-        /* Enhanced Progress Container */
         .progress-container {
           position: relative;
           margin-bottom: 28px;
@@ -1072,7 +976,7 @@ export default function Signup() {
           justify-content: center;
           color: var(--text-muted);
           transition: all 0.3s ease;
-          position: relative;
+          font-weight: 600;
         }
 
         .step-indicator.active .step-circle {
@@ -1089,9 +993,9 @@ export default function Signup() {
 
         .step-label {
           font-size: 0.75rem;
+          color: var(--text-muted);
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          transition: all 0.3s ease;
         }
 
         .error-banner {
@@ -1165,12 +1069,6 @@ export default function Signup() {
           gap: 18px;
         }
 
-        .field-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 14px;
-        }
-
         .input-wrapper {
           display: flex;
           flex-direction: column;
@@ -1184,11 +1082,6 @@ export default function Signup() {
           font-size: 0.875rem;
           font-weight: 600;
           color: var(--text-secondary);
-          transition: color 0.2s ease;
-        }
-
-        .input-wrapper.focused label {
-          color: #2DBE60;
         }
 
         .input-field {
@@ -1215,6 +1108,12 @@ export default function Signup() {
           border-color: #2DBE60;
           background: var(--card-bg);
           box-shadow: 0 0 0 4px rgba(45, 190, 96, 0.1);
+        }
+
+        .field-hint {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          margin-top: -4px;
         }
 
         .phone-input {
@@ -1343,10 +1242,6 @@ export default function Signup() {
           font-weight: 500;
         }
 
-        .terms-checkbox a:hover {
-          text-decoration: underline;
-        }
-
         .form-actions {
           display: flex;
           gap: 12px;
@@ -1429,11 +1324,6 @@ export default function Signup() {
           display: inline-flex;
           align-items: center;
           gap: 4px;
-          transition: color 0.2s ease;
-        }
-
-        .auth-footer a:hover {
-          color: #25A854;
         }
 
         @media (max-width: 900px) {
@@ -1462,10 +1352,6 @@ export default function Signup() {
 
           .form-header h2 {
             font-size: 1.5rem;
-          }
-
-          .field-row {
-            grid-template-columns: 1fr;
           }
 
           .progress-bar-bg {

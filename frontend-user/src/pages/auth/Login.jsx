@@ -54,15 +54,18 @@ export default function Login() {
 
     setLoading(true);
     try {
-      await login(form);
+      const response = await login(form);
+      console.log('Login successful:', response);
       navigate(from, { replace: true });
-      window.location.reload();
     } catch (err) {
-      setError('Invalid email or password');
+      setError(err.message || 'Invalid email or password');
     } finally {
       setLoading(false);
     }
   };
+
+
+
 
   const features = [
     { icon: Zap, text: 'Instant loan approvals', color: '#F59E0B' },
