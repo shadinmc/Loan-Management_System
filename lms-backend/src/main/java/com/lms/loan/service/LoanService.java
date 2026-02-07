@@ -213,14 +213,28 @@ public class LoanService {
     public Loan applyForLoan(String userId, LoanApplicationRequest request, String idempotencyKey) {
 
         // ✅ Step 1: Check if this request was already processed
-        Optional<IdempotencyRecord> existingRecord = idempotencyKeyService.findByKey(idempotencyKey);
+        Optional<IdempotencyRecord> recordOpt =
+                idempotencyKeyService.findByKey(idempotencyKey);
 
-        if (existingRecord.isPresent()) {
-            // Return the already created loan - prevents duplicate
-            String existingLoanId = existingRecord.get().getResourceId();
-            return loanRepository.findByLoanId(existingLoanId)
-                    .orElseThrow(() -> new RuntimeException("Loan not found for idempotency key"));
+        if (recordOpt.isPresent()) {
+
+            IdempotencyRecord record = recordOpt.get();
+
+            // ✅ If expired → treat as new request
+            if (record.getExpiresAt().isBefore(java.time.Instant.now())) {
+                // continue normally (create new loan)
+            } else {
+                // ✅ Replay case
+                Optional<Loan> existingLoan =
+                        loanRepository.findByLoanId(record.getResourceId());
+
+                if (existingLoan.isPresent()) {
+                    return existingLoan.get(); // replay response
+                }
+                // else orphan record → continue to create new loan
+            }
         }
+
 
         // ✅ Step 2: Validate request
         validateLoanRequest(request);
