@@ -4,7 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="94172bc9-ecc6-4ab9-bb14-296ec23d4b1c" name="Changes" comment="" />
+    <list default="true" id="94172bc9-ecc6-4ab9-bb14-296ec23d4b1c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-admin/src/pages/LoanApplications/LoanApplications.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend-admin/src/pages/LoanApplications/LoanApplications.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-admin/src/pages/auth/AdminLogin.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend-admin/src/pages/auth/AdminLogin.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-admin/src/pages/auth/AdminLogin.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend-admin/src/pages/auth/AdminLogin.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-admin/src/routes/AdminRoutes.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend-admin/src/routes/AdminRoutes.jsx" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,26 +24,31 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 5
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5
+}</component>
   <component name="ProjectId" id="39BtMOJPXLvmtFmMYVAGRS2T4vx" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "base",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/304483/Desktop/JAVA_LMS_4_repo",
-    "settings.editor.selected.configurable": "configurable.group.appearance"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Ragumaan-frontend&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/304483/Desktop/JAVA_LMS_4_repo&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.appearance&quot;
   }
-}]]></component>
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\304483\Desktop\JAVA_LMS_4_repo\frontend-admin\src\assets" />
+    </key>
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="94172bc9-ecc6-4ab9-bb14-296ec23d4b1c" name="Changes" comment="" />
