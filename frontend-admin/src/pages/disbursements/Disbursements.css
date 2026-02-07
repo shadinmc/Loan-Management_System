@@ -1,0 +1,105 @@
+/* ---------- COMMON ---------- */
+.page-title h2 {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.page-title p {
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* ---------- STATS ---------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.stat-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0,0,0,.05);
+  animation: fadeUp .4s ease;
+}
+
+.stat-card strong {
+  margin-left: auto;
+  font-size: 20px;
+}
+
+.warning { background: #fef9c3; }
+.info { background: #e0e7ff; }
+.success { background: #dcfce7; }
+.danger { background: #fee2e2; }
+
+/* ---------- FILTER ---------- */
+.filter-bar {
+  margin-bottom: 16px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 14px;
+  max-width: 420px;
+}
+
+/* ---------- TABLE ---------- */
+.table-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.06);
+  overflow: hidden;
+  animation: fadeUp .5s ease;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #f8fafc;
+}
+
+th, td {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 14px;
+}
+
+tbody tr:hover {
+  background: #f9fafb;
+}
+
+.sub {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ---------- BADGES ---------- */
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge.pending { background: #fef3c7; color: #92400e; }
+.badge.completed { background: #dcfce7; color: #166534; }
+
+/* ---------- ANIMATION ---------- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

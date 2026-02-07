@@ -1,6 +1,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import RegionalLayout from "../layouts/RegionalLayout";
 import RegionalDashboard from "../pages/dashboard/RegionalDashboard";
+import AdminDashboard from "../pages/dashboard/AdminDashboard";
+import Repayments from "../pages/Repayments/Repayments";
+import LoanClosure from "../pages/LoanClosure/LoanClosure";
+import Disbursement from "../pages/disbursements/Disbursements";
 import RegionalLoanApplications from "../pages/LoanApplications/RegionalLoanApplications";
 import AuthGuard from "../utils/AuthGuard";
 
@@ -17,6 +21,9 @@ const RegionalRoutes = () => {
       >
         <Route path="dashboard" element={<RegionalDashboard />} />
         <Route path="loan-applications" element={<RegionalLoanApplications />} />
+        <Route path="disbursements" element={<Disbursement/>} />
+        <Route path="repayments" element={<Repayments />} />
+        <Route path="loan-closure" element={<LoanClosure />} />
 
 
       </Route>

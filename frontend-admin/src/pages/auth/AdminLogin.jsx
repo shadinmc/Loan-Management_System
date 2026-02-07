@@ -84,7 +84,7 @@ const AdminLogin = () => {
       {/* RIGHT SIDE */}
       <div className="login-right">
         <div className="login-card">
-          <div className="login-icon">🔒</div>
+
 
           <h2>Admin Login</h2>
           <p className="subtitle">Secure Access Portal</p>

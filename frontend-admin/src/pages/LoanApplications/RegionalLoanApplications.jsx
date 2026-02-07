@@ -5,7 +5,7 @@ import RegionalLoanReview from "../loans/RegionalLoanReview";
 import "./RegionalLoanApplications.css";
 
 /* ===========================
-   DUMMY DATA (TEMPORARY)
+   DUMMY DATA
    =========================== */
 const REGIONAL_LOANS = [
   {
@@ -44,24 +44,26 @@ const LOAN_TYPES = [
 const RegionalLoanApplications = () => {
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
 
   /* ===========================
-     FILTER LOGIC (SAFE)
+     FILTER LOGIC
      =========================== */
   const filteredLoans = REGIONAL_LOANS.filter((loan) => {
     // Card filter
     if (selectedType && loan.type !== selectedType) return false;
 
+    // Status filter
+    if (statusFilter !== "ALL" && loan.status !== statusFilter) return false;
+
     // Search filter
     if (search) {
-      const text = search.toLowerCase();
+      const q = search.toLowerCase();
       const applicant = loan.applicant?.toLowerCase() || "";
       const id = loan.id?.toLowerCase() || "";
 
-      if (!applicant.includes(text) && !id.includes(text)) {
-        return false;
-      }
+      if (!applicant.includes(q) && !id.includes(q)) return false;
     }
 
     return true;
@@ -92,7 +94,7 @@ const RegionalLoanApplications = () => {
         ))}
       </div>
 
-      {/* SEARCH BAR */}
+      {/* SEARCH + STATUS FILTER */}
       <div className="filter-bar">
         <div className="search-box">
           <Search size={18} />
@@ -103,6 +105,17 @@ const RegionalLoanApplications = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+
+        <select
+          className="status-filter"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="ALL">All Status</option>
+          <option value="PENDING_REGIONAL_REVIEW">Pending My Review</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
       </div>
 
       {/* TABLE */}

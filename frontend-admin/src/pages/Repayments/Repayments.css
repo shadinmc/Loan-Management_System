@@ -1,0 +1,72 @@
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.stat-card {
+  background: #fff;
+  padding: 18px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(0,0,0,.05);
+  animation: fadeUp .4s ease;
+}
+
+.repayment-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.06);
+  margin-top: 20px;
+  animation: fadeUp .5s ease;
+}
+
+.repayment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.link {
+  font-size: 13px;
+  color: #4f46e5;
+  cursor: pointer;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.bar {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg,#6366f1,#4f46e5);
+  border-radius: 999px;
+  transition: width .4s ease;
+}
+
+.meta {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.paid { color: #16a34a; }
+.pending { color: #ca8a04; }
