@@ -13,7 +13,7 @@ public class DecisionEligibilityMapper {
 
         /* Core */
         ctx.setLoanType(input.getLoanType());
-        ctx.setCreditScore(input.getCreditScore());
+        ctx.setCibilScore(input.getCreditScore());
         ctx.setDateOfBirth(input.getDateOfBirth());
 
         /* Loan basics */

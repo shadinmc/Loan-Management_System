@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.Period;
 
 @Data
 @Builder
@@ -17,30 +17,35 @@ import java.util.Date;
 @AllArgsConstructor
 public class EligibilityContext {
 
+    private String userId;
     private String loanId;
     private LoanType loanType;
+
     private BigDecimal requestedAmount;
     private Integer tenureMonths;
     private Integer cibilScore;
 
+    private LocalDate dateOfBirth; // SOURCE OF TRUTH
 
-    // Personal Loan fields
+    /* Derived */
+    public int getAge() {
+        if (dateOfBirth == null) return 0;
+        return Period.between(dateOfBirth, LocalDate.now()).getYears();
+    }
+
+    /* Personal */
     private BigDecimal monthlyIncome;
     private String employmentType;
 
-    // Education Loan fields
+    /* Education */
     private BigDecimal coApplicantIncome;
     private Integer courseDurationMonths;
 
-    // Business Loan fields
+    /* Business */
     private BigDecimal annualTurnover;
     private Integer businessVintageYears;
 
-    // Vehicle Loan fields
+    /* Vehicle */
     private BigDecimal downPaymentAmount;
     private String vehicleType;
-
-    // Credit Score (can be fetched from external service)
-    private Integer creditScore;
-
-    private LocalDate dateOfBirth;}
+}
