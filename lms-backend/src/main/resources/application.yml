@@ -1,3 +1,6 @@
 spring:
   application:
     name: lms-backend
+  data:
+    mongodb:
+      auto-index-creation: true

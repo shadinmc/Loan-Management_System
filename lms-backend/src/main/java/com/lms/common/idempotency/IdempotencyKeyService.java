@@ -2,8 +2,9 @@ package com.lms.common.idempotency;
 
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
+import java.time.Duration;
+import java.time.Instant;
 
 @Service
 public class IdempotencyKeyService {
@@ -27,10 +28,10 @@ public class IdempotencyKeyService {
         record.setIdempotencyKey(key);
         record.setResourceId(resourceId);
         record.setResourceType(resourceType);
-        record.setCreatedAt(LocalDateTime.now());
+        record.setCreatedAt(Instant.now());
 
         // ✅ 10-minute expiry
-        record.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+        record.setExpiresAt(Instant.now().plus(Duration.ofMinutes(1)));
 
         return repository.save(record);
     }

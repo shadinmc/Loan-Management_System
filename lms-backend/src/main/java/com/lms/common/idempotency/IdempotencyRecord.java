@@ -7,7 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 @NoArgsConstructor
@@ -24,9 +24,8 @@ public class IdempotencyRecord {
     private String resourceId;      // loanId
     private String resourceType;    // LOAN_APPLICATION
 
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
-    // ✅ TTL handled by Mongo using absolute time
-    @Indexed
-    private LocalDateTime expiresAt;
+    // ✅ MongoDB TTL uses this field
+    private Instant expiresAt;
 }

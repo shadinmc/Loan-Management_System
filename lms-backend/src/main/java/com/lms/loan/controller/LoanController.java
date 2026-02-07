@@ -50,6 +50,10 @@ public class LoanController {
     ) {
         String userId = securityUtils.getCurrentUser().getId();
 
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            idempotencyKey = UUID.randomUUID().toString(); // auto-generate
+        }
+
         Loan loan = loanService.applyForLoan(userId, request, idempotencyKey);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(loan);

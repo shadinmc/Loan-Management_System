@@ -28,14 +28,14 @@ public class EligibilityService {
                 .orElseThrow(() -> new RuntimeException("Loan not found or unauthorized"));
 
         /* Guard: prevent re-evaluation */
-        if (loan.getEligibilityCheckedAt() != null) {
+      /*  if (loan.getEligibilityCheckedAt() != null) {
             throw new IllegalStateException("Eligibility already evaluated for this loan");
-        }
+        }*/
 
         /* Guard: state validation */
-        if (loan.getStatus() != LoanStatus.APPLIED) {
+       /* if (loan.getStatus() != LoanStatus.APPLIED) {
             throw new IllegalStateException("Eligibility check allowed only in APPLIED state");
-        }
+        }*/
 
         /* Build eligibility context */
         EligibilityContext context = buildContextFromLoan(loan);
