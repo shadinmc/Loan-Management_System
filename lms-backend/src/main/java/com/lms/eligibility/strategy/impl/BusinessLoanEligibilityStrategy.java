@@ -1,54 +1,96 @@
-/*
 package com.lms.eligibility.strategy.impl;
 
+import com.lms.common.enums.LoanStatus;
+import com.lms.common.enums.LoanType;
 import com.lms.eligibility.context.EligibilityContext;
 import com.lms.eligibility.dto.EligibilityResult;
 import com.lms.eligibility.strategy.LoanEligibilityStrategy;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
-public class BusinessLoanEligibilityStrategy
-        implements LoanEligibilityStrategy {
+public class BusinessLoanEligibilityStrategy implements LoanEligibilityStrategy {
+
+    @Override
+    public LoanType getLoanType() {
+        return LoanType.BUSINESS;
+    }
 
     @Override
     public EligibilityResult evaluate(EligibilityContext ctx) {
 
+        List<String> passedRules = new ArrayList<>();
+        List<String> failedRules = new ArrayList<>();
         int score = 0;
 
-        // 1️⃣ CIBIL score (strict for business loans)
-        if (ctx.getCreditScore()>= 750) score += 30;
-        else if (ctx.getCreditScore() >= 700) score += 20;
-        else
-            return new EligibilityResult(false, 0, "Low CIBIL score");
+        boolean eligible = true;
 
-        // 2️⃣ Business vintage
-        if (ctx.getBusinessVintageYears() == null)
-            return new EligibilityResult(false, score, "Business vintage missing");
-
-        if (ctx.getBusinessVintageYears() >= 5) score += 30;
-        else if (ctx.getBusinessVintageYears() >= 2) score += 20;
-        else
-            return new EligibilityResult(false, score, "Business too new");
-
-        // 3️⃣ GST annual turnover
-        if (ctx.getGstAnnualTurnover() == null)
-            return new EligibilityResult(false, score, "GST turnover missing");
-
-        if (ctx.getGstAnnualTurnover() >= 5000000)       // ≥ 50 lakhs
-            score += 40;
-        else if (ctx.getGstAnnualTurnover() >= 2000000)  // ≥ 20 lakhs
+        /* 1️ CIBIL score */
+        Integer cibil = ctx.getCibilScore();
+        if (cibil == null || cibil < 700) {
+            failedRules.add("CIBIL score below 700");
+            eligible = false;
+        } else {
             score += 30;
-        else
-            return new EligibilityResult(false, score, "Low GST turnover");
+            passedRules.add("CIBIL score ≥ 700");
+        }
 
-        return new EligibilityResult(
-                true,
-                score,
-                "Eligible for business loan"
-        );
+        /* 2 Business vintage */
+        Integer vintage = ctx.getBusinessVintageYears();
+        if (vintage == null || vintage < 2) {
+            failedRules.add("Business vintage less than 2 years");
+            eligible = false;
+        } else {
+            score += 30;
+            passedRules.add("Business vintage ≥ 2 years");
+        }
+
+        /* 3️ GST annual turnover */
+        BigDecimal turnover = ctx.getAnnualTurnover();
+        BigDecimal minTurnover = new BigDecimal("2000000"); // ₹20 lakhs
+
+        if (turnover == null) {
+            failedRules.add("GST annual turnover not provided");
+            eligible = false;
+        }
+        else if (turnover.compareTo(minTurnover) < 0) {
+            failedRules.add("GST annual turnover below ₹20,00,000");
+            eligible = false;
+        }
+        else {
+            score += 40;
+            passedRules.add("GST annual turnover acceptable");
+        }
+
+        /*  Final failure */
+        if (!eligible) {
+            return EligibilityResult.builder()
+                    .eligible(false)
+                    .newStatus(LoanStatus.NOT_ELIGIBLE)
+                    .approvedAmount(BigDecimal.ZERO)
+                    .score(score)
+                    .remarks("Business loan eligibility failed")
+                    .failedRules(failedRules)
+                    .passedRules(passedRules)
+                    .build();
+        }
+
+        /* ✅ Final success */
+        return EligibilityResult.builder()
+                .eligible(true)
+                .newStatus(LoanStatus.PENDING_BRANCH_REVIEW)
+                .approvedAmount(ctx.getRequestedAmount())
+                .score(score)
+                .remarks("Eligible for business loan")
+                .passedRules(passedRules)
+                .failedRules(failedRules)
+                .build();
     }
 }
-*/
+
 
 
 /*

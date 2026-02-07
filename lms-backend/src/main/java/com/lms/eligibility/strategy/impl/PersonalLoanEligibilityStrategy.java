@@ -1,5 +1,6 @@
 package com.lms.eligibility.strategy.impl;
 
+import com.lms.common.enums.LoanType;
 import com.lms.eligibility.context.EligibilityContext;
 import com.lms.eligibility.dto.EligibilityResult;
 import com.lms.eligibility.strategy.LoanEligibilityStrategy;
@@ -19,6 +20,11 @@ public class PersonalLoanEligibilityStrategy implements LoanEligibilityStrategy 
     private static final BigDecimal MAX_LOAN_MULTIPLIER = new BigDecimal("24"); // 24x monthly income
     private static final int MIN_TENURE = 6;
     private static final int MAX_TENURE = 60;
+
+    @Override
+    public LoanType getLoanType() {
+        return LoanType.PERSONAL;
+    }
 
     @Override
     public EligibilityResult evaluate(EligibilityContext context) {

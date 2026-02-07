@@ -1,55 +1,103 @@
-/*
 package com.lms.eligibility.strategy.impl;
 
+import com.lms.common.enums.LoanStatus;
+import com.lms.common.enums.LoanType;
 import com.lms.eligibility.context.EligibilityContext;
 import com.lms.eligibility.dto.EligibilityResult;
 import com.lms.eligibility.strategy.LoanEligibilityStrategy;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
-public class VehicleLoanEligibilityStrategy
-        implements LoanEligibilityStrategy {
+public class VehicleLoanEligibilityStrategy implements LoanEligibilityStrategy {
+
+    @Override
+    public LoanType getLoanType() {
+        return LoanType.VEHICLE;
+    }
 
     @Override
     public EligibilityResult evaluate(EligibilityContext ctx) {
 
+        List<String> passedRules = new ArrayList<>();
+        List<String> failedRules = new ArrayList<>();
         int score = 0;
 
-        // 1️⃣ CIBIL score
-        if (ctx.getCreditScore() >= 750) score += 30;
-        else if (ctx.getCreditScore() >= 650) score += 20;
-        else
-            return new EligibilityResult(false, 0, "Low CIBIL score");
+        boolean eligible = true;
 
-        // 2️⃣ Down payment
-        if (ctx.getDownPaymentAmount() == null)
-            return new EligibilityResult(false, score, "Down payment missing");
+        /* 1️ CIBIL score */
+        Integer cibil = ctx.getCibilScore();
+        if (cibil == null || cibil < 650) {
+            failedRules.add("CIBIL score below 650");
+            eligible = false;
+        } else {
+            passedRules.add("CIBIL score acceptable");
+            score += (cibil >= 750) ? 30 : 20;
+        }
 
-        double minDownPayment = ctx.getLoanAmount() * 0.20;
+        /* 2️ Down payment present */
+        if (ctx.getDownPaymentAmount() == null) {
+            failedRules.add("Down payment missing");
+            eligible = false;
+        }
 
-        if (ctx.getDownPaymentAmount() >= minDownPayment)
-            score += 50;
-        else
-            return new EligibilityResult(
-                    false,
-                    score,
-                    "Down payment less than 20%"
-            );
+        /* 3️ Down payment ≥ 20% */
+        if (ctx.getDownPaymentAmount() != null && ctx.getRequestedAmount() != null) {
+            BigDecimal minDownPayment =
+                    ctx.getRequestedAmount().multiply(new BigDecimal("0.20"));
 
-        // 3️⃣ EMI affordability (basic proxy)
-        if (ctx.getEmiAmount() <= ctx.getLoanAmount() * 0.05)
-            score += 20;
-        else
-            score += 10; // still acceptable, but higher risk
+            if (ctx.getDownPaymentAmount().compareTo(minDownPayment) >= 0) {
+                passedRules.add("Down payment ≥ 20%");
+                score += 50;
+            } else {
+                failedRules.add("Down payment less than 20%");
+                eligible = false;
+            }
+        }
 
-        return new EligibilityResult(
-                true,
-                score,
-                "Eligible for vehicle loan"
-        );
+        /* 4️ EMI affordability (only if still meaningful) */
+        if (eligible && ctx.getRequestedAmount() != null) {
+            BigDecimal emiProxyLimit =
+                    ctx.getRequestedAmount().multiply(new BigDecimal("0.05"));
+
+            if (ctx.getDownPaymentAmount().compareTo(emiProxyLimit) <= 0) {
+                score += 20;
+                passedRules.add("EMI affordability good");
+            } else {
+                score += 10;
+                passedRules.add("EMI affordability acceptable");
+            }
+        }
+
+        /*  Final decision */
+        if (!eligible) {
+            return EligibilityResult.builder()
+                    .eligible(false)
+                    .newStatus(LoanStatus.NOT_ELIGIBLE)
+                    .approvedAmount(BigDecimal.ZERO)
+                    .score(score)
+                    .remarks("Vehicle loan eligibility failed")
+                    .failedRules(failedRules)
+                    .passedRules(passedRules)
+                    .build();
+        }
+
+        return EligibilityResult.builder()
+                .eligible(true)
+                .newStatus(LoanStatus.PENDING_BRANCH_REVIEW)
+                .approvedAmount(ctx.getRequestedAmount())
+                .score(score)
+                .remarks("Eligible for vehicle loan")
+                .passedRules(passedRules)
+                .failedRules(failedRules)
+                .build();
     }
+
 }
-*/
+
 
 /*
 Mandatory checks

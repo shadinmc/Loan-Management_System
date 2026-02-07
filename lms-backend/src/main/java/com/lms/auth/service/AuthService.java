@@ -22,12 +22,11 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
 
     public AuthResponse signup(SignupRequest request) {
-        // Check if email exists
+
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
 
-        // Check if username exists
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
@@ -40,31 +39,34 @@ public class AuthService {
             throw new RuntimeException("PAN number already registered");
         }
 
-        // Create new user
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFullName(request.getFullName());
+        user.setPhone(request.getPhone());
         user.setAadharNumber(request.getAadharNumber());
         user.setPanNumber(request.getPanNumber());
-        user.setPhone(request.getPhone());
-        user.setBranchCode(request.getBranchCode());
+        user.setDateOfBirth(request.getDateOfBirth());
+
+        // 🔥 auto age calculation
+        user.calculateAge();
+
         user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
 
-        // Set role (default to USER if not specified)
         User.Role role = User.Role.USER;
-        if (request.getRole() != null && !request.getRole().isEmpty()) {
+        if (request.getRole() != null) {
             try {
                 role = User.Role.valueOf(request.getRole().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                role = User.Role.USER;
-            }
+            } catch (Exception ignored) {}
         }
+
         user.setRoles(Set.of(role));
 
         User savedUser = userRepository.save(user);
+
         String token = jwtTokenProvider.generateToken(savedUser);
 
         return new AuthResponse(
@@ -76,6 +78,7 @@ public class AuthService {
                 "Signup successful"
         );
     }
+
 
     public AuthResponse login(LoginRequest request) {
         // Find user by email or username

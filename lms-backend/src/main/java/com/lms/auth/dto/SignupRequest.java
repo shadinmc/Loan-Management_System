@@ -1,10 +1,9 @@
 package com.lms.auth.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
+
+import java.time.LocalDate;
 
 @Data
 public class SignupRequest {
@@ -31,6 +30,11 @@ public class SignupRequest {
     @NotBlank(message = "PAN number is required")
     @Pattern(regexp = "^[A-Z]{5}[0-9]{4}[A-Z]{1}$", message = "Invalid PAN format (e.g., ABCDE1234F)")
     private String panNumber;
+
+    @NotNull
+    @Past
+    private LocalDate dateOfBirth;
+
 
     private String phone;
     private String branchCode;

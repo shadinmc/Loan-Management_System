@@ -5,7 +5,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.Set;
 
 @Data
@@ -30,7 +32,11 @@ public class User {
     private String password;
     private String fullName;
     private String phone;
-    private String branchCode;
+
+    private LocalDate dateOfBirth;
+    private Integer age;
+
+
 
     private Set<Role> roles;
 
@@ -44,5 +50,11 @@ public class User {
         USER,
         BRANCH_MANAGER,
         REGIONAL_MANAGER
+    }
+
+    public void calculateAge() {
+        if (this.dateOfBirth != null) {
+            this.age = Period.between(this.dateOfBirth, LocalDate.now()).getYears();
+        }
     }
 }

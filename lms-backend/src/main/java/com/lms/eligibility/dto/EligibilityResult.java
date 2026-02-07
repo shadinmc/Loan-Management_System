@@ -16,6 +16,7 @@ import java.util.List;
 public class EligibilityResult {
 
     private String loanId;
+    private String loanType;
     private boolean eligible;
     private int score;
     private LoanStatus newStatus;
