@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signup } from '../../api/authApi';
+import { useAuth } from '../../context/AuthContext';
 import {
   UserPlus,
   Wallet,
@@ -49,6 +50,7 @@ export default function Signup() {
   const [focusedField, setFocusedField] = useState(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const navigate = useNavigate();
+  const { login: setAuthUser } = useAuth();
 
   const totalSteps = 3;
 
@@ -156,20 +158,30 @@ export default function Signup() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateStep(3)) return;
+        e.preventDefault();
+        if (!validateStep(3)) return;
 
-    setLoading(true);
-    try {
-      const response = await signup(form);
-      console.log('Signup successful:', response);
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.message || 'Signup failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+        setLoading(true);
+        try {
+          const response = await signup(form);
+          // Update context state with user data and token
+          setAuthUser(
+            {
+              userId: response.userId,
+              username: response.username,
+              email: response.email,
+              roles: response.roles
+            },
+            response.token
+          );
+          console.log('Signup successful:', response);
+          navigate('/dashboard');
+        } catch (err) {
+          setError(err.message || 'Signup failed. Please try again.');
+        } finally {
+          setLoading(false);
+        }
+      };
 
   const features = [
     { icon: Gift, text: 'Get ₹500 welcome bonus', color: '#F59E0B' },

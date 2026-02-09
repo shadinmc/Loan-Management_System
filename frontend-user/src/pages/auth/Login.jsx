@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { login } from '../../api/authApi';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import { useAuth } from '../../context/AuthContext';
 import {
   User,
   Wallet,
@@ -36,6 +37,8 @@ export default function Login() {
   const [focusedField, setFocusedField] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { login: setAuthUser } = useAuth();
+
 
   const from = location.state?.from?.pathname || '/dashboard';
 
@@ -46,27 +49,27 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!form.email || !form.password) {
-      setError('Please fill in all fields');
-      return;
-    }
-
     setLoading(true);
     try {
       const response = await login(form);
+      // Update context state with user data and token
+      setAuthUser(
+        {
+          userId: response.userId,
+          username: response.username,
+          email: response.email,
+          roles: response.roles
+        },
+        response.token
+      );
       console.log('Login successful:', response);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || 'Invalid email or password');
+      setError(err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
-
-
-
   const features = [
     { icon: Zap, text: 'Instant loan approvals', color: '#F59E0B' },
     { icon: Shield, text: '100% secure & encrypted', color: '#3B82F6' },
