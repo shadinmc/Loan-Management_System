@@ -27,7 +27,7 @@ public class LoanController {
 
     public LoanController(LoanService loanService, SecurityUtils securityUtils) {
         this.loanService = loanService;
-        this.securityUtils = securityUtils; // ✅ injected by Spring
+        this.securityUtils = securityUtils; // injected by Spring
     }
 
 
