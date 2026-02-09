@@ -321,34 +321,7 @@ export default function HeroSection() {
         </motion.div>
 
         {/* Animated Stats Ticker */}
-        <motion.div
-          className="stats-ticker"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-        >
-          {stats.map((stat, index) => (
-            <motion.div
-              key={index}
-              className={`stat-item ${index === currentStat ? 'active' : ''}`}
-              whileHover={{ scale: 1.05 }}
-            >
-              <AnimatePresence mode="wait">
-                {index === currentStat && (
-                  <motion.div
-                    className="stat-indicator"
-                    layoutId="statIndicator"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  />
-                )}
-              </AnimatePresence>
-              <span className="stat-value">{stat.value}</span>
-              <span className="stat-label">{stat.label}</span>
-            </motion.div>
-          ))}
-        </motion.div>
+
       </div>
 
       {/* Loan Types Section */}

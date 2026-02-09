@@ -7,8 +7,15 @@ const Topbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("adminAuth");
+    localStorage.removeItem("token");
     navigate("/login/admin");
   };
+
+  const roleLabel = user?.roles?.includes("BRANCH_MANAGER")
+    ? "Branch Manager"
+    : user?.roles?.includes("REGIONAL_MANAGER")
+    ? "Regional Manager"
+    : "User";
 
   return (
     <header className="topbar">
@@ -19,12 +26,8 @@ const Topbar = () => {
 
       <div className="user-info">
         <div>
-          <strong>{user?.name}</strong>
-          <span>
-            {user?.role === "BRANCH_MANAGER"
-              ? "Branch Manager"
-              : "Regional Manager"}
-          </span>
+{/*           <strong>{user?.username}</strong> */}
+          <span>{roleLabel}</span>
         </div>
 
         <button className="logout" onClick={handleLogout}>

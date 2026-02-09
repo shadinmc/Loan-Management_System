@@ -1,47 +1,51 @@
 import { useState, useEffect, useCallback } from 'react';
 import { isAuthenticated, logout as authLogout } from '../api/authApi';
 
-/**
- * Custom hook for authentication state management
- * Handles user session and provides auth utilities
- */
 export const useAuth = () => {
   const [user, setUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // Check authentication status on mount
-  useEffect(() => {
-    checkAuth();
-  }, []);
 
   const checkAuth = useCallback(() => {
     const authenticated = isAuthenticated();
     setIsLoggedIn(authenticated);
 
-    if (authenticated) {
+    if (!authenticated) {
+      setUser(null);
+      return;
+    }
+
+    try {
       const userData = localStorage.getItem('user');
-      if (userData) {
-        setUser(JSON.parse(userData));
+
+      if (!userData || userData === 'undefined') {
+        setUser(null);
+        localStorage.removeItem('user');
+        return;
       }
-    } else {
+
+      setUser(JSON.parse(userData));
+    } catch (err) {
+      console.error('Invalid user data in localStorage', err);
+      localStorage.removeItem('user');
       setUser(null);
     }
   }, []);
 
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   const logout = useCallback(() => {
     authLogout();
+    localStorage.removeItem('user');
     setUser(null);
     setIsLoggedIn(false);
   }, []);
-
-  const refreshAuth = useCallback(() => {
-    checkAuth();
-  }, [checkAuth]);
 
   return {
     user,
     isLoggedIn,
     logout,
-    refreshAuth
+    refreshAuth: checkAuth
   };
 };
