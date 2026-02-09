@@ -1,7 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, MoreVertical, Wallet, Calculator } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import LottieAnimation from './LottieAnimation';
 import { useState } from 'react';
 

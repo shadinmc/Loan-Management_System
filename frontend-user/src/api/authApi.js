@@ -1,50 +1,90 @@
-/**
- * Authentication API
- * Handles user authentication operations
- */
+// src/api/authApi.js
+const API_BASE_URL = 'http://localhost:8080/api/auth';
 
-export const login = ({ email, password }) => {
-  return new Promise((resolve, reject) => {
-    // Simulate API delay
-    setTimeout(() => {
-      if (email && password) {
-        const user = {
-          email,
-          username: email.split('@')[0],
-          firstName: 'User',
-          lastName: ''
-        };
+export const signup = async (userData) => {
+  const payload = {
+    username: userData.username,
+    email: userData.email,
+    password: userData.password,
+    fullName: userData.fullName,
+    phone: userData.phone,
+    dateOfBirth: userData.dob, // Add date of birth
+    role: 'USER'
+  };
 
-        localStorage.setItem('token', 'mock-token-' + Date.now());
-        localStorage.setItem('user', JSON.stringify(user));
-
-        resolve({ success: true, user });
-      } else {
-        reject(new Error('Invalid credentials'));
-      }
-    }, 800);
+  const response = await fetch(`${API_BASE_URL}/signup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
   });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Signup failed');
+  }
+
+  // Store token and user data
+  localStorage.setItem('token', data.token);
+  console.log(data.token);
+  localStorage.setItem('user', JSON.stringify({
+    userId: data.userId,
+    username: data.username,
+    email: data.email,
+    roles: data.roles
+  }));
+
+  return data;
 };
 
-export const signup = (data) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log('Signup data:', data);
-      resolve({ success: true });
-    }, 800);
+export const login = async (credentials) => {
+  const payload = {
+    usernameOrEmail: credentials.email, // Backend expects usernameOrEmail
+    password: credentials.password
+  };
+
+  const response = await fetch(`${API_BASE_URL}/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
   });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Login failed');
+  }
+
+  // Store token and user data
+  localStorage.setItem('token', data.token);
+  localStorage.setItem('user', JSON.stringify({
+    userId: data.userId,
+    username: data.username,
+    email: data.email,
+    roles: data.roles
+  }));
+
+  return data;
 };
 
 export const logout = () => {
   localStorage.removeItem('token');
-  localStorage.removeItem('user');window.location.href = '/';
+  localStorage.removeItem('user');
+};
+
+export const getToken = () => {
+  return localStorage.getItem('token');
+};
+
+export const getUser = () => {
+  const user = localStorage.getItem('user');
+  return user ? JSON.parse(user) : null;
 };
 
 export const isAuthenticated = () => {
-  return !!localStorage.getItem('token');
-};
-
-export const getCurrentUser = () => {
-  const userData = localStorage.getItem('user');
-  return userData ? JSON.parse(userData) : null;
+  return !!getToken();
 };

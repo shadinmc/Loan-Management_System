@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import Dashboard from './pages/dashboard/Dashboard';
@@ -11,10 +11,6 @@ import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useState } from 'react';
 
-/**
- * Main Application Component
- * Handles routing and global layout structure
- */
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -22,42 +18,40 @@ export default function App() {
   const closeSidebar = () => setSidebarOpen(false);
 
   return (
-    <BrowserRouter>
-      <div className="app-container">
-        <Navbar onMenuClick={toggleSidebar} />
-        <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+    <div className="app-container">
+      <Navbar onMenuClick={toggleSidebar} />
+      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<LoanTypes />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<LoanTypes />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
 
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/loan/apply" element={<LoanApply />} />
-              <Route path="/loan/apply/:loanType" element={<LoanApply />} />
-              <Route path="/loan/confirm" element={<LoanConfirmation />} />
-              <Route path="/loan/decision" element={<LoanDecision />} />
-              <Route path="/loan/status" element={<LoanDecision />} />
-            </Route>
-          </Routes>
-        </main>
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/loan/apply" element={<LoanApply />} />
+            <Route path="/loan/apply/:loanType" element={<LoanApply />} />
+            <Route path="/loan/confirm" element={<LoanConfirmation />} />
+            <Route path="/loan/decision" element={<LoanDecision />} />
+            <Route path="/loan/status" element={<LoanDecision />} />
+          </Route>
+        </Routes>
+      </main>
 
-        <style>{`
-          .app-container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-          }
+      <style>{`
+        .app-container {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+        }
 
-          .main-content {
-            flex: 1;
-            padding-top: 70px;
-            min-height: calc(100vh - 70px);
-          }
-        `}</style>
-      </div>
-    </BrowserRouter>
+        .main-content {
+          flex: 1;
+          padding-top: 70px;
+          min-height: calc(100vh - 70px);
+        }
+      `}</style>
+    </div>
   );
 }
