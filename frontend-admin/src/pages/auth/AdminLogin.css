@@ -1,0 +1,143 @@
+/* PAGE LAYOUT */
+.login-page {
+  display: flex;
+  height: 100vh;
+  background: #ffffff;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+/* LEFT SECTION */
+.login-left {
+  flex: 1;
+  padding: 48px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.logo-circle {
+  width: 38px;
+  height: 38px;
+  background: #4f46e5;
+  color: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.illustration-text {
+  max-width: 420px;
+}
+
+.illustration-text h2 {
+  font-size: 26px;
+  margin-bottom: 12px;
+  color: #0f172a;
+}
+
+.illustration-text p {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+/* RIGHT SECTION */
+.login-right {
+  width: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* LOGIN CARD (YOUR ORIGINAL STYLE – CLEANED) */
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  padding: 32px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.login-icon {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.login-card h2 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 18px;
+}
+
+.login-card label {
+  font-size: 13px;
+  margin-top: 12px;
+  display: block;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 6px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+}
+
+.login-card button {
+  width: 100%;
+  margin-top: 18px;
+  padding: 11px;
+  border-radius: 8px;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.login-links {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.login-links a {
+  font-size: 12px;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.error-text {
+  color: #dc2626;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+.login-illustration {
+  margin: 40px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.login-illustration img {
+  max-width: 420px;
+  width: 100%;
+  height: auto;
+   opacity: 0.75;
+}

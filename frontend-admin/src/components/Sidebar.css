@@ -1,0 +1,18 @@
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  text-decoration: none;
+  color: #334155;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.nav-link.active {
+  background: #eef2ff;
+  color: #4f46e5;
+  font-weight: 600;
+}
