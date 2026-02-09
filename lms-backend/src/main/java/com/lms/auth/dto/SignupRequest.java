@@ -1,5 +1,6 @@
 package com.lms.auth.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -10,7 +11,12 @@ public class SignupRequest {
 
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50, message = "Username must be 3-50 characters")
+    @Pattern(
+            regexp = "^[A-Za-z][A-Za-z0-9_]*$",
+            message = "Username must start with a letter and contain only letters, numbers, or underscores"
+    )
     private String username;
+
 
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
@@ -25,6 +31,7 @@ public class SignupRequest {
 
     @NotNull
     @Past
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
 
 
