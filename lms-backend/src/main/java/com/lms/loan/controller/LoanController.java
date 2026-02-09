@@ -3,14 +3,15 @@ package com.lms.loan.controller;
 import com.lms.auth.security.SecurityUtils;
 import com.lms.common.enums.LoanType;
 import com.lms.loan.dto.LoanApplicationRequest;
-import com.lms.loan.dto.LoanResponse;
 import com.lms.loan.dto.LoanTypeResponse;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.service.LoanService;
 import jakarta.validation.Valid;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/loans")
+@PreAuthorize("hasRole('USER')")
 public class LoanController {
 
     private final LoanService loanService;
@@ -27,9 +29,10 @@ public class LoanController {
 
     public LoanController(LoanService loanService, SecurityUtils securityUtils) {
         this.loanService = loanService;
-        this.securityUtils = securityUtils; // ✅ injected by Spring
+        this.securityUtils = securityUtils;
     }
 
+    // ---------- META ----------
 
     @GetMapping("/types")
     public ResponseEntity<List<LoanTypeResponse>> getLoanTypes() {
@@ -40,38 +43,58 @@ public class LoanController {
                         type.getDescription()
                 ))
                 .collect(Collectors.toList());
+
         return ResponseEntity.ok(types);
     }
+
+    // ---------- APPLY ----------
 
     @PostMapping("/apply")
     public ResponseEntity<Loan> applyLoan(
             @RequestBody LoanApplicationRequest request,
-            @RequestHeader("X-Idempotency-Key") String idempotencyKey
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
+            @RequestHeader(value = "X-Correlation-Id", required = false) String correlationId
     ) {
-        String userId = securityUtils.getCurrentUser().getId();
-
-        if (idempotencyKey == null || idempotencyKey.isBlank()) {
-            idempotencyKey = UUID.randomUUID().toString(); // auto-generate
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = UUID.randomUUID().toString();
         }
 
-        Loan loan = loanService.applyForLoan(userId, request, idempotencyKey);
+        MDC.put("correlationId", correlationId);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(loan);
+        try {
+            if (idempotencyKey == null || idempotencyKey.isBlank()) {
+                idempotencyKey = UUID.randomUUID().toString();
+            }
+
+            //  REAL USERNAME FROM SECURITY
+            String username = securityUtils.getCurrentUsername();
+
+            Loan loan = loanService.applyForLoan( request, idempotencyKey);
+            return ResponseEntity.status(HttpStatus.CREATED).body(loan);
+
+        } finally {
+            MDC.clear();
+        }
     }
 
 
+
+    // ---------- READ ----------
 
     @GetMapping("/my-loans")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Loan>> getAllLoans() {
-        return ResponseEntity.ok(loanService.getLoansByUserId(securityUtils.getCurrentUserId()));
+    public ResponseEntity<List<Loan>> getMyLoans() {
+        return ResponseEntity.ok(
+                loanService.getLoansByUserId(securityUtils.getCurrentUserId())
+        );
     }
-
-
 
     @GetMapping("/{loanId}")
     public ResponseEntity<Loan> getLoanById(@PathVariable String loanId) {
-        return ResponseEntity.ok(loanService.getLoanById(loanId));
+        return ResponseEntity.ok(
+                loanService.getLoanByIdAndUserId(
+                        loanId,
+                        securityUtils.getCurrentUserId()
+                )
+        );
     }
-
 }
