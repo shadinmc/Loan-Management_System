@@ -29,7 +29,7 @@ public class KycService {
 
         String userId = securityUtils.getCurrentUserId();
 
-        // 1️⃣ Idempotency check
+        //  Idempotency check
         var existingKey = idempotencyKeyService.findByKey(idempotencyKey);
         if (existingKey.isPresent()) {
             Kyc existingKyc = kycRepository.findById(
@@ -39,19 +39,19 @@ public class KycService {
             return mapToResponse(existingKyc);
         }
 
-        // 2️⃣ Prevent multiple KYCs per user
+        //  Prevent multiple KYCs per user
         if (kycRepository.existsByUserId(userId)) {
             throw new RuntimeException("KYC already submitted for this user");
         }
 
-        // 3️⃣ Aadhaar / PAN uniqueness
+        //  Aadhaar / PAN uniqueness
         if (kycRepository.existsByAadhaarNumber(request.getAadhaarNumber()))
             throw new RuntimeException("Aadhaar already registered");
 
         if (kycRepository.existsByPanNumber(request.getPanNumber()))
             throw new RuntimeException("PAN already registered");
 
-        // 4️⃣ Create KYC
+        //  Create KYC
         Kyc kyc = Kyc.builder()
                 .userId(userId)
                 .aadhaarNumber(request.getAadhaarNumber())
@@ -65,7 +65,7 @@ public class KycService {
 
         Kyc savedKyc = kycRepository.save(kyc);
 
-        // 5️⃣ Store idempotency
+        //  Store idempotency
         idempotencyKeyService.saveKey(
                 idempotencyKey,
                 savedKyc.getId(),

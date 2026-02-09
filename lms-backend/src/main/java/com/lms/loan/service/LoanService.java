@@ -218,7 +218,7 @@ public class LoanService {
 
         kycService.validateKycVerified(userId);
 
-        // ✅ Step 1: Check if this request was already processed
+        //  Step 1: Check if this request was already processed
         Optional<IdempotencyRecord> recordOpt =
                 idempotencyKeyService.findByKey(idempotencyKey);
 
@@ -226,11 +226,11 @@ public class LoanService {
 
             IdempotencyRecord record = recordOpt.get();
 
-            // ✅ If expired → treat as new request
+            //  If expired → treat as new request
             if (record.getExpiresAt().isBefore(java.time.Instant.now())) {
                 // continue normally (create new loan)
             } else {
-                // ✅ Replay case
+                //  Replay case
                 Optional<Loan> existingLoan =
                         loanRepository.findByLoanId(record.getResourceId());
 
@@ -242,10 +242,10 @@ public class LoanService {
         }
 
 
-        // ✅ Step 2: Validate request
+        //  Step 2: Validate request
         validateLoanRequest(request);
 
-        // ✅ Step 3: Create base loan
+        //  Step 3: Create base loan
         Loan loan = Loan.builder()
                 .loanId(generateLoanId())
                 .userId(userId)
@@ -262,7 +262,7 @@ public class LoanService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        // ✅ Step 4: Attach loan-type specific details
+        //  Step 4: Attach loan-type specific details
         switch (request.getLoanType()) {
             case PERSONAL -> loan.setPersonalLoanDetails(mapPersonalLoan(request));
             case EDUCATION -> loan.setEducationLoanDetails(mapEducationLoan(request));
@@ -271,10 +271,10 @@ public class LoanService {
             default -> throw new IllegalArgumentException("Unsupported loan type: " + request.getLoanType());
         }
 
-        // ✅ Step 5: Save loan
+        //  Step 5: Save loan
         Loan savedLoan = loanRepository.save(loan);
 
-        // ✅ Step 6: Save idempotency record to prevent future duplicates
+        //  Step 6: Save idempotency record to prevent future duplicates
         idempotencyKeyService.saveKey(idempotencyKey, savedLoan.getLoanId(), "LOAN_APPLICATION");
 
         return savedLoan;

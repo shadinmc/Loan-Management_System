@@ -40,7 +40,7 @@ public class AuthService {
         user.setPhone(request.getPhone());
         user.setDateOfBirth(request.getDateOfBirth());
 
-        // 🔥 auto age calculation
+        //  auto age calculation
         user.calculateAge();
 
         user.setCreatedAt(LocalDateTime.now());
