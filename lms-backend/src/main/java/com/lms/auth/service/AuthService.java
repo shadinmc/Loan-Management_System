@@ -31,13 +31,6 @@ public class AuthService {
             throw new RuntimeException("Username already exists");
         }
 
-        if (userRepository.findByAadharNumber(request.getAadharNumber()).isPresent()) {
-            throw new RuntimeException("Aadhar number already registered");
-        }
-
-        if (userRepository.findByPanNumber(request.getPanNumber()).isPresent()) {
-            throw new RuntimeException("PAN number already registered");
-        }
 
         User user = new User();
         user.setUsername(request.getUsername());
@@ -45,8 +38,6 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFullName(request.getFullName());
         user.setPhone(request.getPhone());
-        user.setAadharNumber(request.getAadharNumber());
-        user.setPanNumber(request.getPanNumber());
         user.setDateOfBirth(request.getDateOfBirth());
 
         // 🔥 auto age calculation

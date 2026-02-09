@@ -51,8 +51,6 @@ public class Loan {
     private Integer eligibilityScore;
     private String eligibilityRemarks;
     private LocalDateTime eligibilityCheckedAt;
-    private List<String> eligibilityFailedRules;
-    private List<String> eligibilityPassedRules;
     private BigDecimal approvedAmount;
     private Boolean emiEligible;
 

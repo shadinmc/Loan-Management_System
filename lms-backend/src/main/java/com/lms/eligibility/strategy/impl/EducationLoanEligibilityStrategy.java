@@ -83,7 +83,7 @@ public class EducationLoanEligibilityStrategy implements LoanEligibilityStrategy
                 .eligible(eligible)
                 .newStatus(
                         eligible
-                                ? LoanStatus.PENDING_BRANCH_REVIEW
+                                ? LoanStatus.UNDER_BRANCH_REVIEW
                                 : LoanStatus.NOT_ELIGIBLE
                 )
                 .approvedAmount(
