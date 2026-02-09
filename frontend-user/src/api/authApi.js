@@ -2,15 +2,13 @@
 const API_BASE_URL = 'http://localhost:8080/api/auth';
 
 export const signup = async (userData) => {
-  // Remove spaces from aadhar number before sending
   const payload = {
     username: userData.username,
     email: userData.email,
     password: userData.password,
     fullName: userData.fullName,
-    aadharNumber: userData.aadharNumber.replace(/\s/g, ''), // Remove spaces
-    panNumber: userData.panNumber,
     phone: userData.phone,
+    dateOfBirth: userData.dob, // Add date of birth
     role: 'USER'
   };
 
@@ -30,6 +28,7 @@ export const signup = async (userData) => {
 
   // Store token and user data
   localStorage.setItem('token', data.token);
+  console.log(data.token);
   localStorage.setItem('user', JSON.stringify({
     userId: data.userId,
     username: data.username,

@@ -23,12 +23,11 @@ import {
   CreditCard,
   TrendingUp,
   PiggyBank,
-  Fingerprint,
   Gift,
   Check,
   AlertCircle,
-  FileText,
-  IdCard
+  IdCard,
+  Calendar
 } from 'lucide-react';
 
 export default function Signup() {
@@ -38,8 +37,7 @@ export default function Signup() {
     fullName: '',
     email: '',
     phone: '',
-    aadharNumber: '',
-    panNumber: '',
+    dob: '',
     password: '',
     confirmPassword: ''
   });
@@ -57,18 +55,13 @@ export default function Signup() {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    if (name === 'aadharNumber') {
-      const cleaned = value.replace(/\D/g, '').slice(0, 12);
-      const formatted = cleaned.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
-      setForm({ ...form, [name]: formatted });
-    } else if (name === 'panNumber') {
-      setForm({ ...form, [name]: value.toUpperCase().slice(0, 10) });
-    } else if (name === 'phone') {
+    if (name === 'phone') {
       const cleaned = value.replace(/\D/g, '').slice(0, 10);
       setForm({ ...form, [name]: cleaned });
     } else {
       setForm({ ...form, [name]: value });
-    }setError('');
+    }
+    setError('');
   };
 
   const validateStep = (currentStep) => {
@@ -78,8 +71,13 @@ export default function Signup() {
           setError('Username is required');
           return false;
         }
-        if (form.username.length < 3) {
-          setError('Username must be at least 3 characters');
+        if (form.username.length < 5) {
+          setError('Username must be at least 5 characters');
+          return false;
+        }
+        // Check if username has at least 4 letters followed by anything
+        if (!/^[a-zA-Z]{4,}/.test(form.username)) {
+          setError('Username must start with at least 4 letters');
           return false;
         }
         if (!form.fullName.trim()) {
@@ -104,20 +102,24 @@ export default function Signup() {
           setError('Phone number must be 10 digits');
           return false;
         }
-        if (!form.aadharNumber.trim()) {
-          setError('Aadhar number is required');
+        if (!form.dob.trim()) {
+          setError('Date of birth is required');
           return false;
         }
-        if (form.aadharNumber.replace(/\s/g, '').length !== 12) {
-          setError('Aadhar number must be 12 digits');
+        // Validate age (must be at least 18 years old)
+        const birthDate = new Date(form.dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        if (age < 18) {
+          setError('You must be at least 18 years old to register');
           return false;
         }
-        if (!form.panNumber.trim()) {
-          setError('PAN number is required');
-          return false;
-        }
-        if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.panNumber)) {
-          setError('Invalid PAN format (e.g., ABCDE1234F)');
+        if (age > 120) {
+          setError('Please enter a valid date of birth');
           return false;
         }
         break;
@@ -158,30 +160,30 @@ export default function Signup() {
   };
 
   const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!validateStep(3)) return;
+    e.preventDefault();
+    if (!validateStep(3)) return;
 
-        setLoading(true);
-        try {
-          const response = await signup(form);
-          // Update context state with user data and token
-          setAuthUser(
-            {
-              userId: response.userId,
-              username: response.username,
-              email: response.email,
-              roles: response.roles
-            },
-            response.token
-          );
-          console.log('Signup successful:', response);
-          navigate('/dashboard');
-        } catch (err) {
-          setError(err.message || 'Signup failed. Please try again.');
-        } finally {
-          setLoading(false);
-        }
-      };
+    setLoading(true);
+    try {
+      const response = await signup(form);
+      // Update context state with user data and token
+      setAuthUser(
+        {
+          userId: response.userId,
+          username: response.username,
+          email: response.email,
+          roles: response.roles
+        },
+        response.token
+      );
+      console.log('Signup successful:', response);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Signup failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const features = [
     { icon: Gift, text: 'Get ₹500 welcome bonus', color: '#F59E0B' },
@@ -263,6 +265,16 @@ export default function Signup() {
                     placeholder="Choose a username"
                   />
                 </div>
+                <div className="validation-rules">
+                  <div className={`rule-item ${form.username.length >= 5 ? 'valid' : ''}`}>
+                    {form.username.length >= 5 ? <Check size={12} /> : <span className="dot">•</span>}
+                    At least 5 characters
+                  </div>
+                  <div className={`rule-item ${/^[a-zA-Z]{4,}/.test(form.username) ? 'valid' : ''}`}>
+                    {/^[a-zA-Z]{4,}/.test(form.username) ? <Check size={12} /> : <span className="dot">•</span>}
+                    Start with at least 4 letters
+                  </div>
+                </div>
               </div>
               <div className="input-wrapper">
                 <label><User size={16} /> Full Name</label>
@@ -311,35 +323,22 @@ export default function Signup() {
                     placeholder="10-digit mobile number"
                   />
                 </div>
-              </div><div className="input-wrapper">
-                <label><Fingerprint size={16} /> Aadhar Number</label>
-                <div className="input-field">
-                  <input
-                    type="text"
-                    name="aadharNumber"
-                    value={form.aadharNumber}
-                    onChange={handleChange}
-                    onFocus={() => setFocusedField('aadharNumber')}
-                    onBlur={() => setFocusedField(null)}
-                    placeholder="1234 5678 9012"
-                  />
-                </div>
-                <span className="field-hint">12-digit Aadhar number</span>
               </div>
               <div className="input-wrapper">
-                <label><FileText size={16} /> PAN Number</label>
+                <label><Calendar size={16} /> Date of Birth</label>
                 <div className="input-field">
                   <input
-                    type="text"
-                    name="panNumber"
-                    value={form.panNumber}
+                    type="date"
+                    name="dob"
+                    value={form.dob}
                     onChange={handleChange}
-                    onFocus={() => setFocusedField('panNumber')}
+                    onFocus={() => setFocusedField('dob')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="ABCDE1234F"
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                    min={new Date(new Date().setFullYear(new Date().getFullYear() - 120)).toISOString().split('T')[0]}
                   />
                 </div>
-                <span className="field-hint">Format: ABCDE1234F</span>
+                <span className="field-hint">You must be at least 18 years old</span>
               </div>
             </>
           )}
@@ -408,7 +407,8 @@ export default function Signup() {
                     <Check size={14} /> Passwords match
                   </div>
                 )}
-              </div><label className="terms-checkbox">
+              </div>
+              <label className="terms-checkbox">
                 <input
                   type="checkbox"
                   checked={agreedToTerms}
@@ -422,7 +422,8 @@ export default function Signup() {
               </label>
             </>
           )}
-        </div></motion.div>
+        </div>
+      </motion.div>
     );
   };
 
@@ -551,13 +552,14 @@ export default function Signup() {
               transition={{ delay: 1 }}
             >
               <div className="badge">
-                <Fingerprint size={16} />
+                <Shield size={16} />
                 <span>Bank-grade Security</span>
               </div>
               <div className="badge">
                 <BadgeCheck size={16} />
                 <span>RBI Registered</span>
-              </div></motion.div>
+              </div>
+            </motion.div>
           </div>
 
           <div className="branding-decor">
@@ -1112,6 +1114,15 @@ export default function Signup() {
           outline: none;
         }
 
+        .input-field input[type="date"]::-webkit-calendar-picker-indicator {
+          cursor: pointer;
+          filter: var(--date-picker-filter, invert(0.5));
+        }
+
+        [data-theme="dark"] .input-field input[type="date"]::-webkit-calendar-picker-indicator {
+          filter: invert(0.8);
+        }
+
         .input-field input::placeholder {
           color: var(--text-muted);
         }
@@ -1126,6 +1137,36 @@ export default function Signup() {
           font-size: 0.75rem;
           color: var(--text-muted);
           margin-top: -4px;
+        }
+
+        .validation-rules {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          margin-top: 8px;
+        }
+
+        .rule-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          transition: color 0.2s ease;
+        }
+
+        .rule-item.valid {
+          color: #10B981;
+        }
+
+        .rule-item .dot {
+          width: 12px;
+          height: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1rem;
+          line-height: 1;
         }
 
         .phone-input {
