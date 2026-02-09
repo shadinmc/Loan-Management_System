@@ -1,22 +1,23 @@
+import { adminLogin } from "../../api/authApi";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AdminLogin.css";
 
-// MOCK USERS
-const mockUsers = [
-  {
-    email: "admin@example.com",
-    password: "admin123",
-    role: "BRANCH_MANAGER",
-    name: "Rajesh Kumar"
-  },
-  {
-    email: "regional@example.com",
-    password: "regional123",
-    role: "REGIONAL_MANAGER",
-    name: "Priya Sharma"
-  }
-];
+// // MOCK USERS
+// const mockUsers = [
+//   {
+//     email: "admin@example.com",
+//     password: "admin123",
+//     role: "BRANCH_MANAGER",
+//     name: "Rajesh Kumar"
+//   },
+//   {
+//     email: "regional@example.com",
+//     password: "regional123",
+//     role: "REGIONAL_MANAGER",
+//     name: "Priya Sharma"
+//   }
+// ];
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -25,34 +26,43 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // ⭐ Clear previous session when login page loads
+  //  Clear previous session when login page loads
   useEffect(() => {
     localStorage.removeItem("adminAuth");
   }, []);
 
- const handleSubmit = (e) => {
+ const handleSubmit = async (e) => {
    e.preventDefault();
+   console.log("LOGIN SUBMITTED");
    setError("");
 
-   localStorage.removeItem("adminAuth");
+   try {
+     const payload = {
+       usernameOrEmail: email,   // backend expects this
+       password: password,
+     };
 
-   const user = mockUsers.find(
-     (u) =>
-       u.email.trim().toLowerCase() === email.trim().toLowerCase() &&
-       u.password.trim() === password.trim()
-   );
+     const response = await adminLogin(payload);
 
-   if (!user) {
-     setError("Invalid username or password");
-     return;
-   }
+     // Save full auth response
+     localStorage.setItem("adminAuth", JSON.stringify(response));
+     localStorage.setItem("token", response.token);
 
-   localStorage.setItem("adminAuth", JSON.stringify(user));
+     const roles = response.roles || [];
 
-   if (user.role === "BRANCH_MANAGER") {
-     navigate("/admin/dashboard");
-   } else {
-     navigate("/regional/dashboard");
+     if (roles.includes("BRANCH_MANAGER")) {
+       navigate("/admin/dashboard");
+     } else if (roles.includes("REGIONAL_MANAGER")) {
+       navigate("/regional/dashboard");
+     } else {
+       setError("You are not authorized to access admin portal");
+     }
+
+   } catch (err) {
+     console.error(err);
+     setError(
+       err.response?.data?.message || "Invalid username or password"
+     );
    }
  };
 
@@ -131,13 +141,13 @@ const AdminLogin = () => {
             </div>
           </form>
 
-          <div style={{ marginTop: "16px", fontSize: "12px", color: "#64748b" }}>
-            <strong>Mock Logins:</strong>
-            <br />
-            Branch: admin@example.com / admin123
-            <br />
-            Regional: regional@example.com / regional123
-          </div>
+{/*           <div style={{ marginTop: "16px", fontSize: "12px", color: "#64748b" }}> */}
+{/*             <strong>Mock Logins:</strong> */}
+{/*             <br /> */}
+{/*             Branch: admin@example.com / admin123 */}
+{/*             <br /> */}
+{/*             Regional: regional@example.com / regional123 */}
+{/*           </div> */}
         </div>
       </div>
     </div>
