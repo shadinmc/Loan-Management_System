@@ -1,66 +1,131 @@
 // src/pages/loans/forms/BusinessLoanForm.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, User, BarChart3, CreditCard, FileText, ChevronRight, ChevronLeft, Calculator, CheckCircle2, Sparkles, TrendingUp, Briefcase } from 'lucide-react';
+import { Building2, User, BarChart3, CreditCard, FileText, ChevronRight, ChevronLeft, Calculator, CheckCircle2, Sparkles, TrendingUp, Briefcase, AlertTriangle, Eye } from 'lucide-react';
 import Input from '../../../components/Input';
 import FileUpload from '../../../components/FileUpload';
 import Button from '../../../components/Button';
 import { validateEmail, validatePhone, validatePAN, validateGST, validateRequired, validateAmount } from '../../../utils/validators';
 import { LOAN_CONFIG, LOAN_TYPES } from '../../../utils/constants';
+import { useCreateLoan } from '../../../hooks/useCreateLoan';
 
-export default function BusinessLoanForm({ onSubmit, loading, config }) {
+const FORM_STORAGE_KEY = 'businessLoanFormData';
+const STEP_STORAGE_KEY = 'businessLoanFormStep';
+
+export default function BusinessLoanForm({ config }) {
   const loanConfig = config || LOAN_CONFIG[LOAN_TYPES.BUSINESS] || {
     minAmount: 100000,
     maxAmount: 5000000,
     minTenure: 12,
     maxTenure: 84,
-    interestRate: '11% - 20%'
+    interestRate: '13%'
   };
 
-  const [formData, setFormData] = useState({
-    businessName: '',
-    businessType: '',
-    businessNature: '',
-    registrationNumber: '',
-    gstNumber: '',
-    yearEstablished: '',
-    numberOfEmployees: '',
-    businessAddress: '',
-    businessCity: '',
-    businessPincode: '',
-    ownerName: '',
-    ownerEmail: '',
-    ownerPhone: '',
-    ownerPAN: '',
-    ownershipPercentage: '',
-    annualTurnover: '',
-    monthlyRevenue: '',
-    existingLoans: '',
-    profitMargin: '',
-    loanAmount: '',
-    loanPurpose: '',
-    tenure: '',
-    collateralType: '',
-    collateralValue: '',
-    businessRegistration: null,
-    gstCertificate: null,
-    bankStatements: null,
-    financialStatements: null,
-    itrDocuments: null,
-    ownerPanCard: null
+  // Initialize useCreateLoan hook
+  const { createLoan, loading, error: apiError } = useCreateLoan('/api/loans/business');
+
+  // Load saved form data and step on mount
+  const loadSavedData = () => {
+    try {
+      const saved = localStorage.getItem(FORM_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load saved form data:', e);
+    }
+    return null;
+  };
+
+  const loadSavedStep = () => {
+    try {
+      const saved = localStorage.getItem(STEP_STORAGE_KEY);
+      if (saved) {
+        return parseInt(saved, 10);
+      }
+    } catch (e) {
+      console.error('Failed to load saved step:', e);
+    }
+    return 1;
+  };
+
+  const [formData, setFormData] = useState(() => {
+    const saved = loadSavedData();
+    return saved || {
+      businessName: '',
+      businessType: '',
+      businessNature: '',
+      registrationNumber: '',
+      gstNumber: '',
+      yearEstablished: '',
+      numberOfEmployees: '',
+      businessAddress: '',
+      businessCity: '',
+      businessPincode: '',
+      ownerName: '',
+      ownerEmail: '',
+      ownerPhone: '',
+      ownerPAN: '',
+      ownershipPercentage: '',
+      annualTurnover: '',
+      monthlyRevenue: '',
+      existingLoans: '',
+      profitMargin: '',
+      loanAmount: '',
+      loanPurpose: '',
+      tenure: '',
+      collateralType: '',
+      collateralValue: '',
+      businessRegistration: null,
+      gstCertificate: null,
+      bankStatements: null,
+      financialStatements: null,
+      itrDocuments: null,
+      ownerPanCard: null
+    };
   });
 
   const [errors, setErrors] = useState({});
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(loadSavedStep);
   const [direction, setDirection] = useState(1);
+  const [warnings, setWarnings] = useState({});
 
   const steps = [
     { id: 1, title: 'Business', icon: Building2, description: 'Company details' },
     { id: 2, title: 'Owner', icon: User, description: 'Owner info' },
     { id: 3, title: 'Financials', icon: BarChart3, description: 'Revenue details' },
     { id: 4, title: 'Loan', icon: CreditCard, description: 'Amount & tenure' },
-    { id: 5, title: 'Documents', icon: FileText, description: 'Upload files' }
+    { id: 5, title: 'Documents', icon: FileText, description: 'Upload files' },
+    { id: 6, title: 'Review', icon: Eye, description: 'Verify details' }
   ];
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(formData));
+    } catch (e) {
+      console.error('Failed to save form data:', e);
+    }
+  }, [formData]);
+
+  // Save current step to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STEP_STORAGE_KEY, currentStep.toString());
+    } catch (e) {
+      console.error('Failed to save step:', e);
+    }
+  }, [currentStep]);
+
+  // Clear saved data when unmounting after successful submission
+  const clearSavedData = () => {
+    try {
+      localStorage.removeItem(FORM_STORAGE_KEY);
+      localStorage.removeItem(STEP_STORAGE_KEY);
+    } catch (e) {
+      console.error('Failed to clear form data:', e);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -68,6 +133,46 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+    if (warnings[name]) {
+      setWarnings(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleFileChange = (name, file) => {
+    setFormData(prev => ({ ...prev, [name]: file }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateFinancials = () => {
+    const newWarnings = {};
+
+    if (formData.annualTurnover && formData.monthlyRevenue) {
+      const annual = Number(formData.annualTurnover);
+      const monthly = Number(formData.monthlyRevenue);
+      const expectedMonthly = annual / 12;
+
+      // Check if monthly revenue is significantly different from annual/12
+      const difference = Math.abs(monthly - expectedMonthly);
+      const percentageDiff = (difference / expectedMonthly) * 100;
+
+      if (percentageDiff > 13) { // More than 13% difference is a warning
+        if (monthly > expectedMonthly) {
+          newWarnings.monthlyRevenue = `Monthly revenue seems high. Based on annual turnover (₹${annual.toLocaleString()}), monthly should be around ₹${Math.round(expectedMonthly).toLocaleString()}`;
+        } else {
+          newWarnings.monthlyRevenue = `Monthly revenue seems low. Based on annual turnover (₹${annual.toLocaleString()}), monthly should be around ₹${Math.round(expectedMonthly).toLocaleString()}`;
+        }
+      }
+
+      // Strict validation: If difference is more than 25%, treat as error
+      if (percentageDiff > 25) {
+        return false;
+      }
+    }
+
+    setWarnings(newWarnings);
+    return true;
   };
 
   const validateStep = (step) => {
@@ -91,6 +196,11 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
     if (step === 3) {
       if (!validateRequired(formData.annualTurnover)) newErrors.annualTurnover = 'Annual turnover is required';
       if (!validateRequired(formData.monthlyRevenue)) newErrors.monthlyRevenue = 'Monthly revenue is required';
+
+      // Validate financial consistency
+      if (!validateFinancials()) {
+        newErrors.monthlyRevenue = 'Monthly revenue is inconsistent with annual turnover. Please verify your figures.';
+      }
     }
 
     if (step === 4) {
@@ -109,18 +219,35 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
     if (validateStep(currentStep)) {
       setDirection(1);
       setCurrentStep(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handlePrev = () => {
     setDirection(-1);
     setCurrentStep(prev => prev - 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (validateStep(currentStep)) {
-      onSubmit(formData);
+      try {
+        // Submit the loan application
+        const result = await createLoan(formData);
+
+        // Clear saved data on successful submission
+        clearSavedData();
+
+        // You can add navigation or success message here
+        console.log('Loan application submitted successfully:', result);
+        alert('Your business loan application has been submitted successfully!');
+
+      } catch (err) {
+        console.error('Failed to submit loan application:', err);
+        alert('Failed to submit application. Please try again.');
+      }
     }
   };
 
@@ -194,9 +321,15 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
     })
   };
 
-  const emi = formData.loanAmount && formData.tenure
-    ? calculateEMI(Number(formData.loanAmount), 15, Number(formData.tenure))
-    : 0;
+  const emi = calculateEMI(
+    Number(formData.loanAmount),
+    13, // annual interest rate
+    Number(formData.tenure)
+  );
+
+  const totalPayable = emi * Number(formData.tenure);
+  const totalInterest = totalPayable - Number(formData.loanAmount);
+
 
   return (
     <motion.form
@@ -459,7 +592,8 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
                     placeholder="e.g., 51"
                     suffix="%"
                   />
-                </motion.div></div>
+                </motion.div>
+              </div>
             </motion.div>
           )}
 
@@ -510,8 +644,19 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
                     onChange={handleChange}
                     error={errors.monthlyRevenue}
                     placeholder="Average monthly"
-                    prefix="₹"required
+                    prefix="₹"
+                    required
                   />
+                  {warnings.monthlyRevenue && (
+                    <motion.div
+                      className="warning-message"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <AlertTriangle size={14} />
+                      {warnings.monthlyRevenue}
+                    </motion.div>
+                  )}
                 </motion.div>
                 <motion.div custom={2} variants={itemVariants} initial="hidden" animate="visible">
                   <Input
@@ -534,7 +679,8 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
                     placeholder="Total monthly EMIs"
                     prefix="₹"
                   />
-                </motion.div></div>
+                </motion.div>
+              </div>
 
               {formData.annualTurnover && formData.monthlyRevenue && (
                 <motion.div
@@ -604,7 +750,8 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
                 <div className="config-item">
                   <span className="config-label">Interest Rate</span>
                   <span className="config-value">{loanConfig.interestRate}</span>
-                </div></div>
+                </div>
+              </div>
 
               <div className="form-grid">
                 <motion.div custom={0} variants={itemVariants} initial="hidden" animate="visible">
@@ -653,7 +800,8 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
                     onChange={handleChange}
                     options={collateralOptions}
                   />
-                </motion.div></div>
+                </motion.div>
+              </div>
 
               {formData.collateralType && formData.collateralType !== 'none' && (
                 <motion.div
@@ -689,7 +837,7 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
                       <span className="emi-label">Estimated Monthly EMI</span>
                       <span className="emi-amount">₹{emi.toLocaleString()}</span>
                     </div>
-                    <p className="emi-note">*Indicative EMI at 15% p.a. Actual rate may vary.</p>
+                    <p className="emi-note">*Indicative EMI at 13% p.a. Actual rate may vary.</p>
                   </div>
                 </motion.div>
               )}
@@ -735,12 +883,13 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
                     custom={index}
                     variants={itemVariants}
                     initial="hidden"
-                    animate="visible">
+                    animate="visible"
+                  >
                     <FileUpload
                       label={doc.label}
                       name={doc.key}
                       value={formData[doc.key]}
-                      onChange={(file) => setFormData(prev => ({ ...prev, [doc.key]: file }))}
+                      onChange={(file) => handleFileChange(doc.key, file)}
                       required={doc.required}
                     />
                   </motion.div>
@@ -764,8 +913,191 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
               </motion.div>
             </motion.div>
           )}
+
+          {currentStep === 6 && (
+            <motion.div
+              key="step6"
+              className="form-step review-step"
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+            >
+              <div className="step-header">
+                <motion.div
+                  className="header-icon"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Eye size={28} />
+                </motion.div>
+                <div>
+                  <h2 className="step-title-main">Review Your Application</h2>
+                  <p className="step-subtitle">Please verify all details before submission</p>
+                </div>
+              </div>
+
+              <div className="review-sections">
+                {/* Business Details */}
+                <motion.div className="review-section" variants={itemVariants} initial="hidden" animate="visible" custom={0}>
+                  <h3><Building2 size={20} /> Business Information</h3>
+                  <div className="review-grid">
+                    <div className="review-item">
+                      <span className="review-label">Business Name</span>
+                      <span className="review-value">{formData.businessName}</span>
+                    </div>
+                    <div className="review-item">
+                      <span className="review-label">Business Type</span>
+                      <span className="review-value">{businessTypeOptions.find(o => o.value === formData.businessType)?.label}</span>
+                    </div>
+                    <div className="review-item">
+                      <span className="review-label">Nature of Business</span>
+                      <span className="review-value">{businessNatureOptions.find(o => o.value === formData.businessNature)?.label}</span>
+                    </div>
+                    {formData.gstNumber && (
+                      <div className="review-item">
+                        <span className="review-label">GST Number</span>
+                        <span className="review-value">{formData.gstNumber}</span>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+
+                {/* Owner Details */}
+                <motion.div className="review-section" variants={itemVariants} initial="hidden" animate="visible" custom={1}>
+                  <h3><User size={20} /> Owner Information</h3>
+                  <div className="review-grid">
+                    <div className="review-item">
+                      <span className="review-label">Owner Name</span>
+                      <span className="review-value">{formData.ownerName}</span>
+                    </div>
+                    <div className="review-item">
+                      <span className="review-label">Email</span>
+                      <span className="review-value">{formData.ownerEmail}</span>
+                    </div>
+                    <div className="review-item">
+                      <span className="review-label">Phone</span>
+                      <span className="review-value">{formData.ownerPhone}</span>
+                    </div>
+                    <div className="review-item">
+                      <span className="review-label">PAN Number</span>
+                      <span className="review-value">{formData.ownerPAN}</span>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Financial Details */}
+                <motion.div className="review-section" variants={itemVariants} initial="hidden" animate="visible" custom={2}>
+                  <h3><BarChart3 size={20} /> Financial Information</h3>
+                  <div className="review-grid">
+                    <div className="review-item">
+                      <span className="review-label">Annual Turnover</span>
+                      <span className="review-value">₹{Number(formData.annualTurnover).toLocaleString()}</span>
+                    </div>
+                    <div className="review-item">
+                      <span className="review-label">Monthly Revenue</span>
+                      <span className="review-value">₹{Number(formData.monthlyRevenue).toLocaleString()}</span>
+                    </div>
+                    {formData.profitMargin && (
+                      <div className="review-item">
+                        <span className="review-label">Profit Margin</span>
+                        <span className="review-value">{formData.profitMargin}%</span>
+                      </div>
+                    )}
+                    {formData.existingLoans && (
+                      <div className="review-item">
+                        <span className="review-label">Existing EMIs</span>
+                        <span className="review-value">₹{Number(formData.existingLoans).toLocaleString()}/month</span>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+
+                {/* Loan Details Summary */}
+                <motion.div className="review-section highlight-section" variants={itemVariants} initial="hidden" animate="visible" custom={3}>
+                  <h3><CreditCard size={20} /> Loan Summary</h3>
+                  <div className="loan-summary-grid">
+                    <div className="summary-box">
+                      <span className="summary-label">Loan Amount</span>
+                      <span className="summary-big-value">₹{Number(formData.loanAmount).toLocaleString()}</span>
+                    </div>
+                    <div className="summary-box">
+                      <span className="summary-label">Tenure</span>
+                      <span className="summary-big-value">{formData.tenure} Months</span>
+                    </div>
+                    <div className="summary-box">
+                      <span className="summary-label">Interest Rate</span>
+                      <span className="summary-big-value">13% p.a.</span>
+                    </div>
+                    <div className="summary-box highlight">
+                      <span className="summary-label">Monthly EMI</span>
+                      <span className="summary-big-value emi">₹{emi.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className="additional-details">
+                    <div className="detail-row">
+                      <span>Total Interest Payable</span>
+                      <span className="detail-value">₹{totalInterest.toLocaleString()}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span>Total Amount Payable</span>
+                      <span className="detail-value">₹{totalPayable.toLocaleString()}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span>Loan Purpose</span>
+                      <span className="detail-value">{purposeOptions.find(o => o.value === formData.loanPurpose)?.label}</span>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Documents Uploaded */}
+                <motion.div className="review-section" variants={itemVariants} initial="hidden" animate="visible" custom={4}>
+                  <h3><FileText size={20} /> Documents Uploaded</h3>
+                  <div className="documents-checklist">
+                    {[
+                      { key: 'businessRegistration', label: 'Business Registration' },
+                      { key: 'gstCertificate', label: 'GST Certificate' },
+                      { key: 'bankStatements', label: 'Bank Statements' },
+                      { key: 'financialStatements', label: 'Financial Statements' },
+                      { key: 'itrDocuments', label: 'ITR Documents' },
+                      { key: 'ownerPanCard', label: 'Owner PAN Card' }
+                    ].map(doc => (
+                      <div key={doc.key} className="document-check-item">
+                        <CheckCircle2 size={18} className={formData[doc.key] ? 'uploaded' : 'not-uploaded'} />
+                        <span>{doc.label}</span>
+                        <span className="doc-status">{formData[doc.key] ? 'Uploaded' : 'Not uploaded'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              </div>
+
+              <motion.div
+                className="review-actions-note"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                <AlertTriangle size={16} />
+                <p>Please review all details carefully. You can go back to edit any information before final submission.</p>
+              </motion.div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
+
+      {/* API Error Display */}
+      {apiError && (
+        <motion.div
+          className="api-error-message"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <AlertTriangle size={18} />
+          <span>Error: {apiError}</span>
+        </motion.div>
+      )}
 
       {/* Form Actions */}
       <motion.div
@@ -781,7 +1113,7 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
           </Button>
         )}
         <div className="action-spacer" />
-        {currentStep < 5 ? (
+        {currentStep < 6 ? (
           <Button type="button" onClick={handleNext}>
             Next Step
             <ChevronRight size={18} />
@@ -792,7 +1124,9 @@ export default function BusinessLoanForm({ onSubmit, loading, config }) {
             Submit Application
           </Button>
         )}
-      </motion.div><style>{formStyles}</style>
+      </motion.div>
+
+      <style>{formStyles}</style>
     </motion.form>
   );
 }
@@ -958,6 +1292,25 @@ const formStyles = `
 
   .full-width {
     grid-column: 1 / -1;
+  }
+
+  .warning-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 8px;
+    color: #F59E0B;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+
+  .warning-message svg {
+    flex-shrink: 0;
+    margin-top: 2px;
   }
 
   .loan-config-banner {
@@ -1126,6 +1479,197 @@ const formStyles = `
     text-decoration: underline;
   }
 
+  /* Review Step Styles */
+  .review-step {
+    max-width: 100%;
+  }
+
+  .review-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .review-section {
+    padding: 24px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+  }
+
+  .review-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .review-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .review-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .review-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .review-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .highlight-section {
+    background: linear-gradient(135deg, rgba(45, 190, 96, 0.05) 0%, rgba(45, 190, 96, 0.02) 100%);
+    border-color: rgba(45, 190, 96, 0.2);
+  }
+
+  .loan-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .summary-box {
+    text-align: center;
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+
+  .summary-box.highlight {
+    background: linear-gradient(135deg, rgba(45, 190, 96, 0.1) 0%, rgba(45, 190, 96, 0.05) 100%);
+    border-color: rgba(45, 190, 96, 0.3);
+  }
+
+  .summary-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .summary-big-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .summary-big-value.emi {
+    color: #2DBE60;
+  }
+
+  .additional-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: 12px;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .detail-value {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .documents-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .document-check-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+  }
+
+  .document-check-item svg {
+    flex-shrink: 0;
+  }
+
+  .document-check-item svg.uploaded {
+    color: #2DBE60;
+  }
+
+  .document-check-item svg.not-uploaded {
+    color: var(--text-muted);
+  }
+
+  .doc-status {
+    margin-left: auto;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  .review-actions-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+    margin-top: 24px;
+  }
+
+  .review-actions-note svg {
+    flex-shrink: 0;
+    color: #3B82F6;
+    margin-top: 2px;
+  }
+
+  .review-actions-note p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .api-error-message {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 40px;
+    background: rgba(239, 68, 68, 0.1);
+    border-top: 1px solid rgba(239, 68, 68, 0.2);
+    color: #EF4444;
+  }
+
   .form-actions {
     display: flex;
     align-items: center;
@@ -1163,7 +1707,9 @@ const formStyles = `
     }
 
     .form-grid,
-    .documents-grid {
+    .documents-grid,
+    .review-grid,
+    .loan-summary-grid {
       grid-template-columns: 1fr;
     }
 
