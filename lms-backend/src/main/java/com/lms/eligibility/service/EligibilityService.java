@@ -25,12 +25,19 @@ public class EligibilityService {
     private final UserRepository userRepository; // 🔥 REQUIRED
 
     @Transactional
-    public EligibilityResult checkEligibility(String loanId, String userId) {
+    public EligibilityResult checkEligibilityForBranch(String loanId)
+    {
 
-        Loan loan = loanRepository.findByLoanIdAndUserId(loanId, userId)
+        Loan loan = loanRepository.findByLoanId(loanId)
                 .orElseThrow(() -> new RuntimeException("Loan not found or unauthorized"));
 
-        EligibilityContext context = buildContextFromLoan(loan, userId);
+        if (loan.getStatus() != LoanStatus.APPLIED &&
+                loan.getStatus() != LoanStatus.UNDER_BRANCH_REVIEW) {
+            throw new IllegalStateException(
+                    "Eligibility cannot be checked in status: " + loan.getStatus());
+        }
+
+        EligibilityContext context = buildContextFromLoan(loan, loan.getUserId());
 
         LoanEligibilityStrategy strategy =
                 strategyFactory.getStrategy(loan.getLoanType());
@@ -110,7 +117,7 @@ public class EligibilityService {
         loan.setEligibilityCheckedAt(LocalDateTime.now());
 
         if (result.isEligible()) {
-            loan.setStatus(LoanStatus.PENDING_BRANCH_REVIEW);
+            loan.setStatus(LoanStatus.UNDER_BRANCH_REVIEW);
             loan.setApprovedAmount(result.getApprovedAmount());
             loan.setApprovedDate(LocalDate.now());
             loan.setEmiEligible(true);
