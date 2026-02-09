@@ -187,7 +187,7 @@ import com.lms.loan.entity.Loan;
 import com.lms.loan.entity.embedded.*;
 import com.lms.loan.repository.LoanRepository;
 import org.springframework.stereotype.Service;
-
+import com.lms.kyc.service.KycService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -199,11 +199,14 @@ public class LoanService {
 
     private final LoanRepository loanRepository;
     private final IdempotencyKeyService idempotencyKeyService;
+    private final KycService kycService;
+
 
     public LoanService(LoanRepository loanRepository,
-                       IdempotencyKeyService idempotencyKeyService) {
+                       IdempotencyKeyService idempotencyKeyService,KycService kycService) {
         this.loanRepository = loanRepository;
         this.idempotencyKeyService = idempotencyKeyService;
+        this.kycService = kycService;
     }
 
     private String generateLoanId() {
@@ -211,6 +214,9 @@ public class LoanService {
     }
 
     public Loan applyForLoan(String userId, LoanApplicationRequest request, String idempotencyKey) {
+
+
+        kycService.validateKycVerified(userId);
 
         // ✅ Step 1: Check if this request was already processed
         Optional<IdempotencyRecord> recordOpt =
@@ -247,7 +253,7 @@ public class LoanService {
                 .loanAmount(BigDecimal.valueOf(request.getLoanAmount()))
                 .tenureMonths(request.getTenureMonths())
                 .interestRate(BigDecimal.valueOf(request.getInterestRate()))
-                .cibilScore(request.getCibilScore())
+                .cibilScore(kycService.getCibilScore(userId))
                 .status(LoanStatus.APPLIED)
                 .appliedDate(LocalDate.now())
                 .outstandingPrincipal(BigDecimal.valueOf(request.getLoanAmount()))

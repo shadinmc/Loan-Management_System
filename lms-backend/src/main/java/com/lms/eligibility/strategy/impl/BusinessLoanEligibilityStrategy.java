@@ -81,7 +81,7 @@ public class BusinessLoanEligibilityStrategy implements LoanEligibilityStrategy 
         /* ✅ Final success */
         return EligibilityResult.builder()
                 .eligible(true)
-                .newStatus(LoanStatus.PENDING_BRANCH_REVIEW)
+                .newStatus(LoanStatus.UNDER_BRANCH_REVIEW)
                 .approvedAmount(ctx.getRequestedAmount())
                 .score(score)
                 .remarks("Eligible for business loan")

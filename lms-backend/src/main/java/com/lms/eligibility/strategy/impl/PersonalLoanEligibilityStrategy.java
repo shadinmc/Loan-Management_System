@@ -84,8 +84,8 @@ public class PersonalLoanEligibilityStrategy implements LoanEligibilityStrategy 
 
 
         LoanStatus newStatus = isEligible
-                ? LoanStatus.APPROVED
-                : LoanStatus.REJECTED;
+                ? LoanStatus.UNDER_BRANCH_REVIEW
+                : LoanStatus.NOT_ELIGIBLE;
 
         return EligibilityResult.builder()
                 .loanId(context.getLoanId())

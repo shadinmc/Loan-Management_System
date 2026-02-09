@@ -30,7 +30,7 @@ public class IdempotencyKeyService {
         record.setResourceType(resourceType);
         record.setCreatedAt(Instant.now());
 
-        // ✅ 10-minute expiry
+        //  1-minute expiry
         record.setExpiresAt(Instant.now().plus(Duration.ofMinutes(1)));
 
         return repository.save(record);
