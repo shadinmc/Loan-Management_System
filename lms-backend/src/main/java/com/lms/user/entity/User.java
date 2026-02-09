@@ -23,12 +23,6 @@ public class User {
     @Indexed(unique = true)
     private String username;
 
-    @Indexed(unique = true)
-    private String aadharNumber;
-
-    @Indexed(unique = true)
-    private String panNumber;
-
     private String password;
     private String fullName;
     private String phone;

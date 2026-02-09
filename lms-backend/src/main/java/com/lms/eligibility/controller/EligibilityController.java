@@ -9,7 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/eligibility")
+@RequestMapping("/api/branch/eligibility")
 @RequiredArgsConstructor
 public class EligibilityController {
 
@@ -17,10 +17,11 @@ public class EligibilityController {
     private final SecurityUtils securityUtils;
 
     // Check eligibility for an existing loan application
+    @PreAuthorize("hasRole('BRANCH_MANAGER')")
     @GetMapping("/loan/{loanId}")
     public ResponseEntity<EligibilityResult> checkLoanEligibility(@PathVariable String loanId) {
         String userId = securityUtils.getCurrentUserId();
-        EligibilityResult result = eligibilityService.checkEligibility(loanId, userId);
+        EligibilityResult result = eligibilityService.checkEligibilityForBranch(loanId);
         return ResponseEntity.ok(result);
     }
 }
