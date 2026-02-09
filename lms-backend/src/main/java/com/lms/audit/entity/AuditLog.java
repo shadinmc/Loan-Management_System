@@ -1,20 +1,35 @@
 package com.lms.audit.entity;
 
-import lombok.Data;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
-@Data
 @Document(collection = "audit_logs")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AuditLog {
 
     @Id
-    private String auditId;
+    private String id; // Mongo technical ID
 
-    private String actorId;
+    private Long auditSequence; //  NEW incremental ID
+
+    private String correlationId;
+    private String userId;
+
     private String action;
-    private String entityId;
-    private LocalDateTime createdAt;
+    private String resourceType;
+    private String resourceId;
+
+    private String requestPayloadMasked;
+    private String responsePayloadMasked;
+
+    private int httpStatus;
+    private boolean success;
+
+    private Instant createdAt;
 }
