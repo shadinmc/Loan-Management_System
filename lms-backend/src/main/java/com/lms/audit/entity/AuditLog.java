@@ -32,4 +32,6 @@ public class AuditLog {
     private boolean success;
 
     private Instant createdAt;
+    private String previousHash;
+    private String currentHash;
 }
