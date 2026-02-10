@@ -1,5 +1,7 @@
 package com.lms.loan.service;
 
+import com.lms.audit.service.AuditService;
+import com.lms.auth.security.SecurityUtils;
 import com.lms.common.idempotency.IdempotencyKeyService;
 import com.lms.common.idempotency.IdempotencyRecord;
 import com.lms.common.enums.LoanStatus;
@@ -23,15 +25,20 @@ public class LoanService {
     private final LoanRepository loanRepository;
     private final IdempotencyKeyService idempotencyService;
     private final KycService kycService;
+    private final AuditService auditService;
+    private final SecurityUtils securityUtils;
+
 
     public LoanService(
             LoanRepository loanRepository,
             IdempotencyKeyService idempotencyService,
-            KycService kycService
+            KycService kycService, AuditService auditService, SecurityUtils securityUtils
     ) {
         this.loanRepository = loanRepository;
         this.idempotencyService = idempotencyService;
         this.kycService = kycService;
+        this.auditService = auditService;
+        this.securityUtils = securityUtils;
     }
 
     /**
@@ -46,8 +53,8 @@ public class LoanService {
      * Prevents duplicate loan applications within the idempotency window
      */
     @Transactional
-    public Loan applyForLoan(String userId, LoanApplicationRequest request, String idempotencyKey) {
-
+    public Loan applyForLoan( LoanApplicationRequest request, String idempotencyKey) {
+        String userId = securityUtils.getCurrentUserId();
         // Step 0: Validate KYC
         kycService.validateKycVerified(userId);
 
@@ -106,6 +113,17 @@ public class LoanService {
 
         // Step 5: Persist loan to database
         Loan savedLoan = loanRepository.save(loan);
+
+        auditService.log(
+                userId,
+                "LOAN_APPLICATION",
+                "LOAN",
+                savedLoan.getLoanId(),
+                request,
+                savedLoan,
+                201,
+                true
+        );
 
         // Step 6: Save idempotency record to prevent future duplicates
         idempotencyService.saveKey(

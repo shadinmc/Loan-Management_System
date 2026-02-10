@@ -54,7 +54,7 @@ public class LoanController {
             idempotencyKey = UUID.randomUUID().toString(); // auto-generate
         }
 
-        Loan loan = loanService.applyForLoan(userId, request, idempotencyKey);
+        Loan loan = loanService.applyForLoan(request, idempotencyKey);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(loan);
     }
