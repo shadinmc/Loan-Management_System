@@ -1,22 +1,15 @@
 package com.lms.loan.service;
 
-import com.lms.audit.service.AuditService;
-import com.lms.auth.security.SecurityUtils;
 import com.lms.common.idempotency.IdempotencyKeyService;
 import com.lms.common.idempotency.IdempotencyRecord;
 import com.lms.common.enums.LoanStatus;
-import com.lms.kyc.service.KycService;
 import com.lms.loan.dto.LoanApplicationRequest;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.entity.embedded.*;
 import com.lms.loan.repository.LoanRepository;
-<<<<<<< HEAD
 import com.lms.kyc.service.KycService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-=======
-import org.springframework.stereotype.Service;
->>>>>>> 881e8dfb3d15b6bcda5a2c5e1eb71fda83e6a929
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,43 +23,24 @@ public class LoanService {
     private final LoanRepository loanRepository;
     private final IdempotencyKeyService idempotencyService;
     private final KycService kycService;
-    private final AuditService auditService;
-    private final SecurityUtils securityUtils;
 
-<<<<<<< HEAD
     public LoanService(
             LoanRepository loanRepository,
             IdempotencyKeyService idempotencyService,
             KycService kycService
-=======
-
-    public LoanService(
-            LoanRepository loanRepository,
-            IdempotencyKeyService idempotencyKeyService,
-            KycService kycService,
-            AuditService auditService,
-            SecurityUtils securityUtils
->>>>>>> 881e8dfb3d15b6bcda5a2c5e1eb71fda83e6a929
     ) {
         this.loanRepository = loanRepository;
         this.idempotencyService = idempotencyService;
         this.kycService = kycService;
-        this.auditService = auditService;
-        this.securityUtils = securityUtils;
     }
 
-<<<<<<< HEAD
     /**
      * Generate unique loan ID
      */
-=======
-
->>>>>>> 881e8dfb3d15b6bcda5a2c5e1eb71fda83e6a929
     private String generateLoanId() {
         return "LN-" + LocalDate.now().getYear() + "-" + System.currentTimeMillis();
     }
 
-<<<<<<< HEAD
     /**
      * Apply for a loan with idempotency support
      * Prevents duplicate loan applications within the idempotency window
@@ -79,26 +53,11 @@ public class LoanService {
 
         // Step 1: Check idempotency - prevent duplicate submissions
         Optional<IdempotencyRecord> existingRecord = idempotencyService.findByKey(idempotencyKey);
-=======
-    public Loan applyForLoan(LoanApplicationRequest request, String idempotencyKey) {
-        String userId = securityUtils.getCurrentUserId();
-
-        kycService.validateKycVerified(userId);
-        //   Check if this request was already processed
-        Optional<IdempotencyRecord> recordOpt =
-                idempotencyKeyService.findByKey(idempotencyKey);
->>>>>>> 881e8dfb3d15b6bcda5a2c5e1eb71fda83e6a929
 
         if (existingRecord.isPresent()) {
             IdempotencyRecord record = existingRecord.get();
 
-<<<<<<< HEAD
             // Check if record has expired
-=======
-            IdempotencyRecord record = recordOpt.get();
-
-            //  If expired treat as new request
->>>>>>> 881e8dfb3d15b6bcda5a2c5e1eb71fda83e6a929
             if (record.getExpiresAt().isBefore(java.time.Instant.now())) {
                 // Expired - allow new submission (but don't delete old record)
                 // Continue to create new loan
@@ -110,7 +69,6 @@ public class LoanService {
                     // Return the previously created loan
                     return existingLoan.get();
                 }
-<<<<<<< HEAD
                 // If loan was deleted but record exists, continue to create new loan
             }
         }
@@ -119,17 +77,6 @@ public class LoanService {
         validateLoanRequest(request);
 
         // Step 3: Create base loan entity
-=======
-                // else orphan record continue to create new loan
-            }
-        }
-
-
-        //   Validate request
-        validateLoanRequest(request);
-
-        //  Create base loan
->>>>>>> 881e8dfb3d15b6bcda5a2c5e1eb71fda83e6a929
         Loan loan = Loan.builder()
                 .loanId(generateLoanId())
                 .userId(userId)
@@ -146,11 +93,7 @@ public class LoanService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-<<<<<<< HEAD
         // Step 4: Attach loan-type specific details
-=======
-        //  Attach loan-type specific details
->>>>>>> 881e8dfb3d15b6bcda5a2c5e1eb71fda83e6a929
         switch (request.getLoanType()) {
             case PERSONAL -> loan.setPersonalLoanDetails(mapPersonalLoan(request));
             case EDUCATION -> loan.setEducationLoanDetails(mapEducationLoan(request));
@@ -161,23 +104,8 @@ public class LoanService {
             );
         }
 
-<<<<<<< HEAD
         // Step 5: Persist loan to database
-=======
-        //  Save loan
->>>>>>> 881e8dfb3d15b6bcda5a2c5e1eb71fda83e6a929
         Loan savedLoan = loanRepository.save(loan);
-        // Save audit
-        auditService.log(
-                userId,
-                "LOAN_APPLICATION",
-                "LOAN",
-                savedLoan.getLoanId(),
-                request,
-                savedLoan,
-                201,
-                true
-        );
 
         // Step 6: Save idempotency record to prevent future duplicates
         idempotencyService.saveKey(
