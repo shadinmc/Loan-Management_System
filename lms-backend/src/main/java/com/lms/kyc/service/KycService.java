@@ -99,7 +99,7 @@ public class KycService {
 
         if (kyc.getStatus() == KycStatus.VERIFIED) {
 
-            // 🔥 LOG ON FIRST DETECTION ONLY
+            //  LOG ON FIRST DETECTION ONLY
             if (!Boolean.TRUE.equals(kyc.getApprovalAuditLogged())) {
 
                 auditService.log(
