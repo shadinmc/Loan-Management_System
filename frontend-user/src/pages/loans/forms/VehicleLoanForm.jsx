@@ -1,52 +1,39 @@
 // src/pages/loans/forms/VehicleLoanForm.jsx
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Car, User, Settings, CreditCard, FileText, ChevronRight, ChevronLeft, Calculator, CheckCircle2, Sparkles, Shield, Gauge } from 'lucide-react';
+import { Car, CreditCard, FileText, ChevronRight, ChevronLeft, Calculator, CheckCircle2, Sparkles } from 'lucide-react';
 import Input from '../../../components/Input';
 import FileUpload from '../../../components/FileUpload';
 import Button from '../../../components/Button';
-import { validateEmail, validatePhone, validatePAN, validateRequired, validateAmount } from '../../../utils/validators';
+import { validateRequired, validateAmount } from '../../../utils/validators';
 import { LOAN_CONFIG, LOAN_TYPES } from '../../../utils/constants';
+import { useCreateLoan } from '../../../hooks/useCreateLoan';
 
-export default function VehicleLoanForm({ onSubmit, loading, config }) {
+export default function VehicleLoanForm({ config }) {
   const loanConfig = config || LOAN_CONFIG[LOAN_TYPES.VEHICLE] || {
     minAmount: 100000,
     maxAmount: 10000000,
     minTenure: 12,
     maxTenure: 84,
-    interestRate: '7.5% - 13%'
+    interestRate: '9.25%'
   };
 
+  const { createLoan, loading, error: apiError } = useCreateLoan(
+    'http://localhost:8080/api/loans/apply'
+  );
+
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    dateOfBirth: '',
-    panNumber: '',
-    address: '',
-    city: '',
-    pincode: '',
-    employmentType: '',
-    companyName: '',
-    monthlyIncome: '',
     vehicleType: '',
-    vehicleCategory: '',
-    vehicleMake: '',
+    vehicleBrand: '',
     vehicleModel: '',
-    vehicleVariant: '',
-    exShowroomPrice: '',
-    onRoadPrice: '',
     dealerName: '',
-    dealerCity: '',
-    insuranceType: '',
     loanAmount: '',
-    downPayment: '',
-    tenure: '',
-    panCard: null,
-    addressProof: null,
-    incomeProof: null,
-    bankStatement: null,
-    vehicleQuotation: null
+    tenureMonths: '',
+    downPaymentAmount: '',
+    proofOfIdentity: null,
+    proofOfIncome: null,
+    insuranceProof: null,
+    downPaymentProof: null
   });
 
   const [errors, setErrors] = useState({});
@@ -54,10 +41,9 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
   const [direction, setDirection] = useState(1);
 
   const steps = [
-    { id: 1, title: 'Personal', icon: User, description: 'Your details' },
-    { id: 2, title: 'Vehicle', icon: Car, description: 'Vehicle info' },
-    { id: 3, title: 'Loan', icon: CreditCard, description: 'Amount & tenure' },
-    { id: 4, title: 'Documents', icon: FileText, description: 'Upload files' }
+    { id: 1, title: 'Vehicle', icon: Car, description: 'Vehicle info' },
+    { id: 2, title: 'Loan', icon: CreditCard, description: 'Amount & tenure' },
+    { id: 3, title: 'Documents', icon: FileText, description: 'Upload files' }
   ];
 
   const handleChange = (e) => {
@@ -68,29 +54,27 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
     }
   };
 
+  const handleFileChange = (name, file) => {
+    setFormData(prev => ({ ...prev, [name]: file }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
   const validateStep = (step) => {
     const newErrors = {};
 
     if (step === 1) {
-      if (!validateRequired(formData.fullName)) newErrors.fullName = 'Full name is required';
-      if (!validateEmail(formData.email)) newErrors.email = 'Valid email is required';
-      if (!validatePhone(formData.phone)) newErrors.phone = 'Valid phone number is required';
-      if (!validatePAN(formData.panNumber)) newErrors.panNumber = 'Valid PAN number is required';
-      if (!validateRequired(formData.address)) newErrors.address = 'Address is required';
+      if (!validateRequired(formData.vehicleType)) newErrors.vehicleType = 'Vehicle type is required';
+      if (!validateRequired(formData.vehicleBrand)) newErrors.vehicleBrand = 'Vehicle brand is required';
+      if (!validateRequired(formData.vehicleModel)) newErrors.vehicleModel = 'Vehicle model is required';
     }
 
     if (step === 2) {
-      if (!validateRequired(formData.vehicleType)) newErrors.vehicleType = 'Vehicle type is required';
-      if (!validateRequired(formData.vehicleCategory)) newErrors.vehicleCategory = 'Vehicle category is required';
-      if (!validateRequired(formData.vehicleMake)) newErrors.vehicleMake = 'Vehicle make is required';
-      if (!validateRequired(formData.onRoadPrice)) newErrors.onRoadPrice = 'On-road price is required';
-    }
-
-    if (step === 3) {
       if (!validateAmount(formData.loanAmount, loanConfig.minAmount, loanConfig.maxAmount)) {
         newErrors.loanAmount = `Amount must be between ₹${loanConfig.minAmount.toLocaleString()} and ₹${loanConfig.maxAmount.toLocaleString()}`;
       }
-      if (!validateRequired(formData.tenure)) newErrors.tenure = 'Tenure is required';
+      if (!validateRequired(formData.tenureMonths)) newErrors.tenureMonths = 'Tenure is required';
     }
 
     setErrors(newErrors);
@@ -101,55 +85,71 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
     if (validateStep(currentStep)) {
       setDirection(1);
       setCurrentStep(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handlePrev = () => {
     setDirection(-1);
     setCurrentStep(prev => prev - 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateStep(currentStep)) {
-      onSubmit(formData);
+  const handleFinalSubmit = async () => {
+    if (!validateStep(3)) {
+      return;
+    }
+
+    const payload = {
+      loanType: 'VEHICLE',
+      loanAmount: Number(formData.loanAmount),
+      tenureMonths: Number(formData.tenureMonths),
+      interestRate: 9.25,
+      vehicleLoanDetails: {
+        vehicleType: formData.vehicleType,
+        vehicleBrand: formData.vehicleBrand,
+        vehicleModel: formData.vehicleModel,
+        downPaymentAmount: Number(formData.downPaymentAmount) || 0,
+        dealerName: formData.dealerName || '',
+        proofOfIdentity: formData.proofOfIdentity?.name || '',
+        proofOfIncome: formData.proofOfIncome?.name || '',
+        insuranceProof: formData.insuranceProof?.name || '',
+        downPaymentProof: formData.downPaymentProof?.name || ''
+      }
+    };
+
+    try {
+      const res = await createLoan(payload);
+
+      if (res.isDuplicate) {
+        alert(`This application was already submitted. Loan ID: ${res.loanId}\n\nMessage: ${res.message}`);
+      } else {
+        alert(`Vehicle loan submitted successfully! ID: ${res.loanId || res.id}`);
+      }
+    } catch (err) {
+      console.error('Submission failed', err);
     }
   };
 
-  const employmentOptions = [
-    { value: 'salaried', label: 'Salaried' },
-    { value: 'self-employed', label: 'Self Employed' },
-    { value: 'business', label: 'Business Owner' },
-    { value: 'professional', label: 'Professional' }
-  ];
-
   const vehicleTypeOptions = [
-    { value: 'new', label: 'New Vehicle' },
-    { value: 'used', label: 'Used/Pre-owned Vehicle' }
+    { value: 'CAR', label: 'Car' },
+    { value: 'BIKE', label: 'Two Wheeler' },
+    { value: 'COMMERCIAL', label: 'Commercial Vehicle' }
   ];
 
-  const vehicleCategoryOptions = [
-    { value: 'car', label: 'Car' },
-    { value: 'suv', label: 'SUV' },
-    { value: 'bike', label: 'Two Wheeler' },
-    { value: 'commercial', label: 'Commercial Vehicle' }
-  ];
-
-  const vehicleMakeOptions = [
-    { value: 'maruti', label: 'Maruti Suzuki' },
-    { value: 'hyundai', label: 'Hyundai' },
-    { value: 'tata', label: 'Tata Motors' },
-    { value: 'mahindra', label: 'Mahindra' },
-    { value: 'honda', label: 'Honda' },
-    { value: 'toyota', label: 'Toyota' },
-    { value: 'kia', label: 'Kia' },
-    { value: 'other', label: 'Other' }
-  ];
-
-  const insuranceOptions = [
-    { value: 'comprehensive', label: 'Comprehensive' },
-    { value: 'third-party', label: 'Third Party Only' },
-    { value: 'zero-dep', label: 'Zero Depreciation' }
+  const vehicleBrandOptions = [
+    { value: 'Maruti Suzuki', label: 'Maruti Suzuki' },
+    { value: 'Hyundai', label: 'Hyundai' },
+    { value: 'Tata Motors', label: 'Tata Motors' },
+    { value: 'Mahindra', label: 'Mahindra' },
+    { value: 'Honda', label: 'Honda' },
+    { value: 'Toyota', label: 'Toyota' },
+    { value: 'Kia', label: 'Kia' },
+    { value: 'Hero', label: 'Hero MotoCorp' },
+    { value: 'Bajaj', label: 'Bajaj Auto' },
+    { value: 'TVS', label: 'TVS Motor' },
+    { value: 'Royal Enfield', label: 'Royal Enfield' },
+    { value: 'Other', label: 'Other' }
   ];
 
   const tenureOptions = Array.from(
@@ -186,20 +186,12 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
     })
   };
 
-  const calculateLTV = () => {
-    if (formData.onRoadPrice && formData.loanAmount) {
-      return ((Number(formData.loanAmount) / Number(formData.onRoadPrice)) * 100).toFixed(1);
-    }
-    return 0;
-  };
-
-  const emi = formData.loanAmount && formData.tenure
-    ? calculateEMI(Number(formData.loanAmount), 9.5, Number(formData.tenure))
+  const emi = formData.loanAmount && formData.tenureMonths
+    ? calculateEMI(Number(formData.loanAmount), 9.25, Number(formData.tenureMonths))
     : 0;
 
   return (
-    <motion.form
-      onSubmit={handleSubmit}
+    <motion.div
       className="loan-form"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -214,28 +206,28 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
             const isCompleted = currentStep > step.id;
 
             return (
-              <div key={step.id} className="progress-step-wrapper">
+              <motion.div
+                key={step.id}
+                className={`progress-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
                 <motion.div
-                  className={`progress-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
-                  initial={false}
-                  animate={isActive ? { scale: 1.05 } : { scale: 1 }}
+                  className="step-icon"
+                  animate={isActive ? { scale: [1, 1.1, 1] } : {}}
+                  transition={{ duration: 0.5, repeat: isActive ? Infinity : 0, repeatDelay: 2 }}
                 >
-                  <motion.div
-                    className="step-icon"
-                    animate={isActive ? { rotate: [0, -10, 10, 0] } : {}}
-                    transition={{ duration: 0.5 }}
-                  >
-                    {isCompleted ? <CheckCircle2 size={20} /> : <Icon size={20} />}
-                  </motion.div>
-                  <div className="step-info">
-                    <span className="step-title">{step.title}</span>
-                    <span className="step-desc">{step.description}</span>
-                  </div>
+                  {isCompleted ? <CheckCircle2 size={20} /> : <Icon size={20} />}
                 </motion.div>
+                <div className="step-info">
+                  <span className="step-title">{step.title}</span>
+                  <span className="step-desc">{step.description}</span>
+                </div>
                 {index < steps.length - 1 && (
                   <div className={`step-connector ${isCompleted ? 'completed' : ''}`} />
                 )}
-              </div>
+              </motion.div>
             );
           })}
         </div>
@@ -264,135 +256,6 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
             >
               <div className="step-header">
                 <motion.div
-                  className="header-icon"
-                  animate={{ rotate: [0, 360] }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                >
-                  <User size={28} />
-                </motion.div>
-                <div>
-                  <h3 className="step-title-main">Personal Information</h3>
-                  <p className="step-subtitle">Tell us about yourself</p>
-                </div>
-              </div>
-
-              <div className="form-grid">
-                <motion.div custom={0} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input
-                    label="Full Name"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    placeholder="Enter your full name"
-                    error={errors.fullName}
-                    required
-                  />
-                </motion.div>
-                <motion.div custom={1} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input
-                    label="Email Address"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="your@email.com"
-                    error={errors.email}
-                    required
-                  />
-                </motion.div>
-                <motion.div custom={2} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input
-                    label="Phone Number"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="10-digit mobile number"
-                    error={errors.phone}
-                    required
-                  />
-                </motion.div>
-                <motion.div custom={3} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input
-                    label="Date of Birth"
-                    name="dateOfBirth"
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={handleChange}
-                    error={errors.dateOfBirth}
-                  />
-                </motion.div>
-                <motion.div custom={4} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input
-                    label="PAN Number"
-                    name="panNumber"
-                    value={formData.panNumber}
-                    onChange={handleChange}
-                    placeholder="ABCDE1234F"
-                    error={errors.panNumber}
-                    required
-                  />
-                </motion.div>
-                <motion.div custom={5} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input
-                    label="Employment Type"
-                    name="employmentType"
-                    type="select"
-                    value={formData.employmentType}
-                    onChange={handleChange}
-                    options={employmentOptions}
-                    error={errors.employmentType}
-                  />
-                </motion.div></div>
-
-              <motion.div custom={6} variants={itemVariants} initial="hidden" animate="visible" className="full-width">
-                <Input
-                  label="Address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  placeholder="Enter your complete address"
-                  error={errors.address}
-                  required
-                />
-              </motion.div>
-
-              <div className="form-grid">
-                <motion.div custom={7} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input
-                    label="City"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    placeholder="Enter city"
-                    error={errors.city}
-                  />
-                </motion.div>
-                <motion.div custom={8} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input
-                    label="Monthly Income (₹)"
-                    name="monthlyIncome"
-                    type="number"
-                    value={formData.monthlyIncome}
-                    onChange={handleChange}
-                    placeholder="Enter monthly income"
-                    error={errors.monthlyIncome}
-                  />
-                </motion.div></div>
-            </motion.div>
-          )}
-
-          {currentStep === 2 && (
-            <motion.div
-              key="step2"
-              className="form-step"
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-            >
-              <div className="step-header">
-                <motion.div
                   className="header-icon vehicle-icon"
                   animate={{ x: [0, 10, 0] }}
                   transition={{ duration: 0.8, repeat: 1 }}
@@ -401,7 +264,7 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
                 </motion.div>
                 <div>
                   <h3 className="step-title-main">Vehicle Details</h3>
-                  <p className="step-subtitle">Tell us about your dream vehicle</p>
+                  <p className="step-subtitle">Tell us about your vehicle</p>
                 </div>
               </div>
 
@@ -420,124 +283,44 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
                 </motion.div>
                 <motion.div custom={1} variants={itemVariants} initial="hidden" animate="visible">
                   <Input
-                    label="Vehicle Category"
-                    name="vehicleCategory"
+                    label="Vehicle Brand"
+                    name="vehicleBrand"
                     type="select"
-                    value={formData.vehicleCategory}
+                    value={formData.vehicleBrand}
                     onChange={handleChange}
-                    options={vehicleCategoryOptions}
-                    error={errors.vehicleCategory}
+                    options={vehicleBrandOptions}
+                    error={errors.vehicleBrand}
                     required
                   />
                 </motion.div>
                 <motion.div custom={2} variants={itemVariants} initial="hidden" animate="visible">
                   <Input
-                    label="Vehicle Make"
-                    name="vehicleMake"
-                    type="select"
-                    value={formData.vehicleMake}
+                    label="Vehicle Model"
+                    name="vehicleModel"
+                    value={formData.vehicleModel}
                     onChange={handleChange}
-                    options={vehicleMakeOptions}
-                    error={errors.vehicleMake}
+                    placeholder="e.g., Swift, Creta, Activa"
+                    error={errors.vehicleModel}
                     required
                   />
                 </motion.div>
                 <motion.div custom={3} variants={itemVariants} initial="hidden" animate="visible">
                   <Input
-                    label="Vehicle Model"
-                    name="vehicleModel"
-                    value={formData.vehicleModel}
-                    onChange={handleChange}
-                    placeholder="e.g., Swift, Creta, Nexon"
-                    error={errors.vehicleModel}
-                  />
-                </motion.div>
-                <motion.div custom={4} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input
-                    label="Ex-Showroom Price (₹)"
-                    name="exShowroomPrice"
-                    type="number"
-                    value={formData.exShowroomPrice}
-                    onChange={handleChange}
-                    placeholder="Enter ex-showroom price"
-                    error={errors.exShowroomPrice}
-                  />
-                </motion.div>
-                <motion.div custom={5} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input
-                    label="On-Road Price (₹)"
-                    name="onRoadPrice"
-                    type="number"
-                    value={formData.onRoadPrice}
-                    onChange={handleChange}
-                    placeholder="Enter on-road price"
-                    error={errors.onRoadPrice}
-                    required
-                  />
-                </motion.div>
-              </div>
-
-              <div className="form-grid">
-                <motion.div custom={6} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input
                     label="Dealer Name"
                     name="dealerName"
                     value={formData.dealerName}
                     onChange={handleChange}
-                    placeholder="Enter dealer name"
+                    placeholder="Enter dealer name (optional)"
                     error={errors.dealerName}
                   />
                 </motion.div>
-                <motion.div custom={7} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input
-                    label="Insurance Type"
-                    name="insuranceType"
-                    type="select"
-                    value={formData.insuranceType}
-                    onChange={handleChange}
-                    options={insuranceOptions}
-                    error={errors.insuranceType}
-                  />
-                </motion.div>
               </div>
-
-              {formData.onRoadPrice && (
-                <motion.div
-                  className="vehicle-summary-card"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="summary-header">
-                    <Settings size={20} />
-                    <span>Vehicle Summary</span>
-                  </div>
-                  <div className="summary-grid">
-                    <div className="summary-item">
-                      <span className="summary-label">On-Road Price</span>
-                      <span className="summary-value">₹{Number(formData.onRoadPrice).toLocaleString()}</span>
-                    </div>
-                    {formData.vehicleMake && (
-                      <div className="summary-item">
-                        <span className="summary-label">Make</span>
-                        <span className="summary-value">{vehicleMakeOptions.find(o => o.value === formData.vehicleMake)?.label}</span>
-                      </div>
-                    )}
-                    {formData.vehicleType && (
-                      <div className="summary-item">
-                        <span className="summary-label">Condition</span>
-                        <span className="summary-value">{formData.vehicleType === 'new' ? 'Brand New' : 'Pre-Owned'}</span>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
             </motion.div>
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 2 && (
             <motion.div
-              key="step3"
+              key="step2"
               className="form-step"
               custom={direction}
               variants={slideVariants}
@@ -577,74 +360,47 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
                   <span className="config-label">Max Amount</span>
                   <span className="config-value">₹{loanConfig.maxAmount.toLocaleString()}</span>
                 </div>
-                <div className="config-item">
-                  <span className="config-label">Max Tenure</span>
-                  <span className="config-value">{loanConfig.maxTenure} Months</span>
-                </div>
               </motion.div>
 
               <div className="form-grid">
                 <motion.div custom={0} variants={itemVariants} initial="hidden" animate="visible">
                   <Input
-                    label="Loan Amount (₹)"
+                    label="Loan Amount"
                     name="loanAmount"
                     type="number"
                     value={formData.loanAmount}
                     onChange={handleChange}
                     placeholder="Enter loan amount"
+                    prefix="₹"
                     error={errors.loanAmount}
                     required
                   />
                 </motion.div>
                 <motion.div custom={1} variants={itemVariants} initial="hidden" animate="visible">
                   <Input
-                    label="Down Payment (₹)"
-                    name="downPayment"
+                    label="Down Payment"
+                    name="downPaymentAmount"
                     type="number"
-                    value={formData.downPayment}
+                    value={formData.downPaymentAmount}
                     onChange={handleChange}
-                    placeholder="Enter down payment"
-                    error={errors.downPayment}
+                    placeholder="Enter down payment (optional)"
+                    prefix="₹"
+                    error={errors.downPaymentAmount}
                   />
                 </motion.div>
                 <motion.div custom={2} variants={itemVariants} initial="hidden" animate="visible">
                   <Input
                     label="Tenure"
-                    name="tenure"
+                    name="tenureMonths"
                     type="select"
-                    value={formData.tenure}
+                    value={formData.tenureMonths}
                     onChange={handleChange}
                     options={tenureOptions}
-                    error={errors.tenure}
+                    error={errors.tenureMonths}
                     required
                   />
                 </motion.div>
               </div>
-
-              {formData.loanAmount && formData.onRoadPrice && (
-                <motion.div
-                  className="ltv-indicator"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <div className="ltv-header">
-                    <Gauge size={18} />
-                    <span>Loan-to-Value Ratio</span>
-                  </div>
-                  <div className="ltv-bar">
-                    <motion.div
-                      className="ltv-fill"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(calculateLTV(), 100)}%` }}
-                      style={{
-                        background: calculateLTV() > 85 ? '#EF4444' : calculateLTV() > 70 ? '#F59E0B' : '#2DBE60'
-                      }}
-                    />
-                  </div>
-                  <div className="ltv-value">{calculateLTV()}%</div>
-                </motion.div>
-              )}
 
               {emi > 0 && (
                 <motion.div
@@ -670,16 +426,16 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
                         ₹{emi.toLocaleString()}
                       </motion.span>
                     </div>
-                    <p className="emi-note">*Calculated at 9.5% p.a. Actual rate may vary based on credit profile.</p>
+                    <p className="emi-note">*Calculated at 9.25% p.a. Actual rate may vary.</p>
                   </div>
                 </motion.div>
               )}
             </motion.div>
           )}
 
-          {currentStep === 4 && (
+          {currentStep === 3 && (
             <motion.div
-              key="step4"
+              key="step3"
               className="form-step"
               custom={direction}
               variants={slideVariants}
@@ -697,79 +453,47 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
                 </motion.div>
                 <div>
                   <h3 className="step-title-main">Upload Documents</h3>
-                  <p className="step-subtitle">Upload required documents for verification</p>
+                  <p className="step-subtitle">Upload required documents</p>
                 </div>
               </div>
 
               <div className="documents-grid">
-                <motion.div custom={0} variants={itemVariants} initial="hidden" animate="visible" className="document-item">
-                  <FileUpload
-                    label="PAN Card"
-                    name="panCard"
-                    onChange={handleChange}
-                    required
-                    error={errors.panCard}
-                  />
-                </motion.div>
-                <motion.div custom={1} variants={itemVariants} initial="hidden" animate="visible" className="document-item">
-                  <FileUpload
-                    label="Address Proof"
-                    name="addressProof"
-                    onChange={handleChange}
-                    required
-                    error={errors.addressProof}
-                  />
-                </motion.div>
-                <motion.div custom={2} variants={itemVariants} initial="hidden" animate="visible" className="document-item">
-                  <FileUpload
-                    label="Income Proof"
-                    name="incomeProof"
-                    onChange={handleChange}
-                    required
-                    error={errors.incomeProof}
-                  />
-                </motion.div>
-                <motion.div custom={3} variants={itemVariants} initial="hidden" animate="visible" className="document-item">
-                  <FileUpload
-                    label="Bank Statement (Last 6 months)"
-                    name="bankStatement"
-                    onChange={handleChange}
-                    required
-                    error={errors.bankStatement}
-                  />
-                </motion.div>
-                <motion.div custom={4} variants={itemVariants} initial="hidden" animate="visible" className="document-item full-width-doc">
-                  <FileUpload
-                    label="Vehicle Quotation/Proforma Invoice"
-                    name="vehicleQuotation"
-                    onChange={handleChange}
-                    error={errors.vehicleQuotation}
-                  />
-                </motion.div>
+                {[
+                  { key: 'proofOfIdentity', label: 'Proof of Identity (Aadhaar/PAN/Passport)', required: true },
+                  { key: 'proofOfIncome', label: 'Proof of Income (Salary Slips/ITR)', required: true },
+                  { key: 'insuranceProof', label: 'Vehicle Insurance Proof', required: false },
+                  { key: 'downPaymentProof', label: 'Down Payment Proof (if applicable)', required: false }
+                ].map((doc, index) => (
+                  <motion.div
+                    key={doc.key}
+                    className="document-item"
+                    custom={index}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <FileUpload
+                      label={doc.label}
+                      name={doc.key}
+                      value={formData[doc.key]}
+                      onChange={(file) => handleFileChange(doc.key, file)}
+                      required={doc.required}
+                    />
+                  </motion.div>
+                ))}
               </div>
 
               <motion.div
-                className="insurance-note"
-                custom={5}
-                variants={itemVariants}
-                initial="hidden"
-                animate="visible"
-              >
-                <Shield size={20} />
-                <p>Vehicle insurance is mandatory and will be arranged as part of the loan process.</p>
-              </motion.div>
-
-              <motion.div
                 className="terms-section"
-                custom={6}
-                variants={itemVariants}
-                initial="hidden"
-                animate="visible"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
               >
                 <label className="terms-checkbox">
                   <input type="checkbox" required />
                   <span>
-                    I agree to the <a href="/terms">Terms & Conditions</a> and <a href="/privacy">Privacy Policy</a>. I also authorize the lender to register a lien on the vehicle until the loan is fully repaid.
+                    I agree to the <a href="/terms" target="_blank">Terms & Conditions</a> and{' '}
+                    <a href="/privacy" target="_blank">Privacy Policy</a>.
                   </span>
                 </label>
               </motion.div>
@@ -777,6 +501,17 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
           )}
         </AnimatePresence>
       </div>
+
+      {/* API Error Display */}
+      {apiError && (
+        <motion.div
+          className="api-error-message"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <span>Error: {apiError}</span>
+        </motion.div>
+      )}
 
       {/* Form Actions */}
       <motion.div
@@ -792,19 +527,21 @@ export default function VehicleLoanForm({ onSubmit, loading, config }) {
           </Button>
         )}
         <div className="action-spacer" />
-        {currentStep < 4 ? (
+        {currentStep < 3 ? (
           <Button type="button" onClick={handleNext}>
             Continue
             <ChevronRight size={18} />
           </Button>
         ) : (
-          <Button type="submit" loading={loading}>
+          <Button type="button" onClick={handleFinalSubmit} loading={loading}>
             <Sparkles size={18} />
             Submit Application
           </Button>
         )}
-      </motion.div><style>{formStyles}</style>
-    </motion.form>
+      </motion.div>
+
+      <style>{formStyles}</style>
+    </motion.div>
   );
 }
 
@@ -835,16 +572,6 @@ const formStyles = `
     justify-content: space-between;
     position: relative;
     margin-bottom: 24px;
-  }
-
-  .progress-step-wrapper {
-    display: flex;
-    align-items: center;
-    flex: 1;
-  }
-
-  .progress-step-wrapper:last-child {
-    flex: 0;
   }
 
   .progress-step {
@@ -903,10 +630,13 @@ const formStyles = `
   }
 
   .step-connector {
-    flex: 1;
+    position: absolute;
+    top: 24px;
+    left: 60px;
+    width: calc(100% - 60px);
     height: 2px;
     background: rgba(255, 255, 255, 0.1);
-    margin: 0 16px;
+    z-index: 1;
   }
 
   .step-connector.completed {
@@ -980,11 +710,6 @@ const formStyles = `
     margin-bottom: 24px;
   }
 
-  .full-width {
-    grid-column: 1 / -1;
-    margin-bottom: 24px;
-  }
-
   .loan-config-banner {
     display: flex;
     justify-content: space-around;
@@ -1010,85 +735,6 @@ const formStyles = `
     font-size: 1.25rem;
     font-weight: 700;
     color: #2DBE60;
-  }
-
-  .vehicle-summary-card {
-    margin-top: 24px;
-    padding: 24px;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 16px;
-  }
-
-  .summary-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
-    color: #3B82F6;
-    font-weight: 600;
-  }
-
-  .summary-grid {
-    display: flex;
-    gap: 32px;
-    flex-wrap: wrap;
-  }
-
-  .summary-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .summary-label {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-  }
-
-  .summary-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #3B82F6;
-  }
-
-  .ltv-indicator {
-    margin: 24px 0;
-    padding: 20px;
-    background: var(--bg-secondary);
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-  }
-
-  .ltv-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 12px;
-  }
-
-  .ltv-bar {
-    height: 8px;
-    background: var(--bg-tertiary);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .ltv-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.5s ease;
-  }
-
-  .ltv-value {
-    text-align: right;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-top: 8px;
   }
 
   .emi-calculator-card {
@@ -1154,27 +800,6 @@ const formStyles = `
     box-shadow: 0 4px 12px rgba(45, 190, 96, 0.1);
   }
 
-  .full-width-doc {
-    grid-column: 1 / -1;
-  }
-
-  .insurance-note {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
-    background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 12px;
-    margin-top: 24px;
-    color: #3B82F6;
-  }
-
-  .insurance-note p {
-    margin: 0;font-size: 0.875rem;
-    color: var(--text-secondary);
-  }
-
   .terms-section {
     margin-top: 28px;
     padding-top: 20px;
@@ -1209,6 +834,16 @@ const formStyles = `
 
   .terms-checkbox a:hover {
     text-decoration: underline;
+  }
+
+  .api-error-message {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 40px;
+    background: rgba(239, 68, 68, 0.1);
+    border-top: 1px solid rgba(239, 68, 68, 0.2);
+    color: #EF4444;
   }
 
   .form-actions {
@@ -1252,8 +887,7 @@ const formStyles = `
       grid-template-columns: 1fr;
     }
 
-    .loan-config-banner,
-    .summary-grid {
+    .loan-config-banner {
       flex-direction: column;
       gap: 16px;
     }

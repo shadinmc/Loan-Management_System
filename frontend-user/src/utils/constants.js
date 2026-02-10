@@ -2,7 +2,6 @@
  * Application Constants
  * Centralized configuration values and loan type definitions
  */
-
 export const LOAN_TYPES = {
   PERSONAL: 'PERSONAL',
   EDUCATION: 'EDUCATION',
@@ -19,7 +18,8 @@ export const LOAN_CONFIG = {
     maxAmount: 2500000,
     minTenure: 12,
     maxTenure: 60,
-    interestRate: '10.5% - 18%',
+    interestRate: 10.5, // Numeric value for backend
+    interestRateDisplay: '10.5% - 18%', // For UI display
     features: [
       'No collateral required',
       'Quick approval within 24 hours',
@@ -38,7 +38,8 @@ export const LOAN_CONFIG = {
     maxAmount: 7500000,
     minTenure: 12,
     maxTenure: 180,
-    interestRate: '8.5% - 12%',
+    interestRate: 8.5, // ✅ Numeric value for backend
+    interestRateDisplay: '8.5% - 12%', // For UI display
     features: [
       'Covers tuition and living expenses',
       'Moratorium period available',
@@ -57,7 +58,8 @@ export const LOAN_CONFIG = {
     maxAmount: 5000000,
     minTenure: 12,
     maxTenure: 84,
-    interestRate: '11% - 20%',
+    interestRate: 13, // ✅ Numeric value for backend
+    interestRateDisplay: '11% - 20%', // For UI display
     features: [
       'No collateral for MSME',
       'Flexible end-use',
@@ -76,7 +78,8 @@ export const LOAN_CONFIG = {
     maxAmount: 10000000,
     minTenure: 12,
     maxTenure: 84,
-    interestRate: '7.5% - 13%',
+    interestRate: 9.5, // ✅ Numeric value for backend
+    interestRateDisplay: '7.5% - 13%', // For UI display
     features: [
       'Up to 100% on-road funding',
       'Flexible down payment',

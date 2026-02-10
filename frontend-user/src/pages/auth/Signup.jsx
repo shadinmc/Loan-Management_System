@@ -7,7 +7,6 @@ import { useAuth } from '../../context/AuthContext';
 import {
   UserPlus,
   Wallet,
-  CheckCircle,
   Shield,
   Zap,
   Mail,
@@ -66,7 +65,7 @@ export default function Signup() {
 
   const validateStep = (currentStep) => {
     switch (currentStep) {
-      case 1:
+      case 1: {
         if (!form.username.trim()) {
           setError('Username is required');
           return false;
@@ -80,12 +79,29 @@ export default function Signup() {
           setError('Username must start with at least 4 letters');
           return false;
         }
-        if (!form.fullName.trim()) {
+
+        // Full name validation
+        const fullName = form.fullName.trim();
+        if (!fullName) {
           setError('Full name is required');
           return false;
         }
+        // Disallow digits anywhere
+        if (/\d/.test(fullName)) {
+          setError('Full name cannot contain numbers');
+          return false;
+        }
+        // Optional: allow letters, spaces, apostrophes, periods, and hyphens
+        // Ensure it starts with a letter and contains at least 2 letters total
+        const namePattern = /^[A-Za-z][A-Za-z\s'.-]*$/;
+        const lettersCount = (fullName.match(/[A-Za-z]/g) || []).length;
+        if (!namePattern.test(fullName) || lettersCount < 2) {
+          setError("Please enter a valid full name (letters, spaces, apostrophes, periods, hyphens only)");
+          return false;
+        }
         break;
-      case 2:
+      }
+      case 2: {
         if (!form.email.trim()) {
           setError('Email is required');
           return false;
@@ -123,7 +139,8 @@ export default function Signup() {
           return false;
         }
         break;
-      case 3:
+      }
+      case 3: {
         if (!form.password) {
           setError('Password is required');
           return false;
@@ -141,6 +158,7 @@ export default function Signup() {
           return false;
         }
         break;
+      }
       default:
         break;
     }
@@ -276,6 +294,7 @@ export default function Signup() {
                   </div>
                 </div>
               </div>
+
               <div className="input-wrapper">
                 <label><User size={16} /> Full Name</label>
                 <div className="input-field">
@@ -287,7 +306,20 @@ export default function Signup() {
                     onFocus={() => setFocusedField('fullName')}
                     onBlur={() => setFocusedField(null)}
                     placeholder="Enter your full name"
+                    pattern="^[A-Za-z][A-Za-z\s'.-]*$"
+                    title="Only letters, spaces, apostrophes ('), periods (.), and hyphens (-). Must start with a letter."
                   />
+                </div>
+                {/* Optional visual rules to mirror username UX */}
+                <div className="validation-rules">
+                  <div className={`rule-item ${!/\\d/.test((form.fullName || '')) && (form.fullName || '').trim() ? 'valid' : ''}`}>
+                    {!/\d/.test((form.fullName || '')) && (form.fullName || '').trim() ? <Check size={12} /> : <span className="dot">•</span>}
+                    No numbers allowed
+                  </div>
+                  <div className={`rule-item ${/^[A-Za-z][A-Za-z\s'.-]*$/.test((form.fullName || '').trim()) ? 'valid' : ''}`}>
+                    {/^[A-Za-z][A-Za-z\s'.-]*$/.test((form.fullName || '').trim()) ? <Check size={12} /> : <span className="dot">•</span>}
+                    Use letters, spaces, apostrophes, periods, or hyphens
+                  </div>
                 </div>
               </div>
             </>
@@ -1341,7 +1373,7 @@ export default function Signup() {
           transition: all 0.2s ease;
         }
 
-        .next-btn:hover:not(:disabled),
+        .next-btn
         .submit-btn:hover:not(:disabled) {
           box-shadow: 0 12px 32px rgba(45, 190, 96, 0.4);
           transform: translateY(-1px);
