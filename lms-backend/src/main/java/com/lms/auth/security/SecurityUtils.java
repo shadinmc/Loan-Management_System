@@ -15,7 +15,9 @@ public class SecurityUtils {
         }
         throw new RuntimeException("No authenticated user found");
     }
-
+    public String getCurrentUsername() {
+        return getCurrentUser().getUsername();
+    }
     public String getCurrentUserId() {
         return getCurrentUser().getId();
     }
