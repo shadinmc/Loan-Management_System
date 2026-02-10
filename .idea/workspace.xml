@@ -6,10 +6,15 @@
   <component name="ChangeListManager">
     <list default="true" id="94172bc9-ecc6-4ab9-bb14-296ec23d4b1c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend-admin/src/pages/LoanApplications/LoanApplications.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend-admin/src/pages/LoanApplications/LoanApplications.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend-admin/src/pages/auth/AdminLogin.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend-admin/src/pages/auth/AdminLogin.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend-admin/src/pages/auth/AdminLogin.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend-admin/src/pages/auth/AdminLogin.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend-admin/src/routes/AdminRoutes.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend-admin/src/routes/AdminRoutes.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-user/src/api/authApi.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend-user/src/api/authApi.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-user/src/api/loanApi.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend-user/src/api/loanApi.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-user/src/hooks/useCreateLoan.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend-user/src/hooks/useCreateLoan.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend-user/src/pages/loans/forms/BusinessLoanForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend-user/src/pages/loans/forms/BusinessLoanForm.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lms-backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/lms-backend/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lms-backend/src/main/java/com/lms/auth/security/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/lms-backend/src/main/java/com/lms/auth/security/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lms-backend/src/main/java/com/lms/common/idempotency/IdempotencyFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/lms-backend/src/main/java/com/lms/common/idempotency/IdempotencyFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lms-backend/src/main/java/com/lms/config/CorsConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/lms-backend/src/main/java/com/lms/config/CorsConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lms-backend/src/main/java/com/lms/loan/service/LoanService.java" beforeDir="false" afterPath="$PROJECT_DIR$/lms-backend/src/main/java/com/lms/loan/service/LoanService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,6 +24,7 @@
   <component name="CopilotPersistence">
     <persistenceIdMap>
       <entry key="_C:/Users/304483/Desktop/JAVA_LMS_4_repo" value="39BtMOJPXLvmtFmMYVAGRS2T4vx" />
+      <entry key="_C:/Users/304501/Documents/JAVA_LMS_4_repo" value="39RIgqJVYTbK01FM6KtThR0INcx" />
     </persistenceIdMap>
   </component>
   <component name="Git.Settings">
@@ -32,18 +38,18 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;Ragumaan-frontend&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/304483/Desktop/JAVA_LMS_4_repo&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.appearance&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "Athul__Frontend",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/304501/Documents/JAVA_LMS_4_repo",
+    "settings.editor.selected.configurable": "configurable.group.appearance"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\304483\Desktop\JAVA_LMS_4_repo\frontend-admin\src\assets" />
