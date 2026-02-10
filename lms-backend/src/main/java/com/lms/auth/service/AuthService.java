@@ -1,5 +1,6 @@
 package com.lms.auth.service;
 
+import com.lms.audit.service.AuditService;
 import com.lms.auth.dto.AuthResponse;
 import com.lms.auth.dto.LoginRequest;
 import com.lms.auth.dto.SignupRequest;
@@ -20,6 +21,8 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final AuditService auditService;
+
 
     public AuthResponse signup(SignupRequest request) {
 
@@ -59,6 +62,17 @@ public class AuthService {
         User savedUser = userRepository.save(user);
 
         String token = jwtTokenProvider.generateToken(savedUser);
+        auditService.log(
+                savedUser.getId(),
+                "USER_SIGNUP",
+                "USER",
+                savedUser.getId(),
+                request,
+                savedUser,
+                201,
+                true
+        );
+
 
         return new AuthResponse(
                 token,
@@ -72,30 +86,64 @@ public class AuthService {
 
 
     public AuthResponse login(LoginRequest request) {
-        // Find user by email or username
-        User user = userRepository.findByEmail(request.getUsernameOrEmail())
-                .orElseGet(() -> userRepository.findByUsername(request.getUsernameOrEmail())
-                        .orElseThrow(() -> new RuntimeException("User not found")));
 
-        // Verify password
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+        try {
+            // Find user by email or username
+            User user = userRepository.findByEmail(request.getUsernameOrEmail())
+                    .orElseGet(() -> userRepository.findByUsername(request.getUsernameOrEmail())
+                            .orElseThrow(() -> new RuntimeException("User not found")));
+
+            // Verify password
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                throw new RuntimeException("Invalid credentials");
+            }
+
+            // Check if active
+            if (!user.isActive()) {
+                throw new RuntimeException("User account is disabled");
+            }
+
+            String token = jwtTokenProvider.generateToken(user);
+
+            AuthResponse response = new AuthResponse(
+                    token,
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRoles(),
+                    "Login successful"
+            );
+
+            //  SUCCESS AUDIT
+            auditService.log(
+                    user.getId(),
+                    "USER_LOGIN",
+                    "AUTH",
+                    user.getId(),
+                    request,
+                    response,
+                    200,
+                    true
+            );
+
+            return response;
+
+        } catch (Exception ex) {
+
+            // FAILURE AUDIT (VERY IMPORTANT)
+            auditService.log(
+                    request.getUsernameOrEmail(),
+                    "USER_LOGIN",
+                    "AUTH",
+                    null,
+                    request,
+                    "LOGIN_FAILED",
+                    401,
+                    false
+            );
+
+            throw ex;
         }
-
-        // Check if active
-        if (!user.isActive()) {
-            throw new RuntimeException("User account is disabled");
-        }
-
-        String token = jwtTokenProvider.generateToken(user);
-
-        return new AuthResponse(
-                token,
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRoles(),
-                "Login successful"
-        );
     }
+
 }

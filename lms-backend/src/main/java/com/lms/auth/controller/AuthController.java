@@ -1,5 +1,6 @@
 package com.lms.auth.controller;
 
+import com.lms.audit.service.AuditService;
 import com.lms.auth.dto.AuthResponse;
 import com.lms.auth.dto.LoginRequest;
 import com.lms.auth.dto.SignupRequest;
@@ -15,10 +16,22 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuditService auditService;
 
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signup(@Valid @RequestBody SignupRequest request) {
         AuthResponse response = authService.signup(request);
+        auditService.log(
+                response.getUserId(),          // userId
+                "USER_SIGNUP",                 // action
+                "AUTH",                        // resourceType
+                response.getUserId(),          // resourceId
+                request,                       // request DTO
+                response,                      // response DTO
+                201,
+                true
+        );
+
         return ResponseEntity.ok(response);
     }
 

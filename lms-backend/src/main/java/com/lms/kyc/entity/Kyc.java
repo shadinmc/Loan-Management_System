@@ -31,4 +31,7 @@ public class Kyc {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private Boolean approvalAuditLogged = false;
+
 }

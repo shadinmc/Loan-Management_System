@@ -1,5 +1,6 @@
 package com.lms.kyc.service;
 
+import com.lms.audit.service.AuditService;
 import com.lms.auth.security.SecurityUtils;
 import com.lms.common.exception.KycNotVerifiedException;
 import com.lms.common.idempotency.IdempotencyKeyService;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -22,6 +24,8 @@ public class KycService {
     private final KycRepository kycRepository;
     private final IdempotencyKeyService idempotencyKeyService;
     private final SecurityUtils securityUtils; // inject bean
+    private final AuditService auditService;
+
 
 
     // ---------------- SUBMIT KYC ----------------
@@ -65,6 +69,17 @@ public class KycService {
 
         Kyc savedKyc = kycRepository.save(kyc);
 
+        auditService.log(
+                userId,
+                "KYC_APPLY",
+                "KYC",
+                savedKyc.getId(),
+                request,          // raw request → will be masked
+                savedKyc,         // entity → will be masked
+                201,
+                true
+        );
+
         //  Store idempotency
         idempotencyKeyService.saveKey(
                 idempotencyKey,
@@ -82,10 +97,34 @@ public class KycService {
         Kyc kyc = kycRepository.findByUserId(userId)
                 .orElseThrow(KycNotVerifiedException::new);
 
-        if (kyc.getStatus() != KycStatus.VERIFIED) {
-            throw new KycNotVerifiedException();
+        if (kyc.getStatus() == KycStatus.VERIFIED) {
+
+            // 🔥 LOG ON FIRST DETECTION ONLY
+            if (!Boolean.TRUE.equals(kyc.getApprovalAuditLogged())) {
+
+                auditService.log(
+                        "SYSTEM",
+                        "KYC_APPROVED",
+                        "KYC",
+                        kyc.getId(),
+                        Map.of("previousStatus", "PENDING"),
+                        Map.of("currentStatus", "VERIFIED"),
+                        200,
+                        true
+                );
+
+                // mark as logged
+                kyc.setApprovalAuditLogged(true);
+                kycRepository.save(kyc);
+            }
+
+            return;
         }
+
+        throw new KycNotVerifiedException();
     }
+
+
 
     // ---------------- CIBIL FETCH ----------------
     public Integer getCibilScore(String userId) {
