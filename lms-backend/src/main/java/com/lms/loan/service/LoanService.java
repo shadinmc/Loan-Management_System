@@ -1,16 +1,15 @@
 package com.lms.loan.service;
 
-import com.lms.audit.service.AuditService;
-import com.lms.auth.security.SecurityUtils;
 import com.lms.common.idempotency.IdempotencyKeyService;
 import com.lms.common.idempotency.IdempotencyRecord;
 import com.lms.common.enums.LoanStatus;
-import com.lms.kyc.service.KycService;
 import com.lms.loan.dto.LoanApplicationRequest;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.entity.embedded.*;
 import com.lms.loan.repository.LoanRepository;
+import com.lms.kyc.service.KycService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,63 +21,62 @@ import java.util.Optional;
 public class LoanService {
 
     private final LoanRepository loanRepository;
-    private final IdempotencyKeyService idempotencyKeyService;
+    private final IdempotencyKeyService idempotencyService;
     private final KycService kycService;
-    private final AuditService auditService;
-    private final SecurityUtils securityUtils;
-
 
     public LoanService(
             LoanRepository loanRepository,
-            IdempotencyKeyService idempotencyKeyService,
-            KycService kycService,
-            AuditService auditService,
-            SecurityUtils securityUtils
+            IdempotencyKeyService idempotencyService,
+            KycService kycService
     ) {
         this.loanRepository = loanRepository;
-        this.idempotencyKeyService = idempotencyKeyService;
+        this.idempotencyService = idempotencyService;
         this.kycService = kycService;
-        this.auditService = auditService;
-        this.securityUtils = securityUtils;
     }
 
-
+    /**
+     * Generate unique loan ID
+     */
     private String generateLoanId() {
         return "LN-" + LocalDate.now().getYear() + "-" + System.currentTimeMillis();
     }
 
-    public Loan applyForLoan(LoanApplicationRequest request, String idempotencyKey) {
-        String userId = securityUtils.getCurrentUserId();
+    /**
+     * Apply for a loan with idempotency support
+     * Prevents duplicate loan applications within the idempotency window
+     */
+    @Transactional
+    public Loan applyForLoan(String userId, LoanApplicationRequest request, String idempotencyKey) {
 
+        // Step 0: Validate KYC
         kycService.validateKycVerified(userId);
-        //   Check if this request was already processed
-        Optional<IdempotencyRecord> recordOpt =
-                idempotencyKeyService.findByKey(idempotencyKey);
 
-        if (recordOpt.isPresent()) {
+        // Step 1: Check idempotency - prevent duplicate submissions
+        Optional<IdempotencyRecord> existingRecord = idempotencyService.findByKey(idempotencyKey);
 
-            IdempotencyRecord record = recordOpt.get();
+        if (existingRecord.isPresent()) {
+            IdempotencyRecord record = existingRecord.get();
 
-            //  If expired treat as new request
+            // Check if record has expired
             if (record.getExpiresAt().isBefore(java.time.Instant.now())) {
-                // continue normally (create new loan)
+                // Expired - allow new submission (but don't delete old record)
+                // Continue to create new loan
             } else {
-                //  Replay case
-                Optional<Loan> existingLoan =
-                        loanRepository.findByLoanId(record.getResourceId());
+                // Valid record exists - return existing loan (idempotent replay)
+                Optional<Loan> existingLoan = loanRepository.findByLoanId(record.getResourceId());
 
                 if (existingLoan.isPresent()) {
-                    return existingLoan.get(); // replay response
+                    // Return the previously created loan
+                    return existingLoan.get();
                 }
-                // else orphan record continue to create new loan
+                // If loan was deleted but record exists, continue to create new loan
             }
         }
 
-
-        //   Validate request
+        // Step 2: Validate request
         validateLoanRequest(request);
 
-        //  Create base loan
+        // Step 3: Create base loan entity
         Loan loan = Loan.builder()
                 .loanId(generateLoanId())
                 .userId(userId)
@@ -95,69 +93,87 @@ public class LoanService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        //  Attach loan-type specific details
+        // Step 4: Attach loan-type specific details
         switch (request.getLoanType()) {
             case PERSONAL -> loan.setPersonalLoanDetails(mapPersonalLoan(request));
             case EDUCATION -> loan.setEducationLoanDetails(mapEducationLoan(request));
             case BUSINESS -> loan.setBusinessLoanDetails(mapBusinessLoan(request));
             case VEHICLE -> loan.setVehicleLoanDetails(mapVehicleLoan(request));
-            default -> throw new IllegalArgumentException("Unsupported loan type: " + request.getLoanType());
+            default -> throw new IllegalArgumentException(
+                    "Unsupported loan type: " + request.getLoanType()
+            );
         }
 
-        //  Save loan
+        // Step 5: Persist loan to database
         Loan savedLoan = loanRepository.save(loan);
-        // Save audit
-        auditService.log(
-                userId,
-                "LOAN_APPLICATION",
-                "LOAN",
-                savedLoan.getLoanId(),
-                request,
-                savedLoan,
-                201,
-                true
-        );
 
-        //  Step 6: Save idempotency record to prevent future duplicates
-        idempotencyKeyService.saveKey(idempotencyKey, savedLoan.getLoanId(), "LOAN_APPLICATION");
+        // Step 6: Save idempotency record to prevent future duplicates
+        idempotencyService.saveKey(
+                idempotencyKey,
+                savedLoan.getLoanId(),
+                "LOAN_APPLICATION"
+        );
 
         return savedLoan;
     }
 
+    /**
+     * Get loan by loan ID
+     */
     public Loan getLoanById(String loanId) {
         return loanRepository.findByLoanId(loanId)
                 .orElseThrow(() -> new RuntimeException("Loan not found: " + loanId));
     }
 
+    /**
+     * Get all loans for a specific user
+     */
     public List<Loan> getLoansByUserId(String userId) {
         return loanRepository.findByUserId(userId);
     }
 
+    /**
+     * Get loan by ID and verify user ownership
+     */
     public Loan getLoanByIdAndUserId(String loanId, String userId) {
         return loanRepository.findByLoanIdAndUserId(loanId, userId)
                 .orElseThrow(() -> new RuntimeException("Loan not found or access denied"));
     }
 
+    /**
+     * Get loans pending branch review
+     */
     public List<Loan> getLoansForBranchReview() {
         return loanRepository.findByStatus(LoanStatus.ELIGIBILITY_CHECK_PASSED);
     }
 
+    /**
+     * Get loans by status
+     */
     public List<Loan> getLoansByStatus(LoanStatus status) {
         return loanRepository.findByStatus(status);
     }
 
+    /**
+     * Update existing loan
+     */
+    @Transactional
     public Loan updateLoan(Loan loan) {
         loan.setUpdatedAt(LocalDateTime.now());
         return loanRepository.save(loan);
     }
 
-    // ... keep all your existing private methods (validateLoanRequest, mappers) ...
+    // ==================== VALIDATION ====================
 
+    /**
+     * Validate loan application request
+     */
     private void validateLoanRequest(LoanApplicationRequest request) {
         if (request.getLoanType() == null) {
             throw new IllegalArgumentException("Loan type is mandatory");
         }
 
+        // Validate loan-specific details are present
         switch (request.getLoanType()) {
             case PERSONAL -> {
                 if (request.getPersonalLoanDetails() == null) {
@@ -182,55 +198,78 @@ public class LoanService {
         }
     }
 
+    // ==================== MAPPERS ====================
+
+    /**
+     * Map personal loan details from request to entity
+     */
     private PersonalLoanDetails mapPersonalLoan(LoanApplicationRequest request) {
+        var details = request.getPersonalLoanDetails();
         return PersonalLoanDetails.builder()
-                .employmentType(request.getPersonalLoanDetails().getEmploymentType())
-                .monthlyIncome(request.getPersonalLoanDetails().getMonthlyIncome())
-                .employerName(request.getPersonalLoanDetails().getEmployerName())
-                .proofOfIdentity(request.getPersonalLoanDetails().getProofOfIdentity())
-                .proofOfIncome(request.getPersonalLoanDetails().getProofOfIncome())
-                .proofOfAddress(request.getPersonalLoanDetails().getProofOfAddress())
+                .employmentType(details.getEmploymentType())
+                .monthlyIncome(details.getMonthlyIncome())
+                .employerName(details.getEmployerName())
+                .proofOfIdentity(details.getProofOfIdentity())
+                .proofOfIncome(details.getProofOfIncome())
+                .proofOfAddress(details.getProofOfAddress())
                 .applicationStatus("SUBMITTED")
                 .build();
     }
 
+    /**
+     * Map education loan details from request to entity
+     */
     private EducationLoanDetails mapEducationLoan(LoanApplicationRequest request) {
+        var details = request.getEducationLoanDetails();
         return EducationLoanDetails.builder()
-                .courseName(request.getEducationLoanDetails().getCourseName())
-                .courseDurationMonths(request.getEducationLoanDetails().getCourseDurationMonths())
-                .coApplicantName(request.getEducationLoanDetails().getCoApplicantName())
-                .coApplicantIncome(request.getEducationLoanDetails().getCoApplicantIncome())
-                .relationship(request.getEducationLoanDetails().getRelationship())
-                .proofOfAdmission(request.getEducationLoanDetails().getProofOfAdmission())
-                .proofOfIncome(request.getEducationLoanDetails().getProofOfIncome())
-                .proofOfAddress(request.getEducationLoanDetails().getProofOfAddress())
-                .collateralDocuments(request.getEducationLoanDetails().getCollateralDocuments())
+                .courseName(details.getCourseName())
+                .courseDurationMonths(details.getCourseDurationMonths())
+                .coApplicantName(details.getCoApplicantName())
+                .coApplicantIncome(details.getCoApplicantIncome())
+                .relationship(details.getRelationship())
+                .proofOfAdmission(details.getProofOfAdmission())
+                .proofOfIncome(details.getProofOfIncome())
+                .proofOfAddress(details.getProofOfAddress())
+                .collateralDocuments(details.getCollateralDocuments())
                 .build();
     }
 
+    /**
+     * Map business loan details from request to entity
+     */
     private BusinessLoanDetails mapBusinessLoan(LoanApplicationRequest request) {
+        var details = request.getBusinessLoanDetails();
+
+        if(details.getBusinessType().equals("personal")){
+            throw new RuntimeException("Business loan mapping not implemented yet");
+        }
+
         return BusinessLoanDetails.builder()
-                .businessName(request.getBusinessLoanDetails().getBusinessName())
-                .businessType(request.getBusinessLoanDetails().getBusinessType())
-                .gstAnnualTurnover(request.getBusinessLoanDetails().getGstAnnualTurnover())
-                .businessVintageYears(request.getBusinessLoanDetails().getBusinessVintageYears())
-                .proofOfBusiness(request.getBusinessLoanDetails().getProofOfBusiness())
-                .proofOfIncome(request.getBusinessLoanDetails().getProofOfIncome())
-                .calculatedEligibleAmount(null)
+                .businessName(details.getBusinessName())
+                .businessType(details.getBusinessType())
+                .gstAnnualTurnover(details.getGstAnnualTurnover())
+                .businessVintageYears(details.getBusinessVintageYears())
+                .proofOfBusiness(details.getProofOfBusiness())
+                .proofOfIncome(details.getProofOfIncome())
+                .calculatedEligibleAmount(null) // Calculated during eligibility check
                 .build();
     }
 
+    /**
+     * Map vehicle loan details from request to entity
+     */
     private VehicleLoanDetails mapVehicleLoan(LoanApplicationRequest request) {
+        var details = request.getVehicleLoanDetails();
         return VehicleLoanDetails.builder()
-                .vehicleType(request.getVehicleLoanDetails().getVehicleType())
-                .vehicleBrand(request.getVehicleLoanDetails().getVehicleBrand())
-                .vehicleModel(request.getVehicleLoanDetails().getVehicleModel())
-                .downPaymentAmount(request.getVehicleLoanDetails().getDownPaymentAmount())
-                .dealerName(request.getVehicleLoanDetails().getDealerName())
-                .proofOfIdentity(request.getVehicleLoanDetails().getProofOfIdentity())
-                .proofOfIncome(request.getVehicleLoanDetails().getProofOfIncome())
-                .insuranceProof(request.getVehicleLoanDetails().getInsuranceProof())
-                .downPaymentProof(request.getVehicleLoanDetails().getDownPaymentProof())
+                .vehicleType(details.getVehicleType())
+                .vehicleBrand(details.getVehicleBrand())
+                .vehicleModel(details.getVehicleModel())
+                .downPaymentAmount(details.getDownPaymentAmount())
+                .dealerName(details.getDealerName())
+                .proofOfIdentity(details.getProofOfIdentity())
+                .proofOfIncome(details.getProofOfIncome())
+                .insuranceProof(details.getInsuranceProof())
+                .downPaymentProof(details.getDownPaymentProof())
                 .build();
     }
 }
