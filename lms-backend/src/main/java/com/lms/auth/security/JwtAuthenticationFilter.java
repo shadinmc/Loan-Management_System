@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 
 @Component
-@Order(1) // ✅ MUST run first
+@Order(1) // MUST run first
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;

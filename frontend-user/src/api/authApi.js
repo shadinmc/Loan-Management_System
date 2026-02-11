@@ -9,7 +9,7 @@ export const signup = async (userData) => {
     fullName: userData.fullName,
     phone: userData.phone,
     dateOfBirth: userData.dob, // Add date of birth
-    role: 'USER'
+    role: 'ROLE_USER'
   };
 
   const response = await fetch(`${API_BASE_URL}/signup`, {
@@ -28,7 +28,9 @@ export const signup = async (userData) => {
 
   // Store token and user data
   localStorage.setItem('token', data.token);
-  console.log(data.token);
+  const token = localStorage.getItem('token');
+
+  console.log('Token payload:', payload);
   localStorage.setItem('user', JSON.stringify({
     userId: data.userId,
     username: data.username,
@@ -67,7 +69,8 @@ export const login = async (credentials) => {
     email: data.email,
     roles: data.roles
   }));
-
+    console.log('Token:', localStorage.getItem('token'));
+    console.log('User:', localStorage.getItem('user'));
   return data;
 };
 

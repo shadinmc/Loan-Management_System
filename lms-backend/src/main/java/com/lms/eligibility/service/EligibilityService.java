@@ -1,6 +1,7 @@
 package com.lms.eligibility.service;
 
 import com.lms.common.enums.LoanStatus;
+import com.lms.common.util.EmiCalculator;
 import com.lms.eligibility.context.EligibilityContext;
 import com.lms.eligibility.dto.EligibilityResult;
 import com.lms.eligibility.factory.EligibilityStrategyFactory;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -48,6 +50,16 @@ public class EligibilityService {
 
         return result;
     }
+
+    private BigDecimal getInterestRateByLoanType(Loan loan) {
+        return switch (loan.getLoanType()) {
+            case PERSONAL -> new BigDecimal("11.5");
+            case EDUCATION -> new BigDecimal("8.5");
+            case BUSINESS -> new BigDecimal("13.0");
+            case VEHICLE -> new BigDecimal("9.5");
+        };
+    }
+
 
     private EligibilityContext buildContextFromLoan(Loan loan, String userId) {
 
@@ -117,15 +129,30 @@ public class EligibilityService {
         loan.setEligibilityCheckedAt(LocalDateTime.now());
 
         if (result.isEligible()) {
+
+            BigDecimal interestRate = getInterestRateByLoanType(loan);
+
+            BigDecimal emi = EmiCalculator.calculateEmi(
+                    result.getApprovedAmount(),
+                    interestRate,
+                    loan.getTenureMonths()
+            );
+
             loan.setStatus(LoanStatus.UNDER_BRANCH_REVIEW);
             loan.setApprovedAmount(result.getApprovedAmount());
+            loan.setInterestRate(interestRate);
+            loan.setEmiAmount(emi);
             loan.setApprovedDate(LocalDate.now());
             loan.setEmiEligible(true);
+
         } else {
             loan.setStatus(LoanStatus.NOT_ELIGIBLE);
+            loan.setEmiAmount(BigDecimal.ZERO);
+            loan.setEmiEligible(false);
         }
 
         loan.setUpdatedAt(LocalDateTime.now());
         loanRepository.save(loan);
     }
+
 }

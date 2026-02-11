@@ -44,12 +44,11 @@ public class Loan {
     private BigDecimal outstandingPrincipal;
     private BigDecimal totalInterestPayable;
 
+
     /* Status */
     private LoanStatus status;
 
     /* Eligibility */
-    private Integer eligibilityScore;
-    private String eligibilityRemarks;
     private LocalDateTime eligibilityCheckedAt;
     private BigDecimal approvedAmount;
     private Boolean emiEligible;

@@ -1,5 +1,6 @@
 package com.lms.kyc.service;
 
+import com.lms.audit.service.AuditService;
 import com.lms.auth.security.SecurityUtils;
 import com.lms.common.exception.KycNotVerifiedException;
 import com.lms.common.idempotency.IdempotencyKeyService;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -22,6 +24,8 @@ public class KycService {
     private final KycRepository kycRepository;
     private final IdempotencyKeyService idempotencyKeyService;
     private final SecurityUtils securityUtils; // inject bean
+    private final AuditService auditService;
+
 
 
     // ---------------- SUBMIT KYC ----------------
@@ -29,7 +33,7 @@ public class KycService {
 
         String userId = securityUtils.getCurrentUserId();
 
-        // 1️⃣ Idempotency check
+        //  Idempotency check
         var existingKey = idempotencyKeyService.findByKey(idempotencyKey);
         if (existingKey.isPresent()) {
             Kyc existingKyc = kycRepository.findById(
@@ -39,19 +43,19 @@ public class KycService {
             return mapToResponse(existingKyc);
         }
 
-        // 2️⃣ Prevent multiple KYCs per user
+        //  Prevent multiple KYCs per user
         if (kycRepository.existsByUserId(userId)) {
             throw new RuntimeException("KYC already submitted for this user");
         }
 
-        // 3️⃣ Aadhaar / PAN uniqueness
+        //  Aadhaar / PAN uniqueness
         if (kycRepository.existsByAadhaarNumber(request.getAadhaarNumber()))
             throw new RuntimeException("Aadhaar already registered");
 
         if (kycRepository.existsByPanNumber(request.getPanNumber()))
             throw new RuntimeException("PAN already registered");
 
-        // 4️⃣ Create KYC
+        //  Create KYC
         Kyc kyc = Kyc.builder()
                 .userId(userId)
                 .aadhaarNumber(request.getAadhaarNumber())
@@ -65,7 +69,18 @@ public class KycService {
 
         Kyc savedKyc = kycRepository.save(kyc);
 
-        // 5️⃣ Store idempotency
+        auditService.log(
+                userId,
+                "KYC_APPLY",
+                "KYC",
+                savedKyc.getId(),
+                request,          // raw request → will be masked
+                savedKyc,         // entity → will be masked
+                201,
+                true
+        );
+
+        //  Store idempotency
         idempotencyKeyService.saveKey(
                 idempotencyKey,
                 savedKyc.getId(),
@@ -82,10 +97,34 @@ public class KycService {
         Kyc kyc = kycRepository.findByUserId(userId)
                 .orElseThrow(KycNotVerifiedException::new);
 
-        if (kyc.getStatus() != KycStatus.VERIFIED) {
-            throw new KycNotVerifiedException();
+        if (kyc.getStatus() == KycStatus.VERIFIED) {
+
+            //  LOG ON FIRST DETECTION ONLY
+            if (!Boolean.TRUE.equals(kyc.getApprovalAuditLogged())) {
+
+                auditService.log(
+                        "SYSTEM",
+                        "KYC_APPROVED",
+                        "KYC",
+                        kyc.getId(),
+                        Map.of("previousStatus", "PENDING"),
+                        Map.of("currentStatus", "VERIFIED"),
+                        200,
+                        true
+                );
+
+                // mark as logged
+                kyc.setApprovalAuditLogged(true);
+                kycRepository.save(kyc);
+            }
+
+            return;
         }
+
+        throw new KycNotVerifiedException();
     }
+
+
 
     // ---------------- CIBIL FETCH ----------------
     public Integer getCibilScore(String userId) {

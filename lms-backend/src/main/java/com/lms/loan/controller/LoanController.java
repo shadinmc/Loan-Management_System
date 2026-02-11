@@ -27,7 +27,7 @@ public class LoanController {
 
     public LoanController(LoanService loanService, SecurityUtils securityUtils) {
         this.loanService = loanService;
-        this.securityUtils = securityUtils; // ✅ injected by Spring
+        this.securityUtils = securityUtils; // injected by Spring
     }
 
 
@@ -54,7 +54,7 @@ public class LoanController {
             idempotencyKey = UUID.randomUUID().toString(); // auto-generate
         }
 
-        Loan loan = loanService.applyForLoan(userId, request, idempotencyKey);
+        Loan loan = loanService.applyForLoan(request, idempotencyKey);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(loan);
     }
