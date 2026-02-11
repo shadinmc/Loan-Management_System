@@ -26,8 +26,23 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(LoanDataIntegrityException.class)
+    public ResponseEntity<Map<String, Object>> handleLoanDataIntegrity(
+            LoanDataIntegrityException ex) {
 
-    @ExceptionHandler(RuntimeException.class)
+        Map<String, Object> error = new HashMap<>();
+        error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        error.put("error", "Data Integrity Error");
+        error.put("message", ex.getMessage());
+        error.put("timestamp", LocalDateTime.now().toString());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(error);
+    }
+
+
+
+    @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
         Map<String, Object> error = new HashMap<>();
         error.put("status", HttpStatus.BAD_REQUEST.value());

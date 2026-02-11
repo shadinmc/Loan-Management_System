@@ -1,6 +1,5 @@
 package com.lms.auth.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -31,7 +30,6 @@ public class SignupRequest {
 
     @NotNull
     @Past
-    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
 
 

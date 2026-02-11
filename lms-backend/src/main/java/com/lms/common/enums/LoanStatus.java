@@ -4,8 +4,7 @@ public enum LoanStatus {
     APPLIED,                    // Initial submission
     ELIGIBILITY_CHECK_PASSED,   // Eligible for review
     NOT_ELIGIBLE,               // Failed eligibility
-    ELIGIBLE,
-    PENDING_BRANCH_REVIEW,      // Waiting for Branch Manager
+    ELIGIBLE,                  // Eligible but not yet reviewed
     UNDER_BRANCH_REVIEW,        // Branch Manager reviewing
     BRANCH_APPROVED,            // Approved by Branch Manager
     CLARIFICATION_REQUIRED,
