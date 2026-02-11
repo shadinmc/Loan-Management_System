@@ -47,11 +47,26 @@ public class AuthService {
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
 
-        User.Role role = User.Role.USER;
-        if (request.getRole() != null) {
+//        User.Role role = User.Role.USER;
+//        if (request.getRole() != null) {
+//            try {
+//                role = User.Role.valueOf(request.getRole().toUpperCase());
+//            } catch (Exception ignored) {}
+//        }
+//
+//        user.setRoles(Set.of(role));
+
+        //added for testing purposes, in real app only admin can assign role during signup
+        User.Role role;
+
+        if (request.getRole() == null || request.getRole().isBlank()) {
+            role = User.Role.USER; // default only if NOT provided
+        } else {
             try {
                 role = User.Role.valueOf(request.getRole().toUpperCase());
-            } catch (Exception ignored) {}
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid role: " + request.getRole());
+            }
         }
 
         user.setRoles(Set.of(role));

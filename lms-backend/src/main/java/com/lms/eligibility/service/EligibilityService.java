@@ -51,7 +51,7 @@ public class EligibilityService {
 
     private EligibilityContext buildContextFromLoan(Loan loan, String userId) {
 
-        // 🔥 Fetch user separately (Loan has only userId)
+        //  Fetch user separately (Loan has only userId)
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -109,7 +109,7 @@ public class EligibilityService {
             }
         }
 
-        return builder.build(); // ✅ REQUIRED
+        return builder.build(); //  REQUIRED
     }
 
     private void updateLoanWithEligibility(Loan loan, EligibilityResult result) {
