@@ -177,6 +177,24 @@ export default function Navbar({ onMenuClick }) {
           transition={{ delay: 0.3 }}
         >
 
+        {isLoggedIn && (
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <Link
+              to="/wallet"
+              className={`nav-link wallet-link ${isActive('/wallet') ? 'active' : ''}`}
+              role="menuitem"
+            >
+              <Wallet size={16} />
+              <span className="nav-link-text">Wallet</span>
+            </Link>
+          </motion.div>
+        )}
 
 
           {/* Auth Section */}
