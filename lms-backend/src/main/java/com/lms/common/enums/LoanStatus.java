@@ -14,5 +14,9 @@ public enum LoanStatus {
     APPROVED,                   // Final approval
     REJECTED,                   // Final rejection
     DISBURSED,                  // Money sent
-    CLOSED                      // Loan completed
+    CLOSED,                    // Loan completed
+    UNDER_REGIONAL_REVIEW,
+    DISBURSEMENT_PENDING,   // waiting for time
+    REGIONAL_APPROVED,
+    REGIONAL_REJECTED,
 }

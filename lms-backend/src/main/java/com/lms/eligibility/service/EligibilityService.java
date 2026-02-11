@@ -121,7 +121,7 @@ public class EligibilityService {
             }
         }
 
-        return builder.build(); // ✅ REQUIRED
+        return builder.build(); //  REQUIRED
     }
 
     private void updateLoanWithEligibility(Loan loan, EligibilityResult result) {

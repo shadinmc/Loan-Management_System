@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/JAVA_LMS_4_repo.iml" filepath="$PROJECT_DIR$/.idea/JAVA_LMS_4_repo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lms-backend/lms-backend.iml" filepath="$PROJECT_DIR$/lms-backend/lms-backend.iml" />
     </modules>
   </component>
 </project>
