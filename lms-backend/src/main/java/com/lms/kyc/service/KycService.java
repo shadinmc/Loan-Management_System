@@ -103,7 +103,7 @@ public class KycService {
             if (!Boolean.TRUE.equals(kyc.getApprovalAuditLogged())) {
 
                 auditService.log(
-                        "SYSTEM",
+                        userId,
                         "KYC_APPROVED",
                         "KYC",
                         kyc.getId(),
