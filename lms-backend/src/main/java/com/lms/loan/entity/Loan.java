@@ -70,4 +70,16 @@ public class Loan {
     private EducationLoanDetails educationLoanDetails;
     private BusinessLoanDetails businessLoanDetails;
     private VehicleLoanDetails vehicleLoanDetails;
+
+    // Regional review info
+    private String regionalManagerId;
+    private LocalDateTime regionalReviewedAt;
+    private String regionalRemarks;
+    private Boolean regionalApproved;
+
+    // Disbursement
+    private LocalDateTime disbursementScheduledAt;
+    private LocalDateTime disbursedAt;
+    private String transactionId;
+
 }

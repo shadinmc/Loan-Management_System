@@ -17,6 +17,10 @@ public class LoanApplicationRequest {
     private Integer tenureMonths;
     private Double interestRate;
 
+    @NotNull(message = "CIBIL score is required")
+    @Min(value = 300, message = "CIBIL score must be at least 300")
+    @Max(value = 900, message = "CIBIL score cannot exceed 900")
+    private Integer cibilScore;
 
     // -------- Loan-type specific DTOs --------
     private PersonalLoanDetailsDto personalLoanDetails;
