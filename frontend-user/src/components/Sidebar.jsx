@@ -1,15 +1,18 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useKYC } from '../context/KYCContext';
 import { useTheme } from '../hooks/useTheme';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, User, LogOut, Home, LayoutDashboard,
-  FileText, Clock, Settings, HelpCircle, Sun, Moon
+  FileText, Clock, Settings, HelpCircle, Sun, Moon,
+  Shield, CheckCircle, AlertCircle
 } from 'lucide-react';
 import LottieAnimation from './LottieAnimation';
 
 export default function Sidebar({ isOpen, onClose }) {
   const { user, isLoggedIn, logout } = useAuth();
+  const { kycStatus, isKYCComplete, isKYCPending, isKYCRejected } = useKYC();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,17 +44,58 @@ export default function Sidebar({ isOpen, onClose }) {
     })
   };
 
+  const getKYCStatus = () => {
+    switch (kycStatus) {
+      case 'approved':
+        return {
+          icon: CheckCircle,
+          text: 'KYC Verified',
+          subtext: 'All features unlocked',
+          color: '#10B981',
+          bgColor: 'rgba(16, 185, 129, 0.1)'
+        };
+      case 'pending':
+        return {
+          icon: Clock,
+          text: 'KYC Pending',
+          subtext: 'Under review',
+          color: '#F59E0B',
+          bgColor: 'rgba(245, 158, 11, 0.1)'
+        };
+      case 'rejected':
+        return {
+          icon: AlertCircle,
+          text: 'KYC Rejected',
+          subtext: 'Action required',
+          color: '#EF4444',
+          bgColor: 'rgba(239, 68, 68, 0.1)'
+        };
+      default:
+        return {
+          icon: Shield,
+          text: 'Complete KYC',
+          subtext: 'Unlock all features',
+          color: '#6366F1',
+          bgColor: 'rgba(99, 102, 241, 0.1)'
+        };
+    }
+  };
+
+  const kycStatusInfo = getKYCStatus();
+  const KYCStatusIcon = kycStatusInfo.icon;
+
   const navItems = isLoggedIn
     ? [
         { icon: Home, label: 'Home', path: '/', index: 0 },
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', index: 1 },
-        { icon: FileText, label: 'Apply for Loan', path: '/loan/apply', index: 2 },
-        { icon: Clock, label: 'Loan Status', path: '/loan/status', index: 3 },
-        { type: 'divider', index: 4 },
-        { icon: Settings, label: 'Settings', path: '/settings', index: 5 },
-        { icon: HelpCircle, label: 'Help & Support', path: '/help', index: 6 },
-        { type: 'divider', index: 7 },
-        { icon: LogOut, label: 'Logout', action: handleLogout, isLogout: true, index: 8 }
+        { icon: Shield, label: 'KYC Verification', path: '/kyc', index: 2, isKYC: true },
+        { icon: FileText, label: 'Apply for Loan', path: '/loan/apply', index: 3 },
+        { icon: Clock, label: 'Loan Status', path: '/loan/status', index: 4 },
+        { type: 'divider', index: 5 },
+        { icon: Settings, label: 'Settings', path: '/settings', index: 6 },
+        { icon: HelpCircle, label: 'Help & Support', path: '/help', index: 7 },
+        { type: 'divider', index: 8 },
+        { icon: LogOut, label: 'Logout', action: handleLogout, isLogout: true, index: 9 }
       ]
     : [
         { icon: Home, label: 'Home', path: '/', index: 0 },
@@ -68,7 +112,8 @@ export default function Sidebar({ isOpen, onClose }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}aria-hidden="true"
+            onClick={onClose}
+            aria-hidden="true"
           />
         )}
       </AnimatePresence>
@@ -132,7 +177,7 @@ export default function Sidebar({ isOpen, onClose }) {
           className="theme-toggle-section"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.25 }}
         >
           <span className="theme-label">Appearance</span>
           <motion.button
@@ -189,6 +234,8 @@ export default function Sidebar({ isOpen, onClose }) {
               }
 
               const Icon = item.icon;
+              const showKYCBadge = item.isKYC && !isKYCComplete;
+
               return (
                 <motion.button
                   key={item.label}
@@ -203,6 +250,14 @@ export default function Sidebar({ isOpen, onClose }) {
                 >
                   <Icon size={20} />
                   <span>{item.label}</span>
+                  {showKYCBadge && (
+                    <span
+                      className="kyc-mini-badge"
+                      style={{ background: kycStatusInfo.color }}
+                    >
+                      {kycStatus === 'pending' ? 'Pending' : kycStatus === 'rejected' ? 'Action' : 'New'}
+                    </span>
+                  )}
                   {item.path && isActive(item.path) && (
                     <motion.div
                       className="active-indicator"
@@ -358,7 +413,8 @@ export default function Sidebar({ isOpen, onClose }) {
           background: var(--bg-primary);
           border: 1px solid var(--border-color);
           border-radius: 12px;
-          cursor: pointer;}
+          cursor: pointer;
+        }
 
         .toggle-option {
           flex: 1;
@@ -412,6 +468,15 @@ export default function Sidebar({ isOpen, onClose }) {
         .nav-item.active {
           background: rgba(45, 190, 96, 0.1);
           color: #2DBE60;
+        }
+
+        .kyc-mini-badge {
+          margin-left: auto;
+          padding: 4px 8px;
+          border-radius: 12px;
+          font-size: 0.6875rem;
+          font-weight: 600;
+          color: white;
         }
 
         .active-indicator {

@@ -6,6 +6,7 @@ import LoanTypes from './pages/loans/LoanTypes';
 import LoanApply from './pages/loans/LoanApply';
 import LoanConfirmation from './pages/loans/LoanConfirmation';
 import LoanDecision from './pages/loans/LoanDecision';
+import KYCPage from './pages/KYCPage';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -30,6 +31,7 @@ export default function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/kyc" element={<KYCPage />} />
             <Route path="/loan/apply" element={<LoanApply />} />
             <Route path="/loan/apply/:loanType" element={<LoanApply />} />
             <Route path="/loan/confirm" element={<LoanConfirmation />} />
