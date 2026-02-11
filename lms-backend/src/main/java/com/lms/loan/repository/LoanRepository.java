@@ -16,7 +16,10 @@ public interface LoanRepository extends MongoRepository<Loan, String> {
     List<Loan> findByUserId(String userId);
     Optional<Loan> findByLoanIdAndUserId(String loanId, String userId);
     List<Loan> findByStatus(LoanStatus status);
+    List<Loan> findByEmiEligible(Boolean emiEligible);
+    List<Loan> findByStatusAndEmiEligible(LoanStatus status, Boolean emiEligible);
     List<Loan> findByStatusIn(List<LoanStatus> statuses);
+    List<Loan> findByStatusAndDisbursementScheduledAtBefore(LoanStatus status, java.time.LocalDateTime dateTime);
 
 
 //    <T> ScopedValue<T> findByLoanId(String loanId);

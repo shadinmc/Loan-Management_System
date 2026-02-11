@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 
 @Component
-@Order(1) // ✅ MUST run first
+@Order(1) // MUST run first
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
@@ -41,6 +41,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+
+        System.out.println("JWT FILTER HIT: " + request.getServletPath());
+
 
         String authHeader = request.getHeader("Authorization");
 
@@ -78,6 +81,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                System.out.println("AUTH SET: " + SecurityContextHolder.getContext().getAuthentication());
+
             }
         }
 

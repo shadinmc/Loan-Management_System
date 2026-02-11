@@ -53,6 +53,8 @@ public class Loan {
     private BigDecimal approvedAmount;
     private Boolean emiEligible;
 
+    private String decisionMessage;   // reason / clarification note
+
 
     /* Dates */
     private LocalDate appliedDate;
@@ -60,10 +62,24 @@ public class Loan {
     private LocalDate disbursedDate;
     private LocalDateTime updatedAt;
     private LocalDateTime createdAt;
+    private LocalDateTime decisionAt;
+
 
     /* Loan-type specific details (ONLY ONE NON-NULL) */
     private PersonalLoanDetails personalLoanDetails;
     private EducationLoanDetails educationLoanDetails;
     private BusinessLoanDetails businessLoanDetails;
     private VehicleLoanDetails vehicleLoanDetails;
+
+    // Regional review info
+    private String regionalManagerId;
+    private LocalDateTime regionalReviewedAt;
+    private String regionalRemarks;
+    private Boolean regionalApproved;
+
+    // Disbursement
+    private LocalDateTime disbursementScheduledAt;
+    private LocalDateTime disbursedAt;
+    private String transactionId;
+
 }
