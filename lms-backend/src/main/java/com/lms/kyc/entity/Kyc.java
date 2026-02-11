@@ -29,6 +29,10 @@ public class Kyc {
 
     private KycStatus status;
 
+    private String  rejectionReason;
+
+
+    private LocalDateTime reviewedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

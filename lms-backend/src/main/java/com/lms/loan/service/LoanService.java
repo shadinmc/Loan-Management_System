@@ -5,7 +5,7 @@ import com.lms.auth.security.SecurityUtils;
 import com.lms.common.idempotency.IdempotencyKeyService;
 import com.lms.common.idempotency.IdempotencyRecord;
 import com.lms.common.enums.LoanStatus;
-import com.lms.loan.dto.LoanApplicationRequest;
+import com.lms.loan.dto.*;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.entity.embedded.*;
 import com.lms.loan.repository.LoanRepository;
@@ -135,9 +135,83 @@ public class LoanService {
         return savedLoan;
     }
 
-    /**
-     * Get loan by loan ID
-     */
+    public Loan resubmitLoan(
+            String loanId,
+            String userId,
+            LoanApplicationRequest updatedRequest
+    ) {
+        Loan loan = loanRepository.findByLoanIdAndUserId(loanId, userId)
+                .orElseThrow(() -> new RuntimeException("Loan not found"));
+
+        if (loan.getStatus() != LoanStatus.CLARIFICATION_REQUIRED) {
+            throw new IllegalStateException("Loan not eligible for resubmission");
+        }
+
+        switch (loan.getLoanType()) {
+
+            case PERSONAL -> {
+                PersonalLoanDetails incoming =
+                        toPersonalEntity(updatedRequest.getPersonalLoanDetails());
+
+                if (incoming != null) {
+                    if (loan.getPersonalLoanDetails() == null) {
+                        loan.setPersonalLoanDetails(incoming);
+                    } else {
+                        mergeNonNullFields(incoming, loan.getPersonalLoanDetails());
+                    }
+                }
+            }
+
+            case EDUCATION -> {
+                EducationLoanDetails incoming =
+                        toEducationEntity(updatedRequest.getEducationLoanDetails());
+
+                if (incoming != null) {
+                    if (loan.getEducationLoanDetails() == null) {
+                        loan.setEducationLoanDetails(incoming);
+                    } else {
+                        mergeNonNullFields(incoming, loan.getEducationLoanDetails());
+                    }
+                }
+            }
+
+            case BUSINESS -> {
+                BusinessLoanDetails incoming =
+                        toBusinessEntity(updatedRequest.getBusinessLoanDetails());
+
+                if (incoming != null) {
+                    if (loan.getBusinessLoanDetails() == null) {
+                        loan.setBusinessLoanDetails(incoming);
+                    } else {
+                        mergeNonNullFields(incoming, loan.getBusinessLoanDetails());
+                    }
+                }
+            }
+
+            case VEHICLE -> {
+                VehicleLoanDetails incoming =
+                        toVehicleEntity(updatedRequest.getVehicleLoanDetails());
+
+                if (incoming != null) {
+                    if (loan.getVehicleLoanDetails() == null) {
+                        loan.setVehicleLoanDetails(incoming);
+                    } else {
+                        mergeNonNullFields(incoming, loan.getVehicleLoanDetails());
+                    }
+                }
+            }
+        }
+
+        loan.setStatus(LoanStatus.APPLIED);
+        loan.setDecisionMessage(null);
+        loan.setUpdatedAt(LocalDateTime.now());
+
+        return loanRepository.save(loan);
+    }
+
+
+
+
     public Loan getLoanById(String loanId) {
         return loanRepository.findByLoanId(loanId)
                 .orElseThrow(() -> new RuntimeException("Loan not found: " + loanId));
@@ -216,11 +290,29 @@ public class LoanService {
         }
     }
 
-    // ==================== MAPPERS ====================
 
-    /**
-     * Map personal loan details from request to entity
-     */
+    private <T> void mergeNonNullFields(T source, T target) {
+        if (source == null || target == null) return;
+
+        if (!source.getClass().equals(target.getClass())) {
+            throw new IllegalArgumentException("Source and target must be same type");
+        }
+
+        for (var field : source.getClass().getDeclaredFields()) {
+            field.setAccessible(true);
+            try {
+                Object value = field.get(source);
+                if (value != null) {
+                    field.set(target, value);
+                }
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+
+
     private PersonalLoanDetails mapPersonalLoan(LoanApplicationRequest request) {
         var details = request.getPersonalLoanDetails();
         return PersonalLoanDetails.builder()
@@ -289,5 +381,63 @@ public class LoanService {
                 .insuranceProof(details.getInsuranceProof())
                 .downPaymentProof(details.getDownPaymentProof())
                 .build();
+    }
+
+    private EducationLoanDetails toEducationEntity(EducationLoanDetailsDto dto) {
+        if (dto == null) return null;
+
+        EducationLoanDetails e = new EducationLoanDetails();
+        e.setCourseName(dto.getCourseName());
+        e.setCourseDurationMonths(dto.getCourseDurationMonths());
+        e.setCoApplicantName(dto.getCoApplicantName());
+        e.setCoApplicantIncome(dto.getCoApplicantIncome());
+        e.setRelationship(dto.getRelationship());
+        e.setProofOfAdmission(dto.getProofOfAdmission());
+        e.setProofOfIncome(dto.getProofOfIncome());
+        e.setProofOfAddress(dto.getProofOfAddress());
+        e.setCollateralDocuments(dto.getCollateralDocuments());
+        return e;
+    }
+
+    private PersonalLoanDetails toPersonalEntity(PersonalLoanDetailsDto dto) {
+        if (dto == null) return null;
+
+        PersonalLoanDetails e = new PersonalLoanDetails();
+        e.setEmploymentType(dto.getEmploymentType());
+        e.setMonthlyIncome(dto.getMonthlyIncome());
+        e.setEmployerName(dto.getEmployerName());
+        e.setProofOfIdentity(dto.getProofOfIdentity());
+        e.setProofOfIncome(dto.getProofOfIncome());
+        e.setProofOfAddress(dto.getProofOfAddress());
+        return e;
+    }
+
+    private BusinessLoanDetails toBusinessEntity(BusinessLoanDetailsDto dto) {
+        if (dto == null) return null;
+
+        BusinessLoanDetails e = new BusinessLoanDetails();
+        e.setBusinessName(dto.getBusinessName());
+        e.setBusinessType(dto.getBusinessType());
+        e.setGstAnnualTurnover(dto.getGstAnnualTurnover());
+        e.setBusinessVintageYears(dto.getBusinessVintageYears());
+        e.setProofOfBusiness(dto.getProofOfBusiness());
+        e.setProofOfIncome(dto.getProofOfIncome());
+        return e;
+    }
+
+    private VehicleLoanDetails toVehicleEntity(VehicleLoanDetailsDto dto) {
+        if (dto == null) return null;
+
+        VehicleLoanDetails e = new VehicleLoanDetails();
+        e.setVehicleType(dto.getVehicleType());
+        e.setVehicleBrand(dto.getVehicleBrand());
+        e.setVehicleModel(dto.getVehicleModel());
+        e.setDownPaymentAmount(dto.getDownPaymentAmount());
+        e.setDealerName(dto.getDealerName());
+        e.setProofOfIdentity(dto.getProofOfIdentity());
+        e.setProofOfIncome(dto.getProofOfIncome());
+        e.setInsuranceProof(dto.getInsuranceProof());
+        e.setDownPaymentProof(dto.getDownPaymentProof());
+        return e;
     }
 }
