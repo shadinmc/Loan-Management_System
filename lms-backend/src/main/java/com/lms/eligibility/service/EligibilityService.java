@@ -24,7 +24,7 @@ public class EligibilityService {
 
     private final LoanRepository loanRepository;
     private final EligibilityStrategyFactory strategyFactory;
-    private final UserRepository userRepository; // 🔥 REQUIRED
+    private final UserRepository userRepository; //  REQUIRED
 
     @Transactional
     public EligibilityResult checkEligibilityForBranch(String loanId)
@@ -74,7 +74,7 @@ public class EligibilityService {
                         .requestedAmount(loan.getLoanAmount())
                         .tenureMonths(loan.getTenureMonths())
                         .cibilScore(loan.getCibilScore())
-                        .dateOfBirth(user.getDateOfBirth()); // ✅ FIXED
+                        .dateOfBirth(user.getDateOfBirth()); //  FIXED
 
         switch (loan.getLoanType()) {
 
