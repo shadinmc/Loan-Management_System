@@ -23,7 +23,8 @@ public class BranchManagerEligibilityService {
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
         if (loan.getStatus() != LoanStatus.APPLIED &&
-                loan.getStatus() != LoanStatus.PENDING_BRANCH_REVIEW) {
+                loan.getStatus() != LoanStatus.UNDER_BRANCH_REVIEW &&
+                    loan.getStatus() != LoanStatus.NOT_ELIGIBLE) {
 
             throw new IllegalStateException(
                     "Eligibility already processed for this loan");
