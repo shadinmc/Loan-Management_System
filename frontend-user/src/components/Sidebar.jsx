@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, User, LogOut, Home, LayoutDashboard,
   FileText, Clock, Settings, HelpCircle, Sun, Moon,
-  Shield, CheckCircle, AlertCircle
+  Shield, CheckCircle, AlertCircle, Wallet
 } from 'lucide-react';
 import LottieAnimation from './LottieAnimation';
 
@@ -84,24 +84,27 @@ export default function Sidebar({ isOpen, onClose }) {
   const kycStatusInfo = getKYCStatus();
   const KYCStatusIcon = kycStatusInfo.icon;
 
+
   const navItems = isLoggedIn
     ? [
         { icon: Home, label: 'Home', path: '/', index: 0 },
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', index: 1 },
-        { icon: Shield, label: 'KYC Verification', path: '/kyc', index: 2, isKYC: true },
-        { icon: FileText, label: 'Apply for Loan', path: '/loan/apply', index: 3 },
-        { icon: Clock, label: 'Loan Status', path: '/loan/status', index: 4 },
-        { type: 'divider', index: 5 },
-        { icon: Settings, label: 'Settings', path: '/settings', index: 6 },
-        { icon: HelpCircle, label: 'Help & Support', path: '/help', index: 7 },
-        { type: 'divider', index: 8 },
-        { icon: LogOut, label: 'Logout', action: handleLogout, isLogout: true, index: 9 }
+        { icon: Wallet, label: 'Wallet', path: '/wallet', index: 2 },
+        { icon: Shield, label: 'KYC Verification', path: '/kyc', index: 3, isKYC: true },
+        { icon: FileText, label: 'Apply for Loan', path: '/loan/apply', index: 4 },
+        { icon: Clock, label: 'Loan Status', path: '/loan/status', index: 5 },
+        { type: 'divider', index: 6 },
+        { icon: Settings, label: 'Settings', path: '/settings', index: 7 },
+        { icon: HelpCircle, label: 'Help & Support', path: '/help', index: 8 },
+        { type: 'divider', index: 9 },
+        { icon: LogOut, label: 'Logout', action: handleLogout, isLogout: true, index: 10 }
       ]
     : [
         { icon: Home, label: 'Home', path: '/', index: 0 },
         { icon: User, label: 'Login', path: '/login', index: 1 },
         { icon: FileText, label: 'Sign Up', path: '/signup', index: 2 }
       ];
+
 
   return (
     <>
