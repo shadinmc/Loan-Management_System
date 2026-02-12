@@ -72,7 +72,6 @@ public class Loan {
     private VehicleLoanDetails vehicleLoanDetails;
 
     // Regional review info
-    private String regionalManagerId;
     private LocalDateTime regionalReviewedAt;
     private String regionalRemarks;
     private Boolean regionalApproved;

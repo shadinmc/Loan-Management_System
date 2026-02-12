@@ -2,6 +2,7 @@ package com.lms.regional.controller;
 
 import com.lms.loan.entity.Loan;
 import com.lms.regional.dto.RegionalDecisionRequest;
+import com.lms.regional.dto.RegionalDecisionResponse;
 import com.lms.regional.service.RegionalLoanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,21 +35,16 @@ public class RegionalLoanController {
     }
 
     @PostMapping("/{loanId}/decision")
-    public Loan finalizeDecision(
+    public RegionalDecisionResponse finalizeDecision(
             @PathVariable String loanId,
             @RequestBody RegionalDecisionRequest request) {
-
-        String regionalManagerId =
-                SecurityContextHolder.getContext()
-                        .getAuthentication()
-                        .getName();
 
         return regionalLoanService.finalizeDecision(
                 loanId,
                 request.getApproved(),
-                request.getRemarks(),
-                regionalManagerId
+                request.getRemarks()
         );
     }
+
 }
 

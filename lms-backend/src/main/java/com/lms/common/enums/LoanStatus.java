@@ -9,8 +9,6 @@ public enum LoanStatus {
     BRANCH_APPROVED,            // Approved by Branch Manager
     CLARIFICATION_REQUIRED,
     BRANCH_REJECTED,            // Rejected by Branch Manager
-    PENDING_REGIONAL_REVIEW,    // Waiting for Regional Manager
-    APPROVED,                   // Final approval
     REJECTED,                   // Final rejection
     DISBURSED,                  // Money sent
     CLOSED,                    // Loan completed

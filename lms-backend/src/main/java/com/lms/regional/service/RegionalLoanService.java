@@ -3,6 +3,7 @@ package com.lms.regional.service;
 import com.lms.common.enums.LoanStatus;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
+import com.lms.regional.dto.RegionalDecisionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,7 @@ public class RegionalLoanService {
 
     //  Dashboard list
     public List<Loan> getLoansForRegionalReview() {
-        return loanRepository.findByStatus(LoanStatus.PENDING_REGIONAL_REVIEW);
+        return loanRepository.findByStatus(LoanStatus.BRANCH_APPROVED);
     }
 
     // Open loan → move to UNDER_REGIONAL_REVIEW
@@ -26,7 +27,7 @@ public class RegionalLoanService {
         Loan loan = loanRepository.findByLoanId(loanId)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
-        if (loan.getStatus() != LoanStatus.PENDING_REGIONAL_REVIEW) {
+        if (loan.getStatus() != LoanStatus.BRANCH_APPROVED) {
             throw new IllegalStateException("Loan not ready for regional review");
         }
 
@@ -37,42 +38,41 @@ public class RegionalLoanService {
     }
 
     //  Final decision
-    public Loan finalizeDecision(
+    public RegionalDecisionResponse finalizeDecision(
             String loanId,
             boolean approved,
-            String remarks,
-            String regionalManagerId
+            String remarks
     ) {
 
         Loan loan = loanRepository.findByLoanId(loanId)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
-
-
-
-        //  Regional audit fields
-        loan.setRegionalManagerId(regionalManagerId);
         loan.setRegionalReviewedAt(LocalDateTime.now());
         loan.setRegionalRemarks(remarks);
         loan.setRegionalApproved(approved);
 
-        // Final system status
         if (approved) {
             loan.setStatus(LoanStatus.DISBURSEMENT_PENDING);
-
-            // Schedule disbursement (+1 hour)
-            loan.setDisbursementScheduledAt(
-                    LocalDateTime.now().plusHours(1)
-            );
+            loan.setDisbursementScheduledAt(LocalDateTime.now().plusMinutes(3)); // Schedule disbursement after 3 minutes for demo
         } else {
             loan.setStatus(LoanStatus.REJECTED);
             loan.setDisbursementScheduledAt(null);
         }
 
-
         loan.setUpdatedAt(LocalDateTime.now());
 
-        return loanRepository.save(loan);
+        Loan savedLoan = loanRepository.save(loan);
+
+        return RegionalDecisionResponse.builder()
+                .userId(savedLoan.getUserId())
+                .loanId(savedLoan.getLoanId())
+                .status(savedLoan.getStatus())
+                .approvedAmount(savedLoan.getApprovedAmount())
+                .regionalReviewedAt(savedLoan.getRegionalReviewedAt())
+                .regionalRemarks(savedLoan.getRegionalRemarks())
+                .regionalApproved(savedLoan.getRegionalApproved())
+                .build();
     }
+
 
 }

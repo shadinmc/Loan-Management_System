@@ -2,6 +2,7 @@ package com.lms.branch_manager.service;
 
 
 import com.lms.branch_manager.dto.BranchLoanReviewDto;
+import com.lms.common.exception.LoanDataIntegrityException;
 import com.lms.kyc.entity.Kyc;
 import com.lms.kyc.repository.KycRepository;
 import com.lms.loan.entity.Loan;
@@ -22,13 +23,25 @@ public class BranchManagerLoanReviewService {
     public BranchLoanReviewDto getReviewData(String loanId) {
 
         Loan loan = loanRepository.findByLoanId(loanId)
-                .orElseThrow();
+                .orElseThrow(() ->
+                        new LoanDataIntegrityException(
+                                "Loan not found for loanId: " + loanId
+                        )
+                );
 
         User user = userRepository.findById(loan.getUserId())
-                .orElseThrow();
+                .orElseThrow(() ->
+                        new LoanDataIntegrityException(
+                                "User not found for loanId: " + loan.getLoanId()
+                        )
+                );
 
         Kyc kyc = kycRepository.findByUserId(user.getId())
-                .orElseThrow();
+                .orElseThrow(() ->
+                        new LoanDataIntegrityException(
+                                "KYC not found for userId: " + user.getId()
+                        )
+                );
 
         return new BranchLoanReviewDto(
                 loan.getLoanId(),
