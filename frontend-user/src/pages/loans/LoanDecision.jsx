@@ -1,5 +1,5 @@
 // src/pages/loans/LoanDecision.jsx
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,16 +8,23 @@ import {
 } from 'lucide-react';
 import Button from '../../components/Button';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import { APPLICATION_STATUS } from '../../utils/constants';
+import { APPLICATION_STATUS, LOAN_CONFIG } from '../../utils/constants';
+import { useQuery } from '@tanstack/react-query';
+import { getMyLoans } from '../../api/loanApi';
 
 export default function LoanDecision() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [applications, setApplications] = useState([]);
   const [expandedCard, setExpandedCard] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const loansQuery = useQuery({
+    queryKey: ['loans', 'my-loans'],
+    queryFn: getMyLoans,
+    enabled: !!localStorage.getItem('token'),
+    retry: false,
+  });
 
   const statusOptions = [
     { value: 'all', label: 'All Applications', icon: FileText, color: '#6B7280' },
@@ -28,84 +35,57 @@ export default function LoanDecision() {
     { value: APPLICATION_STATUS.DISBURSED, label: 'Disbursed', icon: Banknote, color: '#8B5CF6' }
   ];
 
-  useEffect(() => {
-    const fetchApplications = async () => {
-      setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setApplications([
-        {
-          id: 'LW24789012',
-          loanType: 'Personal Loan',
-          amount: 500000,
-          tenure: 36,
-          interestRate: 10.5,
-          emi: 16267,
-          status: APPLICATION_STATUS.APPROVED,
-          appliedDate: '2024-01-15',
-          timeline: [
-            { status: 'Application Submitted', date: '2024-01-15', completed: true },
-            { status: 'Documents Verified', date: '2024-01-16', completed: true },
-            { status: 'Credit Assessment', date: '2024-01-17', completed: true },
-            { status: 'Loan Approved', date: '2024-01-18', completed: true },
-            { status: 'Disbursement', date: 'Pending', completed: false }
-          ]
-        },
-        {
-          id: 'LW24789013',
-          loanType: 'Education Loan',
-          amount: 800000,
-          tenure: 60,
-          interestRate: 8.5,
-          emi: 16388,
-          status: APPLICATION_STATUS.UNDER_REVIEW,
-          appliedDate: '2024-01-20',
-          timeline: [
-            { status: 'Application Submitted', date: '2024-01-20', completed: true },
-            { status: 'Documents Verified', date: '2024-01-21', completed: true },
-            { status: 'Credit Assessment', date: 'In Progress', completed: false, current: true },
-            { status: 'Final Decision', date: 'Pending', completed: false },
-            { status: 'Disbursement', date: 'Pending', completed: false }
-          ]
-        },
-        {
-          id: 'LW24789014',
-          loanType: 'Business Loan',
-          amount: 1500000,
-          tenure: 48,
-          interestRate: 12.0,
-          emi: 39516,
-          status: APPLICATION_STATUS.SUBMITTED,
-          appliedDate: '2024-01-22',
-          timeline: [
-            { status: 'Application Submitted', date: '2024-01-22', completed: true },
-            { status: 'Document Verification', date: 'Pending', completed: false, current: true },
-            { status: 'Credit Assessment', date: 'Pending', completed: false },
-            { status: 'Final Decision', date: 'Pending', completed: false },
-            { status: 'Disbursement', date: 'Pending', completed: false }
-          ]
-        },
-        {
-          id: 'LW24789015',
-          loanType: 'Vehicle Loan',
-          amount: 600000,
-          tenure: 48,
-          interestRate: 9.5,
-          emi: 15089,
-          status: APPLICATION_STATUS.DISBURSED,
-          appliedDate: '2024-01-10',
-          timeline: [
-            { status: 'Application Submitted', date: '2024-01-10', completed: true },
-            { status: 'Documents Verified', date: '2024-01-11', completed: true },
-            { status: 'Credit Assessment', date: '2024-01-12', completed: true },
-            { status: 'Loan Approved', date: '2024-01-13', completed: true },
-            { status: 'Amount Disbursed', date: '2024-01-14', completed: true }
-          ]
-        }
-      ]);
-      setLoading(false);
+  const mapBackendStatus = (status) => {
+    const map = {
+      APPLIED: APPLICATION_STATUS.SUBMITTED,
+      ELIGIBILITY_CHECK_PASSED: APPLICATION_STATUS.UNDER_REVIEW,
+      ELIGIBLE: APPLICATION_STATUS.UNDER_REVIEW,
+      UNDER_BRANCH_REVIEW: APPLICATION_STATUS.UNDER_REVIEW,
+      UNDER_REGIONAL_REVIEW: APPLICATION_STATUS.UNDER_REVIEW,
+      PENDING_REGIONAL_REVIEW: APPLICATION_STATUS.UNDER_REVIEW,
+      BRANCH_APPROVED: APPLICATION_STATUS.VERIFIED,
+      REGIONAL_APPROVED: APPLICATION_STATUS.VERIFIED,
+      APPROVED: APPLICATION_STATUS.APPROVED,
+      DISBURSED: APPLICATION_STATUS.DISBURSED,
+      REJECTED: APPLICATION_STATUS.REJECTED,
+      BRANCH_REJECTED: APPLICATION_STATUS.REJECTED,
+      REGIONAL_REJECTED: APPLICATION_STATUS.REJECTED,
+      DISBURSEMENT_PENDING: APPLICATION_STATUS.APPROVED,
+      CLARIFICATION_REQUIRED: APPLICATION_STATUS.UNDER_REVIEW,
+      NOT_ELIGIBLE: APPLICATION_STATUS.REJECTED,
+      CLOSED: APPLICATION_STATUS.DISBURSED
     };
-    fetchApplications();
-  }, []);
+    return map[status] || APPLICATION_STATUS.SUBMITTED;
+  };
+
+  const buildTimeline = (statusLabel, appliedDate, updatedAt) => {
+    const submittedDate = appliedDate ? new Date(appliedDate).toLocaleDateString() : 'Submitted';
+    const updated = updatedAt ? new Date(updatedAt).toLocaleDateString() : 'In Progress';
+    return [
+      { status: 'Application Submitted', date: submittedDate, completed: true },
+      { status: statusLabel, date: updated, completed: statusLabel === 'Approved' || statusLabel === 'Disbursed' }
+    ];
+  };
+
+  const applications = useMemo(() => {
+    const items = loansQuery.data || [];
+    return items.map((loan) => {
+      const loanTypeKey = loan.loanType || '';
+      const config = LOAN_CONFIG[loanTypeKey] || {};
+      const uiStatus = mapBackendStatus(loan.status);
+      return {
+        id: loan.loanId || loan.id,
+        loanType: config.name || loanTypeKey,
+        amount: Number(loan.loanAmount || 0),
+        tenure: loan.tenureMonths || 0,
+        interestRate: Number(loan.interestRate || 0),
+        emi: Number(loan.emiAmount || 0),
+        status: uiStatus,
+        appliedDate: loan.appliedDate || loan.createdAt || null,
+        timeline: buildTimeline(uiStatus, loan.appliedDate || loan.createdAt, loan.updatedAt)
+      };
+    });
+  }, [loansQuery.data]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -150,7 +130,7 @@ export default function LoanDecision() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
   };
 
-  if (loading) {
+  if (loansQuery.isLoading) {
     return (
       <div className="status-page loading-state">
         <motion.div

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { getAllApplicationStatus } from '../../api/decisionApi';
+import { useQuery } from '@tanstack/react-query';
+import { getMyLoans } from '../../api/loanApi';
 import Button from '../../components/Button';
 import {
   FileText,
@@ -26,23 +27,12 @@ import { formatCurrency } from '../../utils/validators';
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [applications, setApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadApplications();
-  }, []);
-
-  const loadApplications = async () => {
-    try {
-      const data = await getAllApplicationStatus();
-      setApplications(data);
-    } catch (error) {
-      console.error('Failed to load applications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const applicationsQuery = useQuery({
+    queryKey: ['loans', 'my-loans'],
+    queryFn: getMyLoans,
+    enabled: !!localStorage.getItem('token'),
+    retry: false,
+  });
 
   const loanTypes = Object.values(LOAN_CONFIG);
 
@@ -64,6 +54,46 @@ export default function Dashboard() {
     };
     return colors[status] || '#94a3b8';
   };
+
+  const mapBackendStatus = (status) => {
+    const map = {
+      APPLIED: 'SUBMITTED',
+      ELIGIBILITY_CHECK_PASSED: 'UNDER_REVIEW',
+      ELIGIBLE: 'UNDER_REVIEW',
+      UNDER_BRANCH_REVIEW: 'UNDER_REVIEW',
+      UNDER_REGIONAL_REVIEW: 'UNDER_REVIEW',
+      PENDING_REGIONAL_REVIEW: 'UNDER_REVIEW',
+      BRANCH_APPROVED: 'VERIFIED',
+      REGIONAL_APPROVED: 'VERIFIED',
+      APPROVED: 'APPROVED',
+      DISBURSED: 'DISBURSED',
+      REJECTED: 'REJECTED',
+      BRANCH_REJECTED: 'REJECTED',
+      REGIONAL_REJECTED: 'REJECTED',
+      DISBURSEMENT_PENDING: 'APPROVED',
+      CLARIFICATION_REQUIRED: 'UNDER_REVIEW',
+      NOT_ELIGIBLE: 'REJECTED',
+      CLOSED: 'DISBURSED'
+    };
+    return map[status] || 'SUBMITTED';
+  };
+
+  const applications = useMemo(() => {
+    const items = applicationsQuery.data || [];
+    return items.map((loan) => {
+      const loanTypeKey = loan.loanType || '';
+      const config = LOAN_CONFIG[loanTypeKey] || {};
+      return {
+        applicationId: loan.loanId || loan.id,
+        status: mapBackendStatus(loan.status),
+        loanType: config.name || loanTypeKey,
+        loanAmount: Number(loan.loanAmount || 0),
+        appliedDate: loan.appliedDate || loan.createdAt || new Date().toISOString()
+      };
+    });
+  }, [applicationsQuery.data]);
+
+  const loading = applicationsQuery.isLoading;
 
   return (
     <div className="dashboard-page">

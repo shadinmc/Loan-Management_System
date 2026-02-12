@@ -13,13 +13,24 @@ export default function LoanConfirmation() {
 
   const { loanType, applicationData } = location.state || {};
   const config = loanType ? LOAN_CONFIG[loanType] : null;
-  const applicationId = `LW${Date.now().toString().slice(-8)}`;
+  const getLoanId = (res) => (
+    res?.loanId ||
+    res?.loan?.loanId ||
+    res?.data?.loanId ||
+    res?.id ||
+    res?._id ||
+    res?.data?.id ||
+    res?.data?._id ||
+    null
+  );
+  const applicationId = location.state?.applicationId || getLoanId(applicationData);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const handleCopyId = () => {
+    if (!applicationId) return;
     navigator.clipboard.writeText(applicationId);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -34,8 +45,8 @@ export default function LoanConfirmation() {
 
   const mockData = {
     loanAmount: applicationData?.loanAmount || 500000,
-    tenure: applicationData?.tenure || 36,
-    interestRate: config?.interestRate || 10.5,
+    tenure: applicationData?.tenureMonths || applicationData?.tenure || 36,
+    interestRate: applicationData?.interestRate || config?.interestRate || 10.5,
     name: applicationData?.fullName || 'Applicant'
   };
 
@@ -130,12 +141,13 @@ export default function LoanConfirmation() {
         <motion.div className="application-id" variants={itemVariants}>
           <span className="id-label">Application ID</span>
           <div className="id-value">
-            <code>{applicationId}</code>
+            <code>{applicationId || 'N/A'}</code>
             <motion.button
               onClick={handleCopyId}
               className="copy-btn"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
+              disabled={!applicationId}
             >
               <Copy size={16} />
               {copied && (

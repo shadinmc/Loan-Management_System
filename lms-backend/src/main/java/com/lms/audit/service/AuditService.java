@@ -4,11 +4,15 @@ import com.lms.audit.entity.AuditLog;
 import com.lms.audit.repository.AuditLogRepository;
 import com.lms.audit.util.AuditHashUtil;
 import com.lms.audit.util.AuditMaskingUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 
+@Slf4j
 @Service
 public class AuditService {
 
@@ -36,27 +40,37 @@ public class AuditService {
             int httpStatus,
             boolean success
     ) {
-        // 1. Generate sequence FIRST (order matters)
+
+        // 1. Generate sequence
         Long sequence = sequenceService.nextSequence();
 
-        // 2. Resolve previous hash (chain link)
+        // 2. Resolve previous hash
         String previousHash = repository
                 .findTopByOrderByAuditSequenceDesc()
                 .map(AuditLog::getCurrentHash)
                 .orElse(GENESIS_HASH);
 
-        // 3. Timestamp once (deterministic)
+        // 3. SAFE correlationId (CRITICAL FIX)
+        String correlationId = Optional
+                .ofNullable(MDC.get("correlationId"))
+                .orElseGet(() -> {
+                    String generated = UUID.randomUUID().toString();
+                    MDC.put("correlationId", generated);
+                    return generated;
+                });
+
+        // 4. Timestamp
         Instant now = Instant.now();
 
-        // 4. Mask payloads
+        // 5. Mask payloads
         String requestMasked = AuditMaskingUtil.mask(request);
         String responseMasked = AuditMaskingUtil.mask(response);
 
-        // 5. Build canonical hash input
+        // 6. Build canonical hash input
         String hashInput = buildHashInput(
                 previousHash,
                 sequence,
-                MDC.get("correlationId"),
+                correlationId,
                 userId,
                 action,
                 resourceType,
@@ -68,13 +82,13 @@ public class AuditService {
                 now
         );
 
-        // 6. Compute current hash
+        // 7. Compute hash
         String currentHash = AuditHashUtil.sha256(hashInput);
 
-        // 7. Persist immutable audit log
-        AuditLog log = AuditLog.builder()
+        // 8. Build audit log
+        AuditLog auditLog = AuditLog.builder()
                 .auditSequence(sequence)
-                .correlationId(MDC.get("correlationId"))
+                .correlationId(correlationId)
                 .userId(userId)
                 .action(action)
                 .resourceType(resourceType)
@@ -88,15 +102,14 @@ public class AuditService {
                 .currentHash(currentHash)
                 .build();
 
-        repository.save(log);
+        // 9. HARD LOG — must appear in console
+        log.info("AUDIT INSERT → action={}, resource={}, seq={}",
+                action, resourceId, sequence);
+
+        // 10. Persist
+        repository.save(auditLog);
     }
 
-    /**
-     * IMPORTANT:
-     * - Order MUST NEVER change
-     * - Delimiter must be fixed
-     * - No nulls allowed (String.valueOf handles this)
-     */
     private String buildHashInput(
             String previousHash,
             Long sequence,
@@ -114,7 +127,7 @@ public class AuditService {
         return String.join("|",
                 previousHash,
                 String.valueOf(sequence),
-                String.valueOf(correlationId),
+                correlationId,
                 String.valueOf(userId),
                 action,
                 resourceType,

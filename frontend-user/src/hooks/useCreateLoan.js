@@ -1,17 +1,27 @@
 // src/hooks/useCreateLoan.js
 import { useState } from 'react';
 import { getOrCreateIdempotencyKey, clearIdempotencyKey } from '../utils/idempotency';
-import { getToken } from '../api/authApi';
+import { getToken, getUser } from '../api/authApi';
 
-export const useCreateLoan = (url) => {
+export const useCreateLoan = (url, options = {}) => {
+  const {
+    loanType: defaultLoanType,
+    idempotencyTtlMs = 24 * 60 * 60 * 1000,
+    clearOnSuccess = true
+  } = options;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const createLoan = async (data) => {
+  const createLoan = async (data, requestOptions = {}) => {
     setLoading(true);
     setError(null);
 
-    const idempotencyKey = getOrCreateIdempotencyKey();
+    const user = getUser();
+    const loanType = requestOptions.loanType || data?.loanType || defaultLoanType || 'UNKNOWN';
+    const scope = `${user?.userId || 'anon'}:${loanType}`;
+    const ttlOverride = requestOptions.idempotencyTtlMs;
+    const clearOverride = requestOptions.clearOnSuccess;
+    const idempotencyKey = getOrCreateIdempotencyKey(scope, ttlOverride ?? idempotencyTtlMs);
     const token = getToken();
 
     if (!token) {
@@ -23,13 +33,15 @@ export const useCreateLoan = (url) => {
 
     console.log('Sending request with idempotency key:', idempotencyKey);
 
+    const authHeader = token?.startsWith('Bearer ') ? token : `Bearer ${token}`;
+
     try {
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Idempotency-Key': idempotencyKey,
-          'Authorization': `Bearer ${token}`
+          'Authorization': authHeader
         },
         body: JSON.stringify(data)
       });
@@ -64,16 +76,19 @@ export const useCreateLoan = (url) => {
 
       if (!res.ok) {
         if (res.status === 403) {
-          throw new Error(responseData.message || 'Access denied.');
+          throw new Error(responseData.message || 'Access denied. Please sign in again.');
         }
         if (res.status === 401) {
-          throw new Error(responseData.message || 'Authentication failed.');
+          throw new Error(responseData.message || 'Authentication failed. Please sign in again.');
         }
         throw new Error(responseData.message || `Request failed with status ${res.status}`);
       }
 
       // Only clear key on success (keep it for retries on failure)
-      clearIdempotencyKey();
+      const shouldClear = clearOverride ?? clearOnSuccess;
+      if (shouldClear) {
+        clearIdempotencyKey(scope);
+      }
       setLoading(false);
       return responseData;
     } catch (err) {
