@@ -26,13 +26,30 @@ export default function LoanApply() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [loanType]);
 
-  const handleSubmit = async (formData) => {
+  const getLoanId = (res) => (
+    res?.loanId ||
+    res?.loan?.loanId ||
+    res?.data?.loanId ||
+    res?.id ||
+    res?._id ||
+    res?.data?.id ||
+    res?.data?._id ||
+    null
+  );
+
+  const handleSubmit = async (submission) => {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = submission?.response || submission;
+      const payload = submission?.payload || submission;
+      const applicationId = getLoanId(response) || getLoanId(payload);
       navigate('/loan/confirmation', {
-        state: { loanType: normalizedType, applicationData: formData }
+        state: {
+          loanType: normalizedType,
+          applicationId,
+          applicationData: { ...payload, ...response }
+        }
       });
     } catch (error) {
       setSubmitError('Failed to submit application. Please try again.');

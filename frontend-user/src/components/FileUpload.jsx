@@ -7,7 +7,7 @@ export default function FileUpload({
   name,
   onChange,
   accept = '.pdf,.jpg,.jpeg,.png',
-  maxSize = 5, // MB
+  maxSize = 1, // MB
   required = false,
   error
 }) {
@@ -48,24 +48,12 @@ export default function FileUpload({
     }
 
     setUploadedFile(file);
-    onChange?.({
-      target: {
-        name,
-        value: file,
-        files: [file]
-      }
-    });
+    onChange?.(file);
   };
 
   const removeFile = () => {
     setUploadedFile(null);
-    onChange?.({
-      target: {
-        name,
-        value: null,
-        files: []
-      }
-    });
+    onChange?.(null);
   };
 
   return (

@@ -1,121 +1,92 @@
 // src/context/WalletContext.jsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  getMyWallet,
+  getMyTransactionsPaged,
+  reimburseWallet,
+  withdrawWallet
+} from '../api/walletApi';
 
 const WalletContext = createContext(null);
 
 export function WalletProvider({ children }) {
-  const [balance, setBalance] = useState(0);
-  const [transactions, setTransactions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [size] = useState(10);
+  const queryClient = useQueryClient();
+  const hasToken = !!localStorage.getItem('token');
 
-  useEffect(() => {
-    // Load wallet data from localStorage
-    const savedBalance = localStorage.getItem('walletBalance');
-    const savedTransactions = localStorage.getItem('walletTransactions');
+  const walletQuery = useQuery({
+    queryKey: ['wallet', 'me'],
+    queryFn: getMyWallet,
+    enabled: hasToken,
+    retry: false,
+  });
 
-    if (savedBalance) {
-      setBalance(parseFloat(savedBalance));
-    }
-    if (savedTransactions) {
-      setTransactions(JSON.parse(savedTransactions));
-    }
-    setIsLoading(false);
-  }, []);
+  const transactionsQuery = useQuery({
+    queryKey: ['wallet', 'transactions', page, size],
+    queryFn: () => getMyTransactionsPaged(page, size),
+    keepPreviousData: true,
+    enabled: hasToken,
+    retry: false,
+  });
 
-  const saveToStorage = (newBalance, newTransactions) => {
-    localStorage.setItem('walletBalance', newBalance.toString());
-    localStorage.setItem('walletTransactions', JSON.stringify(newTransactions));
-  };
+  const reimburseMutation = useMutation({
+    mutationFn: ({ loanId, amount }) => reimburseWallet(loanId, amount),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wallet', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet', 'transactions'] });
+    },
+  });
 
-  const addMoney = (amount, method = 'Bank Transfer') => {
-    const newBalance = balance + amount;
-    const transaction = {
-      id: `TXN${Date.now()}`,
-      type: 'credit',
-      amount,
-      description: `Added money via ${method}`,
-      method,
-      date: new Date().toISOString(),
-      status: 'completed'
-    };
+  const withdrawMutation = useMutation({
+    mutationFn: ({ loanId, amount }) => withdrawWallet(loanId, amount),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wallet', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet', 'transactions'] });
+    },
+  });
 
-    const newTransactions = [transaction, ...transactions];
-    setBalance(newBalance);
-    setTransactions(newTransactions);
-    saveToStorage(newBalance, newTransactions);
-
-    return transaction;
-  };
-
-  const withdrawMoney = (amount, method = 'Bank Transfer') => {
-    if (amount > balance) {
-      throw new Error('Insufficient balance');
-    }
-
-    const newBalance = balance - amount;
-    const transaction = {
-      id: `TXN${Date.now()}`,
-      type: 'debit',
-      amount,
-      description: `Withdrawn to ${method}`,
-      method,
-      date: new Date().toISOString(),
-      status: 'completed'
-    };
-
-    const newTransactions = [transaction, ...transactions];
-    setBalance(newBalance);
-    setTransactions(newTransactions);
-    saveToStorage(newBalance, newTransactions);
-
-    return transaction;
-  };
-
-  const payEMI = (loanId, amount, loanType) => {
-    if (amount > balance) {
-      throw new Error('Insufficient balance');
-    }
-
-    const newBalance = balance - amount;
-    const transaction = {
-      id: `TXN${Date.now()}`,
-      type: 'debit',
-      amount,
-      description: `EMI Payment - ${loanType} (${loanId})`,
+  const mapTransaction = (tx) => {
+    const isCredit = tx.action === 'CREDIT' || tx.action === 'REIMBURSEMENT';
+    const type = isCredit ? 'credit' : 'debit';
+    const base = tx.action === 'WITHDRAWN' ? 'Withdrawal' : 'Wallet';
+    const loanRef = tx.loanId ? ` (${tx.loanId})` : '';
+    return {
+      id: tx.transactionId,
+      type,
+      amount: Number(tx.amount),
+      description: `${base} ${tx.action}${loanRef}`,
       method: 'Wallet',
-      date: new Date().toISOString(),
-      status: 'completed',
-      category: 'emi'
+      date: tx.doneAt,
+      status: 'completed'
     };
-
-    const newTransactions = [transaction, ...transactions];
-    setBalance(newBalance);
-    setTransactions(newTransactions);
-    saveToStorage(newBalance, newTransactions);
-
-    return transaction;
   };
 
-  const receiveDisbursement = (loanId, amount, loanType) => {
-    const newBalance = balance + amount;
-    const transaction = {
-      id: `TXN${Date.now()}`,
-      type: 'credit',
-      amount,
-      description: `Loan Disbursement - ${loanType} (${loanId})`,
-      method: 'Loan',
-      date: new Date().toISOString(),
-      status: 'completed',
-      category: 'disbursement'
-    };
+  const transactions = useMemo(() => {
+    const content = transactionsQuery.data?.content || [];
+    return content.map(mapTransaction);
+  }, [transactionsQuery.data]);
 
-    const newTransactions = [transaction, ...transactions];
-    setBalance(newBalance);
-    setTransactions(newTransactions);
-    saveToStorage(newBalance, newTransactions);
-
-    return transaction;
+  const addMoney = async (amount) => {
+    return reimburseMutation.mutateAsync({
+      loanId: 'WALLET_TOPUP',
+      amount
+    });
   };
+
+  const withdrawMoney = async (amount) => {
+    return withdrawMutation.mutateAsync({
+      loanId: 'WALLET_WITHDRAW',
+      amount
+    });
+  };
+
+  const balance = Number(walletQuery.data?.balance || 0);
+  const isLoading = walletQuery.isLoading || transactionsQuery.isLoading;
+
+  const totalPages = transactionsQuery.data?.totalPages || 0;
+  const totalElements = transactionsQuery.data?.totalElements || 0;
 
   return (
     <WalletContext.Provider
@@ -125,8 +96,11 @@ export function WalletProvider({ children }) {
         isLoading,
         addMoney,
         withdrawMoney,
-        payEMI,
-        receiveDisbursement
+        page,
+        setPage,
+        size,
+        totalPages,
+        totalElements
       }}
     >
       {children}

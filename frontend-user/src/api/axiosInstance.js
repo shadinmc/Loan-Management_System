@@ -11,10 +11,17 @@ const axiosInstance = axios.create({
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn('[api] Missing auth token for request:', config.url);
     }
+
+    if (config?.headers?.Authorization) {
+      console.debug('[api] Auth header set for request:', config.url);
+    }
+
 
     // Add CSRF token if available
     const csrfToken = getCookie('XSRF-TOKEN');

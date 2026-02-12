@@ -53,6 +53,20 @@ export const getAllLoans = async (userId) => {
 };
 
 /**
+ * Get all loan applications for the current user
+ * @returns {Promise} - API response with list of loans
+ */
+export const getMyLoans = async () => {
+  try {
+    const response = await axiosInstance.get('/loans/my-loans');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user loans:', error);
+    throw error;
+  }
+};
+
+/**
  * Get a specific loan application by ID
  * @param {string} loanId - The loan ID
  * @returns {Promise} - API response with loan details
@@ -230,6 +244,7 @@ export default {
   createBusinessLoan,
   getLoanStatus,
   getAllLoans,
+  getMyLoans,
   getLoanById,
   updateLoan,
   cancelLoan,

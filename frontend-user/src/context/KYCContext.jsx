@@ -1,5 +1,7 @@
 // src/context/KYCContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { getMyKyc as getMyKycApi, submitKyc as submitKycApi } from '../api/kycApi';
 
 const KYCContext = createContext(null);
 
@@ -7,6 +9,56 @@ export function KYCProvider({ children }) {
   const [kycData, setKYCData] = useState(null);
   const [kycStatus, setKYCStatus] = useState('not_submitted'); // not_submitted, pending, approved, rejected
   const [rejectionReason, setRejectionReason] = useState(null);
+
+  const mapBackendStatus = (status) => {
+    if (status === 'VERIFIED') return 'approved';
+    if (status === 'REJECTED') return 'rejected';
+    if (status === 'PENDING') return 'pending';
+    return 'not_submitted';
+  };
+
+  const kycQuery = useQuery({
+    queryKey: ['kyc', 'me'],
+    queryFn: getMyKycApi,
+    enabled: !!localStorage.getItem('token'),
+    retry: false,
+    refetchOnWindowFocus: true,
+  });
+
+  useEffect(() => {
+    if (!kycQuery.data) return;
+
+    const data = kycQuery.data;
+    const normalizedStatus = mapBackendStatus(data?.status);
+
+    const submissionData = {
+      aadhaarNumber: data?.aadhaarNumber,
+      panNumber: data?.panNumber,
+      cibilScore: data?.cibilScore,
+    };
+
+    setKYCData(submissionData);
+    setKYCStatus(normalizedStatus);
+    setRejectionReason(null);
+
+    localStorage.setItem('kycData', JSON.stringify(submissionData));
+    localStorage.setItem('kycStatus', normalizedStatus);
+    localStorage.removeItem('kycRejectionReason');
+  }, [kycQuery.data]);
+
+  useEffect(() => {
+    if (!kycQuery.error) return;
+    const status = kycQuery.error?.response?.status;
+    const message = kycQuery.error?.response?.data?.message || '';
+    if (status === 404 || message.includes('KYC not submitted')) {
+      clearKYC();
+    }
+  }, [kycQuery.error]);
+
+  const submitMutation = useMutation({
+    mutationFn: ({ payload, idempotencyKey }) =>
+      submitKycApi(payload, idempotencyKey),
+  });
 
   useEffect(() => {
     // Load KYC data from localStorage on mount
@@ -32,28 +84,40 @@ export function KYCProvider({ children }) {
     }
   }, []);
 
-  const submitKYC = (data) => {
+  const submitKYC = async (data) => {
     try {
-      // Add submission timestamp
+      const idempotencyKey =
+        (globalThis.crypto && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : `kyc-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const response = await submitMutation.mutateAsync({
+        payload: data,
+        idempotencyKey,
+      });
+
       const submissionData = {
         ...data,
+        ...response,
         submittedAt: new Date().toISOString(),
-        submissionId: `KYC${Date.now()}`
       };
 
       setKYCData(submissionData);
       setKYCStatus('pending');
       setRejectionReason(null);
 
-      // Save to localStorage
       localStorage.setItem('kycData', JSON.stringify(submissionData));
       localStorage.setItem('kycStatus', 'pending');
       localStorage.removeItem('kycRejectionReason');
 
-      return { success: true, submissionId: submissionData.submissionId };
+      return { success: true };
     } catch (error) {
       console.error('Error submitting KYC:', error);
-      return { success: false, error: error.message };
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Submission failed';
+      return { success: false, error: message };
     }
   };
 
@@ -135,7 +199,8 @@ export function KYCProvider({ children }) {
 
         // Helpers
         getSubmissionDate,
-        getDaysSinceSubmission
+        getDaysSinceSubmission,
+        kycLoading: kycQuery.isLoading
       }}
     >
       {children}

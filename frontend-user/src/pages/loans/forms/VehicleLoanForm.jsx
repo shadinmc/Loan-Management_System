@@ -10,7 +10,21 @@ import { LOAN_CONFIG, LOAN_TYPES } from '../../../utils/constants';
 import { useCreateLoan } from '../../../hooks/useCreateLoan';
 
 export default function VehicleLoanForm({ onSubmit, loading: externalLoading, config }) {
-  const { createLoan, loading, error: apiError } = useCreateLoan('http://localhost:8080/api/loans/apply');
+  const { createLoan, loading, error: apiError } = useCreateLoan(
+    'http://localhost:8080/api/loans/apply',
+    { loanType: 'VEHICLE', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false }
+  );
+
+  const getLoanId = (res) => (
+    res?.loanId ||
+    res?.loan?.loanId ||
+    res?.data?.loanId ||
+    res?.id ||
+    res?._id ||
+    res?.data?.id ||
+    res?.data?._id ||
+    null
+  );
 
   const loanConfig = config || LOAN_CONFIG[LOAN_TYPES.VEHICLE] || {
     minAmount: 100000,
@@ -39,6 +53,7 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
   const [direction, setDirection] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [submittedLoanId, setSubmittedLoanId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const steps = [
     { id: 1, title: 'Vehicle', icon: Car, description: 'Vehicle details' },
@@ -126,6 +141,13 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
   };
 
   const handleFinalSubmit = async () => {
+    setIsSubmitting(true);
+    const [proofOfIdentity, proofOfIncome, insuranceProof, downPaymentProof] = await Promise.all([
+      fileToBase64(formData.proofOfIdentity),
+      fileToBase64(formData.proofOfIncome),
+      fileToBase64(formData.insuranceProof),
+      fileToBase64(formData.downPaymentProof)
+    ]);
     const payload = {
       loanType: 'VEHICLE',
       loanAmount: Number(formData.loanAmount),
@@ -138,22 +160,34 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
         vehiclePrice: Number(formData.vehiclePrice),
         downPayment: Number(formData.downPayment),
         vehicleRegistrationNumber: formData.vehicleRegistrationNumber?.trim() || null,
-        proofOfIdentity: formData.proofOfIdentity?.name || '',
-        proofOfIncome: formData.proofOfIncome?.name || '',
-        insuranceProof: formData.insuranceProof?.name || null,
-        downPaymentProof: formData.downPaymentProof?.name || null
+        proofOfIdentity,
+        proofOfIncome,
+        insuranceProof,
+        downPaymentProof
       }
     };
 
     try {
-      const res = await createLoan(payload);
-      setSubmittedLoanId(res.loanId || res.id);
+      const res = await createLoan(payload, { loanType: 'VEHICLE', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
+      setSubmittedLoanId(getLoanId(res));
       setShowSuccess(true);
+      if (onSubmit) onSubmit({ response: res, payload });
     } catch (err) {
       console.error('Submission failed', err);
       setErrors({ submit: err.message || 'Failed to submit application' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    if (!file) return resolve(null);
+    if (file.size > 1 * 1024 * 1024) return reject(new Error('File size must be <= 1MB'));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('File read failed'));
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
 
   const vehicleTypes = [
     { value: '', label: 'Select Vehicle Type' },
@@ -200,6 +234,17 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
+      {isSubmitting && (
+        <div className="submission-overlay" aria-live="polite" aria-busy="true">
+          <div className="submission-card">
+            <span className="submission-spinner" aria-hidden="true" />
+            <div>
+              <p className="submission-title">Submitting application</p>
+              <p className="submission-subtitle">Please wait while we process your request.</p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Progress Steps */}
       <div className="form-progress">
         <div className="progress-steps">
@@ -284,7 +329,18 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
                     required
                   />
                 </motion.div>
-                <motion.div custom={2} variants={itemVariants} initial="hidden" animate="visible" className="full-width">
+                <motion.div custom={2} variants={itemVariants} initial="hidden" animate="visible">
+                  <Input
+                    label="Vehicle Model"
+                    name="vehicleModel"
+                    value={formData.vehicleModel}
+                    onChange={handleChange}
+                    placeholder="e.g., City, Swift, Nexon"
+                    error={errors.vehicleModel}
+                    required
+                  />
+                </motion.div>
+                <motion.div custom={3} variants={itemVariants} initial="hidden" animate="visible" className="full-width">
                   <Input
                     label="Vehicle Price (₹)"
                     name="vehiclePrice"
@@ -360,8 +416,8 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
                     type="number"
                     value={formData.loanAmount}
                     onChange={handleChange}
-                    disabled
-                    helper="Auto-calculated: Vehicle Price - Down Payment"
+                    placeholder="Enter loan amount"
+                    error={errors.loanAmount}
                   />
                 </motion.div>
                 <motion.div custom={2} variants={itemVariants} initial="hidden" animate="visible" className="full-width">
@@ -705,168 +761,219 @@ function calculateEMI(principal, rate, tenure) {
 
 const formStyles = `
   .loan-form {
-    max-width: 900px;
+    max-width: 820px;
     margin: 0 auto;
-    background: var(--bg-primary);
+    background: #1a3563;
     border-radius: 20px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 30px rgba(11, 30, 60, 0.18);
+    border: 1px solid rgba(230, 239, 234, 0.35);
     overflow: hidden;
+    font-family: 'Parkinsans', 'Inter', system-ui, sans-serif;
+    position: relative;
+  }
+
+  .submission-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 30, 60, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    backdrop-filter: blur(2px);
+  }
+
+  .submission-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #0B1E3C;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 16px 20px;
+    color: #FFFFFF;
+    box-shadow: 0 10px 24px rgba(11, 30, 60, 0.35);
+    text-align: left;
+  }
+
+  .submission-spinner {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #2DBE60;
+    animation: spin 1s linear infinite;
+  }
+
+  .submission-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #F1F5FF;
+  }
+
+  .submission-subtitle {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: #B8C7E3;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .form-progress {
-    background: linear-gradient(135deg, #0B1E3C 0%, #1a365d 100%);
-    padding: 32px 40px;
-    color: white;
+    background: #1a3563;
+    padding: 36px 36px 28px;
+    border-bottom: 1px solid #E6EFEA;
+    color: #FFFFFF;
   }
 
   .progress-steps {
     display: flex;
     justify-content: space-between;
+    margin-bottom: 28px;
     position: relative;
-    margin-bottom: 24px;
   }
 
   .progress-step-wrapper {
-    display: flex;
-    align-items: center;
     flex: 1;
-  }
-
-  .progress-step-wrapper:last-child {
-    flex: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
   }
 
   .progress-step {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
     position: relative;
-    z-index: 2;
+    text-align: center;
   }
 
   .step-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.6);
-    transition: all 0.3s ease;
+    background: #E6EFEA;
+    color: #64748B;
+    box-shadow: 0 2px 8px rgba(11, 30, 60, 0.06);
   }
 
   .progress-step.active .step-icon {
-    background: #2DBE60;
-    border-color: #2DBE60;
-    color: white;
-    box-shadow: 0 0 20px rgba(45, 190, 96, 0.4);
+    background: #0B1E3C;
+    color: #FFFFFF;
+    box-shadow: 0 4px 16px rgba(11, 30, 60, 0.2);
   }
 
   .progress-step.completed .step-icon {
     background: #2DBE60;
-    border-color: #2DBE60;
-    color: white;
+    color: #FFFFFF;
+    box-shadow: 0 4px 16px rgba(45, 190, 96, 0.25);
   }
 
   .step-info {
+    margin-top: 12px;
     display: flex;
     flex-direction: column;
+    gap: 4px;
   }
 
   .step-title {
+    font-size: 13px;
     font-weight: 600;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.9);
+    color: #EAF1FF;
   }
 
   .step-desc {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    font-weight: 500;
+    color: #B8C7E3;
   }
 
   .step-connector {
-    flex: 1;
-    height: 2px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 0 16px;
+    position: absolute;
+    top: 23px;
+    right: -50%;
+    width: 100%;
+    height: 3px;
+    background: #E6EFEA;
+    border-radius: 2px;
   }
 
   .step-connector.completed {
-    background: #2DBE60;
+    background: linear-gradient(90deg, #2DBE60 0%, #25A854 100%);
   }
 
   .progress-bar {
-    height: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
+    height: 7px;
+    background: #E6EFEA;
+    border-radius: 4px;
     overflow: hidden;
   }
 
   .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #2DBE60 0%, #34d36a 100%);
-    border-radius: 2px;
+    background: linear-gradient(90deg, #2DBE60 0%, #25A854 100%);
+    border-radius: 4px;
   }
 
   .form-content {
-    padding: 40px;
-    min-height: 500px;
-  }
-
-  .form-step {
-    width: 100%;
+    padding: 36px;
+    min-height: 420px;
   }
 
   .step-header {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
     margin-bottom: 32px;
   }
 
   .header-icon {
     width: 56px;
     height: 56px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(45, 190, 96, 0.1) 0%, rgba(45, 190, 96, 0.05) 100%);
-    border: 1px solid rgba(45, 190, 96, 0.2);
+    border-radius: 15px;
+    background: linear-gradient(135deg, #E9F8EF 0%, #D1F4DD 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #2DBE60;
+    box-shadow: 0 2px 12px rgba(45, 190, 96, 0.15);
   }
 
   .header-icon.vehicle-icon {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    background: linear-gradient(135deg, #E7F0FF 0%, #D6E8FF 100%);
     color: #3B82F6;
   }
 
   .header-icon.review-icon {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
-    border: 1px solid rgba(139, 92, 246, 0.2);
-    color: #8B5CF6;
+    background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+    color: #7C3AED;
   }
 
   .step-title-main {
-    font-size: 1.5rem;
+    font-size: 24px;
     font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
+    color: #F1F5FF;
+    margin: 0 0 6px 0;
   }
 
   .step-subtitle {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    margin: 4px 0 0;
+    font-size: 14px;
+    color: #B8C7E3;
+    margin: 0;
+    font-weight: 500;
   }
 
   .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    gap: 22px;
     margin-bottom: 24px;
   }
 
@@ -878,8 +985,8 @@ const formStyles = `
     display: flex;
     justify-content: space-around;
     padding: 20px;
-    background: linear-gradient(135deg, rgba(45, 190, 96, 0.1) 0%, rgba(45, 190, 96, 0.05) 100%);
-    border: 1px solid rgba(45, 190, 96, 0.2);
+    background: linear-gradient(135deg, #E9F8EF 0%, #D1F4DD 100%);
+    border: 1px solid #2DBE60;
     border-radius: 16px;
     margin-bottom: 28px;
   }
@@ -890,33 +997,35 @@ const formStyles = `
 
   .config-label {
     display: block;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    margin-bottom: 4px;
+    font-size: 11px;
+    color: #64748B;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
   }
 
   .config-value {
-    font-size: 1.25rem;
+    font-size: 18px;
     font-weight: 700;
-    color: #2DBE60;
+    color: #0B1E3C;
   }
 
   .emi-calculator-card {
     margin-top: 28px;
     padding: 24px;
-    background: linear-gradient(135deg, #0B1E3C 0%, #1a365d 100%);
+    background: linear-gradient(135deg, #0B1E3C 0%, #1A3563 100%);
     border-radius: 16px;
-    color: white;
+    color: #FFFFFF;
+    box-shadow: 0 8px 24px rgba(11, 30, 60, 0.18);
   }
 
   .emi-header {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     color: #2DBE60;
     font-weight: 600;
-    font-size: 1.1rem;
   }
 
   .emi-details {
@@ -927,17 +1036,17 @@ const formStyles = `
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
   }
 
   .emi-label {
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    color: #A5B4CF;
   }
 
   .emi-amount {
-    font-size: 2.5rem;
-    font-weight: 800;
+    font-size: 30px;
+    font-weight: 700;
     color: #2DBE60;
   }
 
@@ -953,54 +1062,53 @@ const formStyles = `
   .breakdown-item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
   }
 
   .breakdown-item span:first-child {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    color: #7A8BA8;
   }
 
   .breakdown-item span:last-child {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    color: #FFFFFF;
   }
 
   .emi-note {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    color: #7A8BA8;
   }
 
   .documents-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    gap: 18px;
   }
 
   .document-item {
-    background: var(--bg-secondary);
-    border-radius: 12px;
-    padding: 16px;
-    border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
+    background: #1a3563;
+    border: 2px dashed #D1E5DD;
+    border-radius: 13px;
+    padding: 6px;
   }
 
   .document-item:hover {
     border-color: #2DBE60;
-    box-shadow: 0 4px 12px rgba(45, 190, 96, 0.1);
+    box-shadow: 0 8px 18px rgba(11, 30, 60, 0.22);
   }
 
   .terms-section {
     margin-top: 28px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
+    padding-top: 24px;
+    border-top: 1.5px solid #E6EFEA;
   }
 
   .terms-checkbox {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
+    gap: 14px;
     cursor: pointer;
   }
 
@@ -1012,18 +1120,19 @@ const formStyles = `
   }
 
   .terms-checkbox span {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
+    font-size: 14px;
+    color: #C7D6F2;
+    line-height: 1.6;
   }
 
   .terms-checkbox a {
-    color: #2DBE60;
-    font-weight: 500;
+    color: #7CE6A5;
+    font-weight: 600;
     text-decoration: none;
   }
 
   .terms-checkbox a:hover {
+    color: #9AF0BC;
     text-decoration: underline;
   }
 
@@ -1031,35 +1140,35 @@ const formStyles = `
     display: flex;
     flex-direction: column;
     gap: 20px;
+    background: #1a3563;
   }
 
   .review-section {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 20px;
-    transition: all 0.3s ease;
+    background: #1a3563;
+    border: 1.5px solid #E6EFEA;
+    border-radius: 13px;
+    padding: 22px;
   }
 
   .review-section.highlighted {
-    background: linear-gradient(135deg, rgba(45, 190, 96, 0.05) 0%, rgba(45, 190, 96, 0.02) 100%);
-    border-color: rgba(45, 190, 96, 0.3);
+    background: linear-gradient(135deg, #E9F8EF 0%, #D1F4DD 100%);
+    border-color: #2DBE60;
   }
 
   .review-section-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-color);
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1.5px solid #E6EFEA;
   }
 
   .review-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, rgba(45, 190, 96, 0.1) 0%, rgba(45, 190, 96, 0.05) 100%);
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #E9F8EF 0%, #D1F4DD 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1068,40 +1177,47 @@ const formStyles = `
 
   .review-section-header h4 {
     margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-size: 17px;
+    font-weight: 700;
+    color: #F1F5FF;
   }
 
   .review-items {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
   }
 
   .review-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 0;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(230, 239, 234, 0.5);
+  }
+
+  .review-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
   }
 
   .review-label {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
+    font-size: 14px;
+    color: #B8C7E3;
+    font-weight: 500;
   }
 
   .review-value {
-    font-size: 0.95rem;
+    font-size: 15px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #F1F5FF;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
   }
 
   .review-value.highlight {
-    font-size: 1.25rem;
+    font-size: 22px;
     color: #2DBE60;
   }
 
@@ -1112,45 +1228,45 @@ const formStyles = `
   .review-disclaimer {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
+    gap: 14px;
     margin-top: 24px;
-    padding: 16px;
-    background: rgba(59, 130, 246, 0.05);
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 18px;
+    background: #EFF6FF;
+    border: 1.5px solid #BFDBFE;
     border-radius: 12px;
-    color: #3B82F6;
   }
 
   .review-disclaimer p {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: 14px;
     line-height: 1.6;
-    color: var(--text-secondary);
+    color: #475569;
   }
 
   .error-banner {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    gap: 14px;
+    background: #FEE2E2;
+    border: 1.5px solid #FCA5A5;
     border-radius: 12px;
+    padding: 16px 18px;
     margin-bottom: 24px;
-    color: #EF4444;
   }
 
   .error-banner p {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: 14px;
+    color: #DC2626;
   }
 
   .form-actions {
     display: flex;
     align-items: center;
-    padding: 24px 40px;
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--border-color);
+    padding: 26px 36px;
+    background: #1a3563;
+    border-top: 1.5px solid #E6EFEA;
+    gap: 12px;
   }
 
   .action-spacer {
@@ -1163,13 +1279,9 @@ const formStyles = `
     gap: 8px;
   }
 
-  /* Success Screen Styles */
   .success-screen {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     display: flex;
@@ -1180,9 +1292,9 @@ const formStyles = `
   }
 
   .success-content {
-    background: var(--bg-primary);
+    background: #F8FAFC;
     border-radius: 20px;
-    padding: 48px;
+    padding: 40px;
     max-width: 600px;
     width: 100%;
     text-align: center;
@@ -1194,7 +1306,7 @@ const formStyles = `
     height: 120px;
     margin: 0 auto 24px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(45, 190, 96, 0.1) 0%, rgba(45, 190, 96, 0.05) 100%);
+    background: linear-gradient(135deg, #E9F8EF 0%, #D1F4DD 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1202,26 +1314,27 @@ const formStyles = `
   }
 
   .success-title {
-    font-size: 2rem;
+    font-size: 32px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #0B1E3C;
     margin: 0 0 12px;
   }
 
   .success-message {
-    font-size: 1.1rem;
-    color: var(--text-secondary);
-    margin: 0 0 32px;
+    font-size: 16px;
+    color: #64748B;
+    margin: 0 0 28px;
   }
 
   .success-details {
     display: flex;
     gap: 24px;
     justify-content: center;
-    margin-bottom: 32px;
-    padding: 24px;
-    background: var(--bg-secondary);
+    margin-bottom: 28px;
+    padding: 20px;
+    background: #F6FAF8;
     border-radius: 12px;
+    border: 1px solid #E6EFEA;
   }
 
   .detail-item {
@@ -1231,24 +1344,27 @@ const formStyles = `
   }
 
   .detail-label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+    font-size: 12px;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
   }
 
   .detail-value {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 700;
+    color: #0B1E3C;
   }
 
   .status-badge {
     display: inline-block;
     padding: 6px 16px;
-    background: linear-gradient(135deg, rgba(45, 190, 96, 0.1) 0%, rgba(45, 190, 96, 0.05) 100%);
-    border: 1px solid rgba(45, 190, 96, 0.3);
+    background: linear-gradient(135deg, #E9F8EF 0%, #D1F4DD 100%);
+    border: 1px solid #2DBE60;
     border-radius: 20px;
     color: #2DBE60;
-    font-size: 0.9rem;
+    font-size: 13px;
+    font-weight: 600;
   }
 
   .success-info {
@@ -1256,17 +1372,17 @@ const formStyles = `
     align-items: flex-start;
     gap: 12px;
     padding: 16px;
-    background: rgba(59, 130, 246, 0.05);
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    background: #FEF3C7;
+    border: 1px solid #FDE68A;
     border-radius: 12px;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
     text-align: left;
   }
 
   .success-info p {
     margin: 0;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
+    font-size: 14px;
+    color: #92400E;
     line-height: 1.6;
   }
 
@@ -1274,6 +1390,7 @@ const formStyles = `
     display: flex;
     gap: 12px;
     justify-content: center;
+    flex-wrap: wrap;
   }
 
   @media (max-width: 768px) {
@@ -1291,7 +1408,7 @@ const formStyles = `
     }
 
     .form-content {
-      padding: 24px;
+      padding: 28px 24px;
     }
 
     .form-grid,
@@ -1310,9 +1427,8 @@ const formStyles = `
     }
 
     .form-actions {
-      padding: 20px 24px;
+      padding: 24px;
       flex-direction: column;
-      gap: 12px;
     }
 
     .form-actions button {
