@@ -41,6 +41,13 @@ public class LoanService {
         this.securityUtils = securityUtils;
     }
 
+    private static final List<LoanStatus> BLOCKING_STATUSES = List.of(
+            LoanStatus.DISBURSED,
+            LoanStatus.ACTIVE,
+            LoanStatus.DISBURSEMENT_PENDING
+    );
+
+
     /**
      * Generate unique loan ID
      */
@@ -57,6 +64,22 @@ public class LoanService {
         String userId = securityUtils.getCurrentUserId();
         // Step 0: Validate KYC
         kycService.validateKycVerified(userId);
+
+        // Step 0.5: Prevent duplicate active/disbursed loans of same type
+        boolean alreadyHasLoan =
+                loanRepository.existsByUserIdAndLoanTypeAndStatusIn(
+                        userId,
+                        request.getLoanType(),
+                        BLOCKING_STATUSES
+                );
+
+        if (alreadyHasLoan) {
+            throw new IllegalStateException(
+                    "You already have an active or disbursed "
+                            + request.getLoanType() + " loan"
+            );
+        }
+
 
         // Step 1: Check idempotency - prevent duplicate submissions
         Optional<IdempotencyRecord> existingRecord = idempotencyService.findByKey(idempotencyKey);

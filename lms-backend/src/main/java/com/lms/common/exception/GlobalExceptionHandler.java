@@ -43,6 +43,8 @@ public class GlobalExceptionHandler {
 
 
 
+
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(Exception ex) {
         Map<String, Object> error = new HashMap<>();

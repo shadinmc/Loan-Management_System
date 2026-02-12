@@ -63,6 +63,8 @@ public class Loan {
     private LocalDateTime updatedAt;
     private LocalDateTime createdAt;
     private LocalDateTime decisionAt;
+    private LocalDateTime activationScheduledAt;
+
 
 
     /* Loan-type specific details (ONLY ONE NON-NULL) */

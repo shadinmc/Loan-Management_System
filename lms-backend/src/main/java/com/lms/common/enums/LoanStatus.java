@@ -11,7 +11,8 @@ public enum LoanStatus {
     BRANCH_REJECTED,            // Rejected by Branch Manager
     REJECTED,                   // Final rejection
     DISBURSED,                  // Money sent
-    CLOSED,                    // Loan completed
+    CLOSED,                     // Loan completed
+    ACTIVE,                     // Currently active loan
     UNDER_REGIONAL_REVIEW,
     DISBURSEMENT_PENDING,   // waiting for time
     REGIONAL_APPROVED,

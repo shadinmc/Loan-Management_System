@@ -30,6 +30,10 @@ public class DisbursementService {
             loan.setStatus(LoanStatus.DISBURSED);
             loan.setDisbursedAt(LocalDateTime.now());
 
+            // schedule activation after 1 hour
+            loan.setActivationScheduledAt(LocalDateTime.now().plusHours(1));
+
+
             loan.setTransactionId(
                     "TXN-" + System.currentTimeMillis()
             );
@@ -38,4 +42,23 @@ public class DisbursementService {
             loanRepository.save(loan);
         }
     }
+
+    @Scheduled(fixedRate = 60000)
+    public void activateLoans() {
+
+        List<Loan> loans =
+                loanRepository.findByStatusAndActivationScheduledAtBefore(
+                        LoanStatus.DISBURSED,
+                        LocalDateTime.now()
+                );
+
+        for (Loan loan : loans) {
+
+            loan.setStatus(LoanStatus.ACTIVE);
+            loan.setUpdatedAt(LocalDateTime.now());
+
+            loanRepository.save(loan);
+        }
+    }
+
 }
