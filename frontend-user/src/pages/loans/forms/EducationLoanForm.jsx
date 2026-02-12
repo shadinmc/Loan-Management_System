@@ -11,7 +11,19 @@ import { useCreateLoan } from '../../../hooks/useCreateLoan';
 
 export default function EducationLoanForm({ onSubmit, loading: externalLoading, config }) {
   const { createLoan, loading, error } = useCreateLoan(
-    'http://localhost:8080/api/loans/apply'
+    'http://localhost:8080/api/loans/apply',
+    { loanType: 'EDUCATION', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false }
+  );
+
+  const getLoanId = (res) => (
+    res?.loanId ||
+    res?.loan?.loanId ||
+    res?.data?.loanId ||
+    res?.id ||
+    res?._id ||
+    res?.data?.id ||
+    res?.data?._id ||
+    null
   );
 
   const loanConfig = config || LOAN_CONFIG[LOAN_TYPES.EDUCATION] || {
@@ -46,6 +58,7 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
   const [errors, setErrors] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const steps = [
     { id: 1, title: 'Course', icon: GraduationCap, description: 'Course details' },
@@ -141,6 +154,7 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
       return;
     }
 
+    setIsSubmitting(true);
     const payload = {
       loanType: 'EDUCATION',
       loanAmount: Number(formData.loanAmount),
@@ -160,21 +174,16 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
     };
 
     try {
-      const res = await createLoan(payload);
+      const res = await createLoan(payload, { loanType: 'EDUCATION', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
 
-      if (res.isDuplicate) {
-        alert(`This application was already submitted. Loan ID: ${res.loanId}\n\nMessage: ${res.message}`);
-      } else {
-        alert(`Education loan submitted successfully! ID: ${res.loanId || res.id}`);
-
-        // Call parent onSubmit if provided
-        if (onSubmit) {
-          onSubmit(res);
-        }
+      if (onSubmit) {
+        onSubmit({ response: res, payload });
       }
     } catch (err) {
       console.error('Submission failed', err);
       setErrors({ submit: err.message || 'Failed to submit application' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -220,6 +229,17 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
+      {isSubmitting && (
+        <div className="submission-overlay" aria-live="polite" aria-busy="true">
+          <div className="submission-card">
+            <span className="submission-spinner" aria-hidden="true" />
+            <div>
+              <p className="submission-title">Submitting application</p>
+              <p className="submission-subtitle">Please wait while we process your request.</p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Progress Steps */}
       <div className="form-progress">
         <div className="progress-steps">
@@ -424,64 +444,433 @@ function calculateEMI(principal, rate, tenure) {
 }
 
 const formStyles = `
-  .loan-form{max-width:900px;margin:0 auto;background:var(--bg-primary);border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,0.08);overflow:hidden}
-  .form-progress{background:linear-gradient(135deg,#0B1E3C 0%,#1a365d 100%);padding:32px 40px;color:white}
-  .progress-steps{display:flex;justify-content:space-between;position:relative;margin-bottom:24px}
-  .progress-step{display:flex;align-items:center;gap:12px;position:relative;z-index:2}
-  .step-icon{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.6);transition:all 0.3s}
-  .progress-step.active .step-icon{background:#2DBE60;border-color:#2DBE60;color:white;box-shadow:0 0 20px rgba(45,190,96,0.4)}
-  .progress-step.completed .step-icon{background:#2DBE60;border-color:#2DBE60;color:white}
-  .step-info{display:flex;flex-direction:column}
-  .step-title{font-weight:600;font-size:0.9rem;color:rgba(255,255,255,0.9)}
-  .step-desc{font-size:0.75rem;color:rgba(255,255,255,0.5)}
-  .step-connector{position:absolute;top:24px;left:60px;width:calc(100% - 60px);height:2px;background:rgba(255,255,255,0.1);z-index:1}
-  .step-connector.completed{background:#2DBE60}
-  .progress-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
-  .progress-fill{height:100%;background:linear-gradient(90deg,#2DBE60 0%,#34d36a 100%);border-radius:2px}
-  .form-content{padding:40px;min-height:500px}
-  .form-step{width:100%}
-  .step-header{display:flex;align-items:center;gap:16px;margin-bottom:32px}
-  .header-icon{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,rgba(45,190,96,0.1) 0%,rgba(45,190,96,0.05) 100%);border:1px solid rgba(45,190,96,0.2);display:flex;align-items:center;justify-content:center;color:#2DBE60}
-  .step-title-main{font-size:1.5rem;font-weight:700;color:var(--text-primary);margin:0}
-  .step-subtitle{font-size:0.9rem;color:var(--text-secondary);margin:4px 0 0}
-  .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:24px}
-  .full-width{grid-column:1/-1}
-  .info-banner{display:flex;align-items:center;gap:12px;padding:16px 20px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:12px;margin-bottom:24px;color:#3B82F6}
-  .info-banner p{margin:0;font-size:0.875rem;color:var(--text-secondary)}
-  .error-banner{display:flex;align-items:center;gap:12px;padding:16px 20px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:12px;margin-top:24px;color:#EF4444}
-  .error-banner p{margin:0;font-size:0.875rem}
-  .loan-config-banner{display:flex;justify-content:space-around;padding:20px;background:linear-gradient(135deg,rgba(45,190,96,0.1) 0%,rgba(45,190,96,0.05) 100%);border:1px solid rgba(45,190,96,0.2);border-radius:16px;margin-bottom:28px}
-  .config-item{text-align:center}
-  .config-label{display:block;font-size:0.75rem;color:var(--text-secondary);margin-bottom:4px}
-  .config-value{font-size:1.25rem;font-weight:700;color:#2DBE60}
-  .emi-calculator-card{margin-top:28px;padding:24px;background:linear-gradient(135deg,#0B1E3C 0%,#1a365d 100%);border-radius:16px;color:white}
-  .emi-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;color:#2DBE60;font-weight:600}
-  .emi-details{text-align:center}
-  .emi-main{display:flex;flex-direction:column;gap:8px}
-  .emi-label{font-size:0.875rem;color:rgba(255,255,255,0.7)}
-  .emi-amount{font-size:2.5rem;font-weight:800;color:#2DBE60}
-  .emi-note{font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:12px}
-  .documents-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
-  .document-item{background:var(--bg-secondary);border-radius:12px;padding:16px;border:1px solid var(--border-color);transition:all 0.3s}
-  .document-item:hover{border-color:#2DBE60;box-shadow:0 4px 12px rgba(45,190,96,0.1)}
-  .terms-section{margin-top:28px;padding-top:20px;border-top:1px solid var(--border-color)}
-  .terms-checkbox{display:flex;align-items:flex-start;gap:12px;cursor:pointer}
-  .terms-checkbox input{width:20px;height:20px;margin-top:2px;accent-color:#2DBE60}
-  .terms-checkbox span{font-size:0.9rem;color:var(--text-secondary);line-height:1.5}
-  .terms-checkbox a{color:#2DBE60;font-weight:500;text-decoration:none}
-  .terms-checkbox a:hover{text-decoration:underline}
-  .form-actions{display:flex;align-items:center;padding:24px 40px;background:var(--bg-secondary);border-top:1px solid var(--border-color)}
-  .action-spacer{flex:1}
-  .form-actions button{display:flex;align-items:center;gap:8px}
-  @media(max-width:768px){
-    .progress-steps{flex-wrap:wrap;gap:16px}
-    .step-info{display:none}
-    .step-connector{display:none}
-    .form-content{padding:24px}
-    .form-grid,.documents-grid{grid-template-columns:1fr}
-    .loan-config-banner{flex-direction:column;gap:16px}
-    .form-actions{padding:20px 24px;flex-direction:column;gap:12px}
-    .form-actions button{width:100%;justify-content:center}
-    .action-spacer{display:none}
+  .loan-form {
+    max-width: 820px;
+    margin: 0 auto;
+    background: #1a3563;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(11, 30, 60, 0.18);
+    border: 1px solid rgba(230, 239, 234, 0.35);
+    overflow: hidden;
+    font-family: 'Parkinsans', 'Inter', system-ui, sans-serif;
+    position: relative;
+  }
+
+  .submission-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 30, 60, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    backdrop-filter: blur(2px);
+  }
+
+  .submission-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #0B1E3C;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 16px 20px;
+    color: #FFFFFF;
+    box-shadow: 0 10px 24px rgba(11, 30, 60, 0.35);
+    text-align: left;
+  }
+
+  .submission-spinner {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #2DBE60;
+    animation: spin 1s linear infinite;
+  }
+
+  .submission-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #F1F5FF;
+  }
+
+  .submission-subtitle {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: #B8C7E3;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .form-progress {
+    background: #1a3563;
+    padding: 36px 36px 28px;
+    border-bottom: 1px solid #E6EFEA;
+    color: #FFFFFF;
+  }
+
+  .progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    position: relative;
+  }
+
+  .progress-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    text-align: center;
+  }
+
+  .step-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #E6EFEA;
+    color: #64748B;
+    box-shadow: 0 2px 8px rgba(11, 30, 60, 0.06);
+  }
+
+  .progress-step.active .step-icon {
+    background: #0B1E3C;
+    color: #FFFFFF;
+    box-shadow: 0 4px 16px rgba(11, 30, 60, 0.2);
+  }
+
+  .progress-step.completed .step-icon {
+    background: #2DBE60;
+    color: #FFFFFF;
+    box-shadow: 0 4px 16px rgba(45, 190, 96, 0.25);
+  }
+
+  .step-info {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .step-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #EAF1FF;
+  }
+
+  .step-desc {
+    font-size: 11px;
+    font-weight: 500;
+    color: #B8C7E3;
+  }
+
+  .step-connector {
+    position: absolute;
+    top: 23px;
+    right: -50%;
+    width: 100%;
+    height: 3px;
+    background: #E6EFEA;
+    border-radius: 2px;
+  }
+
+  .step-connector.completed {
+    background: linear-gradient(90deg, #2DBE60 0%, #25A854 100%);
+  }
+
+  .progress-bar {
+    height: 7px;
+    background: #E6EFEA;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2DBE60 0%, #25A854 100%);
+    border-radius: 4px;
+  }
+
+  .form-content {
+    padding: 36px;
+    min-height: 420px;
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 32px;
+  }
+
+  .header-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #E9F8EF 0%, #D1F4DD 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2DBE60;
+    box-shadow: 0 2px 12px rgba(45, 190, 96, 0.15);
+  }
+
+  .step-title-main {
+    font-size: 24px;
+    font-weight: 700;
+    color: #F1F5FF;
+    margin: 0 0 6px 0;
+  }
+
+  .step-subtitle {
+    font-size: 14px;
+    color: #B8C7E3;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+    margin-bottom: 24px;
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .info-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: 12px;
+    color: #3B82F6;
+    margin-bottom: 24px;
+  }
+
+  .info-banner p {
+    margin: 0;
+    font-size: 14px;
+    color: #475569;
+  }
+
+  .error-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #FEE2E2;
+    border: 1px solid #FCA5A5;
+    border-radius: 12px;
+    margin-top: 24px;
+    color: #DC2626;
+  }
+
+  .error-banner p {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .loan-config-banner {
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+    background: linear-gradient(135deg, #E9F8EF 0%, #D1F4DD 100%);
+    border: 1px solid #2DBE60;
+    border-radius: 16px;
+    margin-bottom: 28px;
+  }
+
+  .config-item {
+    text-align: center;
+  }
+
+  .config-label {
+    display: block;
+    font-size: 11px;
+    color: #64748B;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  .config-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0B1E3C;
+  }
+
+  .emi-calculator-card {
+    margin-top: 28px;
+    padding: 24px;
+    background: linear-gradient(135deg, #0B1E3C 0%, #1A3563 100%);
+    border-radius: 16px;
+    color: #FFFFFF;
+    box-shadow: 0 8px 24px rgba(11, 30, 60, 0.18);
+  }
+
+  .emi-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    color: #2DBE60;
+    font-weight: 600;
+  }
+
+  .emi-details {
+    text-align: center;
+  }
+
+  .emi-main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .emi-label {
+    font-size: 14px;
+    color: #A5B4CF;
+  }
+
+  .emi-amount {
+    font-size: 30px;
+    font-weight: 700;
+    color: #2DBE60;
+  }
+
+  .emi-note {
+    font-size: 12px;
+    color: #7A8BA8;
+    margin-top: 12px;
+  }
+
+  .documents-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+
+  .document-item {
+    background: #1a3563;
+    border: 2px dashed #D1E5DD;
+    border-radius: 13px;
+    padding: 6px;
+  }
+
+  .document-item:hover {
+    border-color: #2DBE60;
+    box-shadow: 0 8px 18px rgba(11, 30, 60, 0.22);
+  }
+
+  .terms-section {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1.5px solid #E6EFEA;
+  }
+
+  .terms-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    cursor: pointer;
+  }
+
+  .terms-checkbox input {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    accent-color: #2DBE60;
+  }
+
+  .terms-checkbox span {
+    font-size: 14px;
+    color: #C7D6F2;
+    line-height: 1.6;
+  }
+
+  .terms-checkbox a {
+    color: #7CE6A5;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .terms-checkbox a:hover {
+    color: #9AF0BC;
+    text-decoration: underline;
+  }
+
+  .form-actions {
+    display: flex;
+    align-items: center;
+    padding: 26px 36px;
+    background: #1a3563;
+    border-top: 1.5px solid #E6EFEA;
+    gap: 12px;
+  }
+
+  .action-spacer {
+    flex: 1;
+  }
+
+  .form-actions button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  @media (max-width: 768px) {
+    .progress-steps {
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .step-info {
+      display: none;
+    }
+
+    .step-connector {
+      display: none;
+    }
+
+    .form-content {
+      padding: 28px 24px;
+    }
+
+    .form-grid,
+    .documents-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .loan-config-banner {
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-actions {
+      padding: 24px;
+      flex-direction: column;
+    }
+
+    .form-actions button {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .action-spacer {
+      display: none;
+    }
   }
 `;

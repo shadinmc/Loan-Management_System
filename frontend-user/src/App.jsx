@@ -39,6 +39,7 @@ export default function App() {
             <Route path="/loan/apply" element={<LoanApply />} />
             <Route path="/loan/apply/:loanType" element={<LoanApply />} />
             <Route path="/loan/confirm" element={<LoanConfirmation />} />
+            <Route path="/loan/confirmation" element={<LoanConfirmation />} />
             <Route path="/loan/decision" element={<LoanDecision />} />
             <Route path="/loan/status" element={<LoanDecision />} />
           </Route>

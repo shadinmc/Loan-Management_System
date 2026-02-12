@@ -14,6 +14,11 @@ import org.springframework.web.bind.annotation.*;
 public class KycController {
 
     private final KycService kycService;
+    //to fetch the status of the kyc application.
+    @GetMapping("/me")
+    public ResponseEntity<KycResponse> getMyKyc() {
+        return ResponseEntity.ok(kycService.getMyKyc());
+    }
 
     @PostMapping
     public ResponseEntity<KycResponse> submitKyc(

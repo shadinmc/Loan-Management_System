@@ -9,7 +9,7 @@ export const signup = async (userData) => {
     fullName: userData.fullName,
     phone: userData.phone,
     dateOfBirth: userData.dob, // Add date of birth
-    role: 'ROLE_USER'
+    role: 'USER'
   };
 
   const response = await fetch(`${API_BASE_URL}/signup`, {
