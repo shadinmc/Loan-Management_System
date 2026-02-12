@@ -18,4 +18,5 @@ public enum LoanStatus {
     DISBURSEMENT_PENDING,   // waiting for time
     REGIONAL_APPROVED,
     REGIONAL_REJECTED,
+    ACTIVE,
 }

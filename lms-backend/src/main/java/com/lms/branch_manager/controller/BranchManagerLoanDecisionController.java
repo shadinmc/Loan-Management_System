@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/branch/loans")
+@RequestMapping("/api/branch/loans")
 @RequiredArgsConstructor
 public class BranchManagerLoanDecisionController {
 

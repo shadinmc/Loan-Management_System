@@ -1,5 +1,7 @@
 package com.lms.branch_manager.dto;
 
+import com.lms.common.enums.LoanStatus;
+
 import java.math.BigDecimal;
 
 public record BranchLoanReviewDto(
@@ -11,5 +13,6 @@ public record BranchLoanReviewDto(
         String aadhaarMasked,
         String loanType,
         Boolean eligible,
-        BigDecimal emiAmount
+        BigDecimal emiAmount,
+        LoanStatus status
 ) {}

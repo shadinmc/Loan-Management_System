@@ -6,77 +6,65 @@ import {
 import { FiCheckCircle } from "react-icons/fi";
 import "./AdminDashboard.css";
 import { useNavigate } from "react-router-dom";
-
-
+import { useEffect, useState } from "react";
+import { getBranchLoans } from "../../api/loanReviewApi";
 
 const AdminDashboard = () => {
-    const navigate = useNavigate();
-  // MOCK DATA (temporary until backend API)
-  const mockLoans = [
-    {
-      id: "LN-2026-006",
-      applicant: "Meera Nair",
-      type: "Vehicle Loan",
-      amount: 600000,
-      status: "PENDING_BRANCH"
-    },
-    {
-      id: "LN-2026-008",
-      applicant: "Kavita Shah",
-      type: "Business Loan",
-      amount: 1500000,
-      status: "PENDING_BRANCH"
-    },
-    {
-      id: "LN-2026-001",
-      applicant: "Amit Patel",
-      type: "Personal Loan",
-      amount: 500000,
-      status: "PENDING_BRANCH"
-    },
-    {
-      id: "LN-2026-005",
-      applicant: "Rahul Verma",
-      type: "Personal Loan",
-      amount: 300000,
-      status: "BRANCH_REJECTED"
-    },
-    {
-      id: "LN-2026-002",
-      applicant: "Sneha Reddy",
-      type: "Vehicle Loan",
-      amount: 750000,
-      status: "ACTIVE"
+  const navigate = useNavigate();
+
+  const [loans, setLoans] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchLoans();
+  }, []);
+
+  const fetchLoans = async () => {
+    try {
+      const response = await getBranchLoans();
+      setLoans(response.data);
+    } catch (error) {
+      console.error("Error fetching loans:", error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  // 🔥 Show only top 5 loans needing branch review
+  const recentLoans = loans
+    .filter(l => l.status === "UNDER_BRANCH_REVIEW")
+    .slice(0, 5);
 
   // KPI Calculations
-  const pending = mockLoans.filter(l => l.status === "PENDING_BRANCH").length;
-  const rejected = mockLoans.filter(l => l.status === "BRANCH_REJECTED").length;
-  const active = mockLoans.filter(l => l.status === "ACTIVE").length;
-  const approved = 0;
+  const pending = loans.filter(l => l.status === "UNDER_BRANCH_REVIEW").length;
+  const rejected = loans.filter(l => l.status === "BRANCH_REJECTED").length;
+  const active = loans.filter(l => l.status === "ACTIVE").length;
+  const approved = loans.filter(l => l.status === "BRANCH_APPROVED").length;
 
-  // Loan type counts
   const loanTypes = {
-    personal: mockLoans.filter(l => l.type === "Personal Loan").length,
-    vehicle: mockLoans.filter(l => l.type === "Vehicle Loan").length,
-    business: mockLoans.filter(l => l.type === "Business Loan").length,
-    education: 2
+    personal: loans.filter(l => l.loanType === "PERSONAL").length,
+    vehicle: loans.filter(l => l.loanType === "VEHICLE").length,
+    business: loans.filter(l => l.loanType === "BUSINESS").length,
+    education: loans.filter(l => l.loanType === "EDUCATION").length
   };
 
   const getBadgeClass = (status) => {
-    if (status === "PENDING_BRANCH") return "badge warning";
+    if (status === "UNDER_BRANCH_REVIEW") return "badge warning";
     if (status === "BRANCH_REJECTED") return "badge danger";
     if (status === "ACTIVE") return "badge success";
+    if (status === "BRANCH_APPROVED") return "badge success";
     return "badge";
   };
 
   const getStatusText = (status) => {
-    if (status === "PENDING_BRANCH") return "Pending Branch Review";
+    if (status === "UNDER_BRANCH_REVIEW") return "Pending Branch Review";
     if (status === "BRANCH_REJECTED") return "Branch Rejected";
     if (status === "ACTIVE") return "Active Loan";
+    if (status === "BRANCH_APPROVED") return "Branch Approved";
     return status;
   };
+
+  if (loading) return <p style={{ padding: "20px" }}>Loading...</p>;
 
   return (
     <>
@@ -167,27 +155,35 @@ const AdminDashboard = () => {
               <th>Application #</th>
               <th>Applicant</th>
               <th>Loan Type</th>
-              <th className="amount">Amount</th>
+              <th className="amount">EMI Amount</th>
               <th>Status</th>
             </tr>
           </thead>
 
           <tbody>
-            {mockLoans.slice(0, 3).map((loan) => (
-              <tr key={loan.id}>
-                <td>{loan.id}</td>
-                <td>{loan.applicant}</td>
-                <td>{loan.type}</td>
-                <td className="amount">
-                  ₹{loan.amount.toLocaleString()}
-                </td>
-                <td>
-                  <span className={getBadgeClass(loan.status)}>
-                    {getStatusText(loan.status)}
-                  </span>
+            {recentLoans.length > 0 ? (
+              recentLoans.map((loan) => (
+                <tr key={loan.loanId}>
+                  <td>{loan.loanId}</td>
+                  <td>{loan.applicantName}</td>
+                  <td>{loan.loanType}</td>
+                  <td className="amount">
+                    ₹{loan.emiAmount?.toLocaleString()}
+                  </td>
+                  <td>
+                    <span className={getBadgeClass(loan.status)}>
+                      {getStatusText(loan.status)}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" style={{ textAlign: "center", padding: "20px" }}>
+                  No loans pending review
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </section>

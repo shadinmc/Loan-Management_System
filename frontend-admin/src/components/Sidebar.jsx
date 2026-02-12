@@ -21,6 +21,11 @@ const Sidebar = () => {
           Dashboard
         </NavLink>
 
+         <NavLink to="/admin/kyc-verification" className="nav-link">
+                  <CheckCircle size={18} />
+                  KYC Verification
+                </NavLink>
+
      <NavLink
        to="/admin/loan-applications"
        className={({ isActive }) =>

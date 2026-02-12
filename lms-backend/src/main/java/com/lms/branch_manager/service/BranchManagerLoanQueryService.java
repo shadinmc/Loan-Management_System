@@ -71,7 +71,8 @@ public class BranchManagerLoanQueryService {
                 "XXXX-XXXX-" + kyc.getAadhaarNumber().substring(8),
                 loan.getLoanType().name(),
                 loan.getEmiEligible(),
-                loan.getEmiAmount()
+                loan.getEmiAmount(),
+                loan.getStatus()
         );
     }
 }
