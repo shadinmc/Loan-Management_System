@@ -1,5 +1,7 @@
 package com.lms.common.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,14 +46,18 @@ public class GlobalExceptionHandler {
 
 
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleRuntimeException(Exception ex) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("status", HttpStatus.BAD_REQUEST.value());
-        error.put("error", "Error");
-        error.put("message", ex.getMessage());
-        error.put("timestamp", LocalDateTime.now().toString());
-        return ResponseEntity.badRequest().body(error);
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(
+            RuntimeException ex,
+            HttpServletRequest request
+    ) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("correlationId", MDC.get("correlationId"));
+        body.put("error", ex.getMessage());
+        body.put("path", request.getRequestURI());
+        body.put("timestamp", Instant.now());
+
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(ResponseStatusException.class)
