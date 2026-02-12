@@ -7,6 +7,7 @@ import com.lms.loan.repository.LoanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Service
@@ -47,7 +48,7 @@ public class BranchManagerLoanDecisionService {
             }
         }
 
-        loan.setDecisionAt(LocalDateTime.now());
+        loan.setDecisionAt(Instant.now());
         loanRepository.save(loan);
     }
 

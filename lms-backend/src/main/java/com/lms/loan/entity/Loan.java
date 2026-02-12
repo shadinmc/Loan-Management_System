@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,8 +38,6 @@ public class Loan {
     private BigDecimal loanAmount;
     private Integer tenureMonths;
     private BigDecimal interestRate;
-    private Integer cibilScore;
-
 
     private BigDecimal emiAmount;
     private BigDecimal outstandingPrincipal;
@@ -49,7 +48,7 @@ public class Loan {
     private LoanStatus status;
 
     /* Eligibility */
-    private LocalDateTime eligibilityCheckedAt;
+    private Instant eligibilityCheckedAt;
     private BigDecimal approvedAmount;
     private Boolean emiEligible;
 
@@ -57,13 +56,17 @@ public class Loan {
 
 
     /* Dates */
-    private LocalDate appliedDate;
-    private LocalDate approvedDate;
-    private LocalDate disbursedDate;
-    private LocalDateTime updatedAt;
-    private LocalDateTime createdAt;
-    private LocalDateTime decisionAt;
-    private LocalDateTime activationScheduledAt;
+    private Instant appliedDate;
+    private Instant approvedDate;
+    private Instant disbursedDate;
+    private Instant updatedAt;
+    private Instant createdAt;
+    private Instant decisionAt;
+    private Instant activationScheduledAt;
+    private Instant activatedAt;
+
+    private Boolean emiScheduleGenerated;
+
 
 
 
@@ -74,13 +77,13 @@ public class Loan {
     private VehicleLoanDetails vehicleLoanDetails;
 
     // Regional review info
-    private LocalDateTime regionalReviewedAt;
+    private Instant regionalReviewedAt;
     private String regionalRemarks;
     private Boolean regionalApproved;
 
     // Disbursement
-    private LocalDateTime disbursementScheduledAt;
-    private LocalDateTime disbursedAt;
+    private Instant disbursementScheduledAt;
+    private Instant disbursedAt;
     private String transactionId;
 
 }

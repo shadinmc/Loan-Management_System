@@ -14,8 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,7 +62,7 @@ public class LoanService {
      * Prevents duplicate loan applications within the idempotency window
      */
     @Transactional
-    public Loan applyForLoan( LoanApplicationRequest request, String idempotencyKey) {
+    public LoanApplicationResponse  applyForLoan( LoanApplicationRequest request, String idempotencyKey) {
         String userId = securityUtils.getCurrentUserId();
         // Step 0: Validate KYC
         kycService.validateKycVerified(userId);
@@ -97,7 +99,7 @@ public class LoanService {
 
                 if (existingLoan.isPresent()) {
                     // Return the previously created loan
-                    return existingLoan.get();
+                    return toResponse(existingLoan.get());
                 }
                 // If loan was deleted but record exists, continue to create new loan
             }
@@ -113,14 +115,12 @@ public class LoanService {
                 .loanType(request.getLoanType())
                 .loanAmount(BigDecimal.valueOf(request.getLoanAmount()))
                 .tenureMonths(request.getTenureMonths())
-                .interestRate(BigDecimal.valueOf(request.getInterestRate()))
-                .cibilScore(kycService.getCibilScore(userId))
                 .status(LoanStatus.APPLIED)
-                .appliedDate(LocalDate.now())
+                .appliedDate(Instant.now())
                 .outstandingPrincipal(BigDecimal.valueOf(request.getLoanAmount()))
                 .emiEligible(false)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
 
         // Step 4: Attach loan-type specific details
@@ -155,8 +155,69 @@ public class LoanService {
                 "LOAN_APPLICATION"
         );
 
-        return savedLoan;
+        return toResponse(savedLoan);
     }
+
+    private LoanApplicationResponse toResponse(Loan loan) {
+        return LoanApplicationResponse.builder()
+                .loanId(loan.getLoanId())
+                .loanType(loan.getLoanType())
+                .status(loan.getStatus())
+                .loanAmount(loan.getLoanAmount())
+                .tenureMonths(loan.getTenureMonths())
+                .appliedDate(LocalDate.from(loan.getAppliedDate()))
+                .emiEligible(loan.getEmiEligible())
+                .message("Loan application submitted successfully")
+                .build();
+    }
+
+
+    public List<LoanSummaryResponse> getLoanSummaries(String userId) {
+
+        return loanRepository.findByUserId(userId)
+                .stream()
+                .map(loan -> new LoanSummaryResponse(
+                        loan.getLoanId(),
+                        loan.getLoanType(),
+                        loan.getStatus(),
+                        loan.getLoanAmount(),
+                        loan.getAppliedDate()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                ))
+                .toList();
+    }
+
+
+    public LoanDetailResponse getLoanDetails(String loanId, String userId) {
+
+        Loan loan = loanRepository.findByLoanIdAndUserId(loanId, userId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Loan not found")
+                );
+
+        Object details = switch (loan.getLoanType()) {
+            case PERSONAL -> loan.getPersonalLoanDetails();
+            case EDUCATION -> loan.getEducationLoanDetails();
+            case BUSINESS -> loan.getBusinessLoanDetails();
+            case VEHICLE -> loan.getVehicleLoanDetails();
+        };
+
+        return LoanDetailResponse.builder()
+                .loanId(loan.getLoanId())
+                .loanType(loan.getLoanType())
+                .status(loan.getStatus())
+                .loanAmount(loan.getLoanAmount())
+                .tenureMonths(loan.getTenureMonths())
+                .emiAmount(loan.getEmiAmount())
+                .outstandingPrincipal(loan.getOutstandingPrincipal())
+                .appliedDate(loan.getAppliedDate().atZone(ZoneId.systemDefault()).toLocalDate())
+                .approvedDate(loan.getApprovedDate() == null ? null : loan.getApprovedDate().atZone(ZoneId.systemDefault()).toLocalDate()
+        )
+                .loanDetails(details)
+                .build();
+    }
+
 
     public Loan resubmitLoan(
             String loanId,
@@ -227,7 +288,7 @@ public class LoanService {
 
         loan.setStatus(LoanStatus.APPLIED);
         loan.setDecisionMessage(null);
-        loan.setUpdatedAt(LocalDateTime.now());
+        loan.setUpdatedAt(Instant.now());
 
         return loanRepository.save(loan);
     }
@@ -274,7 +335,7 @@ public class LoanService {
      */
     @Transactional
     public Loan updateLoan(Loan loan) {
-        loan.setUpdatedAt(LocalDateTime.now());
+        loan.setUpdatedAt(Instant.now());
         return loanRepository.save(loan);
     }
 

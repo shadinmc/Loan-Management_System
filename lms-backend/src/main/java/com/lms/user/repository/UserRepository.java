@@ -13,4 +13,7 @@ public interface UserRepository extends MongoRepository<User, String> {
     boolean existsByEmail(String email);
     boolean existsByUsername(String username);
     Optional<UserBasicProjection> findProjectedById(String id);
+
+    @Override
+    Optional<User> findById(String s);
 }

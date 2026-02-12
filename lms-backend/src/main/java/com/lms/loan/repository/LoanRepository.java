@@ -6,6 +6,7 @@ import com.lms.loan.entity.Loan;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -21,9 +22,14 @@ public interface LoanRepository extends MongoRepository<Loan, String> {
     List<Loan> findByEmiEligible(Boolean emiEligible);
     List<Loan> findByStatusAndEmiEligible(LoanStatus status, Boolean emiEligible);
     List<Loan> findByStatusIn(List<LoanStatus> statuses);
-    List<Loan> findByStatusAndDisbursementScheduledAtBefore(LoanStatus status, java.time.LocalDateTime dateTime);
-    List<Loan> findByStatusAndActivationScheduledAtBefore(LoanStatus status, LocalDateTime time);
-    boolean existsByUserIdAndLoanTypeAndStatusIn(String userId, LoanType loanType, List<LoanStatus> statuses);
+    List<Loan> findByStatusAndDisbursementScheduledAtBefore(
+            LoanStatus status,
+            Instant time
+    );
+    List<Loan> findByStatusAndActivationScheduledAtBefore(
+            LoanStatus status,
+            Instant time
+    );    boolean existsByUserIdAndLoanTypeAndStatusIn(String userId, LoanType loanType, List<LoanStatus> statuses);
 
 
 //    <T> ScopedValue<T> findByLoanId(String loanId);

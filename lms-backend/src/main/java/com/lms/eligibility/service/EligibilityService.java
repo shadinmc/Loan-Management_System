@@ -6,6 +6,7 @@ import com.lms.eligibility.context.EligibilityContext;
 import com.lms.eligibility.dto.EligibilityResult;
 import com.lms.eligibility.factory.EligibilityStrategyFactory;
 import com.lms.eligibility.strategy.LoanEligibilityStrategy;
+import com.lms.kyc.service.KycService;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
 import com.lms.user.entity.User;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -25,6 +27,7 @@ public class EligibilityService {
     private final LoanRepository loanRepository;
     private final EligibilityStrategyFactory strategyFactory;
     private final UserRepository userRepository; //  REQUIRED
+    private final KycService kycService;
 
     @Transactional
     public EligibilityResult checkEligibilityForBranch(String loanId)
@@ -34,7 +37,8 @@ public class EligibilityService {
                 .orElseThrow(() -> new RuntimeException("Loan not found or unauthorized"));
 
         if (loan.getStatus() != LoanStatus.APPLIED &&
-                loan.getStatus() != LoanStatus.UNDER_BRANCH_REVIEW) {
+                loan.getStatus() != LoanStatus.UNDER_BRANCH_REVIEW &&
+                    loan.getStatus() != LoanStatus.NOT_ELIGIBLE) {
             throw new IllegalStateException(
                     "Eligibility cannot be checked in status: " + loan.getStatus());
         }
@@ -73,7 +77,7 @@ public class EligibilityService {
                         .loanType(loan.getLoanType())
                         .requestedAmount(loan.getLoanAmount())
                         .tenureMonths(loan.getTenureMonths())
-                        .cibilScore(loan.getCibilScore())
+                        .cibilScore(kycService.getCibilScore(userId))
                         .dateOfBirth(user.getDateOfBirth()); //  FIXED
 
         switch (loan.getLoanType()) {
@@ -126,7 +130,7 @@ public class EligibilityService {
 
     private void updateLoanWithEligibility(Loan loan, EligibilityResult result) {
 
-        loan.setEligibilityCheckedAt(LocalDateTime.now());
+        loan.setEligibilityCheckedAt(Instant.now());
 
         if (result.isEligible()) {
 
@@ -142,7 +146,7 @@ public class EligibilityService {
             loan.setApprovedAmount(result.getApprovedAmount());
             loan.setInterestRate(interestRate);
             loan.setEmiAmount(emi);
-            loan.setApprovedDate(LocalDate.now());
+            loan.setApprovedDate(Instant.now());
             loan.setEmiEligible(true);
 
         } else {
@@ -151,7 +155,7 @@ public class EligibilityService {
             loan.setEmiEligible(false);
         }
 
-        loan.setUpdatedAt(LocalDateTime.now());
+        loan.setUpdatedAt(Instant.now());
         loanRepository.save(loan);
     }
 
