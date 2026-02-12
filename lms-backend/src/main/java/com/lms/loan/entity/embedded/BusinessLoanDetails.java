@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import org.bson.types.Binary;
 
 @Data
 @Builder
@@ -19,8 +20,11 @@ public class BusinessLoanDetails {
     private BigDecimal gstAnnualTurnover;
     private Integer businessVintageYears;
 
-    private String proofOfBusiness;
-    private String proofOfIncome;
+    private Binary proofOfBusiness;
+    private Binary proofOfIncome;
+    private Binary financialStatements;
+    private Binary taxReturns;
+    private Binary bankStatements;
 
     private BigDecimal calculatedEligibleAmount;
 }

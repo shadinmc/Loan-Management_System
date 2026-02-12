@@ -126,6 +126,11 @@ export default function PersonalLoanForm({ onSubmit, loading: externalLoading, c
     }
 
     setIsSubmitting(true);
+    const [proofOfIdentity, proofOfIncome, proofOfAddress] = await Promise.all([
+      fileToBase64(formData.proofOfIdentity),
+      fileToBase64(formData.proofOfIncome),
+      fileToBase64(formData.proofOfAddress)
+    ]);
     const payload = {
       loanType: 'PERSONAL',
       loanAmount: Number(formData.loanAmount),
@@ -135,9 +140,9 @@ export default function PersonalLoanForm({ onSubmit, loading: externalLoading, c
         employmentType: formData.employmentType,
         monthlyIncome: Number(formData.monthlyIncome),
         employerName: formData.companyName.trim(),
-        proofOfIdentity: formData.proofOfIdentity?.name || '',
-        proofOfIncome: formData.proofOfIncome?.name || '',
-        proofOfAddress: formData.proofOfAddress?.name || ''
+        proofOfIdentity,
+        proofOfIncome,
+        proofOfAddress
       },
       applicationStatus: 'SUBMITTED'
     };
@@ -155,6 +160,15 @@ export default function PersonalLoanForm({ onSubmit, loading: externalLoading, c
       setIsSubmitting(false);
     }
   };
+
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    if (!file) return resolve(null);
+    if (file.size > 1 * 1024 * 1024) return reject(new Error('File size must be <= 1MB'));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('File read failed'));
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
 
   const employmentOptions = [
     { value: '', label: 'Select Employment Type' },

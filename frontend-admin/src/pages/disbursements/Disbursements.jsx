@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Search,
   Clock,
@@ -7,42 +8,39 @@ import {
   RefreshCcw
 } from "lucide-react";
 import "./Disbursements.css";
-
-const DISBURSEMENTS = [
-  {
-    id: "LN-2026-003",
-    applicant: "Vikram Singh",
-    amount: 2000000,
-    bank: "SBI",
-    account: "****1234",
-    ifsc: "SBIN001234",
-    date: "2/5/2026, 3:30 PM",
-    status: "PENDING",
-    txnId: "-"
-  },
-  {
-    id: "LN-2026-004",
-    applicant: "Ananya Iyer",
-    amount: 1000000,
-    bank: "HDFC",
-    account: "****5678",
-    ifsc: "HDFC0005678",
-    date: "1/28/2026, 9:30 PM",
-    status: "COMPLETED",
-    txnId: "TXN20260128161500"
-  }
-];
+import { getDisbursements } from "../../api/disbursementApi";
 
 const normalize = (v) => (v ?? "").toLowerCase();
 
 const Disbursements = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const disbursementsQuery = useQuery({
+    queryKey: ["disbursements"],
+    queryFn: getDisbursements,
+    enabled: !!localStorage.getItem("token"),
+    retry: false,
+  });
+
+  const disbursements = useMemo(() => {
+    const items = disbursementsQuery.data || [];
+    return items.map((loan) => {
+      const status = loan.status === "DISBURSEMENT_PENDING" ? "PENDING" : "COMPLETED";
+      return {
+        id: loan.loanId || loan.id,
+        applicant: loan.userId,
+        amount: Number(loan.loanAmount || 0),
+        date: loan.disbursementScheduledAt || loan.disbursedAt || loan.updatedAt || null,
+        status,
+        txnId: loan.transactionId || "-"
+      };
+    });
+  }, [disbursementsQuery.data]);
 
   /* =====================
      FILTERED DATA
      ===================== */
-  const filteredData = DISBURSEMENTS.filter((d) => {
+  const filteredData = disbursements.filter((d) => {
     if (statusFilter !== "ALL" && d.status !== statusFilter) return false;
 
     if (search) {
@@ -61,7 +59,7 @@ const Disbursements = () => {
      KPI COUNTS
      ===================== */
   const count = (status) =>
-    DISBURSEMENTS.filter((d) => d.status === status).length;
+    disbursements.filter((d) => d.status === status).length;
 
   return (
     <>
@@ -129,7 +127,6 @@ const Disbursements = () => {
             <tr>
               <th>Loan Details</th>
               <th>Amount</th>
-              <th>Bank Details</th>
               <th>Scheduled Date</th>
               <th>Status</th>
               <th>Transaction ID</th>
@@ -137,9 +134,15 @@ const Disbursements = () => {
           </thead>
 
           <tbody>
-            {filteredData.length === 0 ? (
+            {disbursementsQuery.isLoading ? (
               <tr>
-                <td colSpan="6" className="empty">
+                <td colSpan="5" className="empty">
+                  Loading disbursements...
+                </td>
+              </tr>
+            ) : filteredData.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="empty">
                   No disbursements found
                 </td>
               </tr>
@@ -152,13 +155,7 @@ const Disbursements = () => {
                   </td>
 
                   <td>₹{d.amount.toLocaleString()}</td>
-
-                  <td>
-                    {d.account}
-                    <div className="sub">{d.ifsc}</div>
-                  </td>
-
-                  <td>{d.date}</td>
+                  <td>{d.date ? new Date(d.date).toLocaleString() : "-"}</td>
 
                   <td>
                     <span className={`badge ${d.status.toLowerCase()}`}>
