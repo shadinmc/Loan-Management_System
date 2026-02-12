@@ -43,14 +43,16 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+    public ResponseEntity<Map<String, Object>> handleException(Exception ex) {
         Map<String, Object> error = new HashMap<>();
         error.put("status", HttpStatus.BAD_REQUEST.value());
         error.put("error", "Error");
         error.put("message", ex.getMessage());
         error.put("timestamp", LocalDateTime.now().toString());
+
         return ResponseEntity.badRequest().body(error);
     }
+
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(
