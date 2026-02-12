@@ -142,6 +142,12 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
 
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
+    const [proofOfIdentity, proofOfIncome, insuranceProof, downPaymentProof] = await Promise.all([
+      fileToBase64(formData.proofOfIdentity),
+      fileToBase64(formData.proofOfIncome),
+      fileToBase64(formData.insuranceProof),
+      fileToBase64(formData.downPaymentProof)
+    ]);
     const payload = {
       loanType: 'VEHICLE',
       loanAmount: Number(formData.loanAmount),
@@ -154,10 +160,10 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
         vehiclePrice: Number(formData.vehiclePrice),
         downPayment: Number(formData.downPayment),
         vehicleRegistrationNumber: formData.vehicleRegistrationNumber?.trim() || null,
-        proofOfIdentity: formData.proofOfIdentity?.name || '',
-        proofOfIncome: formData.proofOfIncome?.name || '',
-        insuranceProof: formData.insuranceProof?.name || null,
-        downPaymentProof: formData.downPaymentProof?.name || null
+        proofOfIdentity,
+        proofOfIncome,
+        insuranceProof,
+        downPaymentProof
       }
     };
 
@@ -173,6 +179,15 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
       setIsSubmitting(false);
     }
   };
+
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    if (!file) return resolve(null);
+    if (file.size > 1 * 1024 * 1024) return reject(new Error('File size must be <= 1MB'));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('File read failed'));
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
 
   const vehicleTypes = [
     { value: '', label: 'Select Vehicle Type' },

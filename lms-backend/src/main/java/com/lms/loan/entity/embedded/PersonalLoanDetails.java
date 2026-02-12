@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import org.bson.types.Binary;
 
 @Data
 @Builder
@@ -17,9 +18,9 @@ public class PersonalLoanDetails {
     private BigDecimal monthlyIncome;
     private String employerName;
 
-    private String proofOfIdentity;
-    private String proofOfIncome;
-    private String proofOfAddress;
+    private Binary proofOfIdentity;
+    private Binary proofOfIncome;
+    private Binary proofOfAddress;
 
     private String applicationStatus; // SUBMITTED / VERIFIED
 }

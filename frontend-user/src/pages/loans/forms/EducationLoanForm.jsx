@@ -155,6 +155,12 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
     }
 
     setIsSubmitting(true);
+    const [proofOfAdmission, proofOfIncome, proofOfAddress, collateralDocuments] = await Promise.all([
+      fileToBase64(formData.proofOfAdmission),
+      fileToBase64(formData.proofOfIncome),
+      fileToBase64(formData.proofOfAddress),
+      fileToBase64(formData.collateralDocuments)
+    ]);
     const payload = {
       loanType: 'EDUCATION',
       loanAmount: Number(formData.loanAmount),
@@ -166,10 +172,10 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
         coApplicantName: formData.coApplicantName.trim(),
         coApplicantIncome: Number(formData.coApplicantIncome),
         relationship: formData.relationship,
-        proofOfAdmission: formData.proofOfAdmission?.name || '',
-        proofOfIncome: formData.proofOfIncome?.name || '',
-        proofOfAddress: formData.proofOfAddress?.name || '',
-        collateralDocuments: formData.collateralDocuments?.name || null
+        proofOfAdmission,
+        proofOfIncome,
+        proofOfAddress,
+        collateralDocuments
       }
     };
 
@@ -186,6 +192,15 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
       setIsSubmitting(false);
     }
   };
+
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    if (!file) return resolve(null);
+    if (file.size > 1 * 1024 * 1024) return reject(new Error('File size must be <= 1MB'));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('File read failed'));
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
 
   const relationOptions = [
     { value: '', label: 'Select Relationship' },
