@@ -21,17 +21,6 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signup(@Valid @RequestBody SignupRequest request) {
         AuthResponse response = authService.signup(request);
-        auditService.log(
-                response.getUserId(),          // userId
-                "USER_SIGNUP",                 // action
-                "AUTH",                        // resourceType
-                response.getUserId(),          // resourceId
-                request,                       // request DTO
-                response,                      // response DTO
-                201,
-                true
-        );
-
         return ResponseEntity.ok(response);
     }
 
