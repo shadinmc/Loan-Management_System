@@ -51,7 +51,7 @@ public class    SecurityConfig {
 
         return http.build();
     }
-    // ✅ THIS FIXES THE 403 ISSUE
+    // THIS FIXES THE 403 ISSUE
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
             throws Exception {

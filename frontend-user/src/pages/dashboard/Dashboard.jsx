@@ -74,12 +74,7 @@ export default function Dashboard() {
             <h1>Welcome back, {user?.username || 'User'}</h1>
             <p>Manage your loans and applications from your personal dashboard</p>
           </div>
-          <Button
-            onClick={() => navigate('/loan/apply')}
-            icon={FileText}
-          >
-            Apply for Loan
-          </Button>
+
         </section>
 
         {/* Quick Actions */}
@@ -130,9 +125,7 @@ export default function Dashboard() {
               </div>
               <h3>No applications yet</h3>
               <p>Start by applying for a loan that suits your needs</p>
-              <Button onClick={() => navigate('/loan/apply')}>
-                Apply Now
-              </Button>
+
             </div>
           ) : (
             <div className="applications-list">

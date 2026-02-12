@@ -350,7 +350,7 @@ public class LoanService {
     private BusinessLoanDetails mapBusinessLoan(LoanApplicationRequest request) {
         var details = request.getBusinessLoanDetails();
 
-        if(details.getBusinessType().equals("personal")){
+        if(details.getBusinessType().equals("Personal")){
             throw new RuntimeException("Business loan mapping not implemented yet");
         }
 
