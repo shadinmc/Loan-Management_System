@@ -10,7 +10,17 @@ import { useWallet } from '../context/WalletContext';
 import LottieAnimation from './LottieAnimation';
 
 export default function Wallet() {
-  const { balance, transactions, addMoney, withdrawMoney, isLoading } = useWallet();
+  const {
+    balance,
+    transactions,
+    addMoney,
+    withdrawMoney,
+    isLoading,
+    page,
+    setPage,
+    totalPages,
+    totalElements
+  } = useWallet();
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -213,6 +223,28 @@ export default function Wallet() {
               ))
             )}
           </AnimatePresence>
+        </div>
+
+        <div className="pagination">
+          <div className="page-info">
+            Page {page + 1} of {Math.max(totalPages, 1)} • {totalElements} transactions
+          </div>
+          <div className="page-actions">
+            <button
+              className="page-btn"
+              onClick={() => setPage(Math.max(page - 1, 0))}
+              disabled={page <= 0}
+            >
+              Prev
+            </button>
+            <button
+              className="page-btn"
+              onClick={() => setPage(page + 1)}
+              disabled={totalPages === 0 || page >= totalPages - 1}
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 
@@ -471,6 +503,36 @@ export default function Wallet() {
           gap: 12px;
         }
 
+        .pagination {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-top: 16px;
+          border-top: 1px solid var(--border-color);
+          font-size: 0.85rem;
+          color: var(--text-muted);
+        }
+
+        .page-actions {
+          display: flex;
+          gap: 8px;
+        }
+
+        .page-btn {
+          padding: 8px 14px;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
+          color: var(--text-primary);
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .page-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
         .transaction-item {
           display: flex;
           align-items: center;
@@ -625,7 +687,11 @@ function MoneyModal({ type, balance = 0, onClose, onSubmit }) {
 
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
-    onSubmit(numAmount, methods.find(m => m.id === method)?.name);
+    try {
+      await onSubmit(numAmount, methods.find(m => m.id === method)?.name);
+    } catch (error) {
+      console.error('Wallet action failed:', error);
+    }
   };
 
   return (
