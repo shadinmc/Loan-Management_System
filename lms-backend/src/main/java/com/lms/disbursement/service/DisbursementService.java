@@ -27,7 +27,7 @@ public class DisbursementService {
 
         for (Loan loan : loans) {
 
-            loan.setStatus(LoanStatus.ACTIVE);
+            loan.setStatus(LoanStatus.DISBURSED);
             loan.setDisbursedAt(LocalDateTime.now());
 
             loan.setTransactionId(

@@ -43,19 +43,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(error);
     }
-     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleException(Exception ex) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("status", HttpStatus.BAD_REQUEST.value());
-        error.put("error", "Error");
-        error.put("message", ex.getMessage());
-        error.put("timestamp", LocalDateTime.now().toString());
-
-        return ResponseEntity.badRequest().body(error);
-    }
 
 
-   @ExceptionHandler(RuntimeException.class)
+
+    @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(
             RuntimeException ex,
             HttpServletRequest request
@@ -78,7 +69,6 @@ public class GlobalExceptionHandler {
         error.put("timestamp", LocalDateTime.now().toString());
         return ResponseEntity.status(ex.getStatusCode()).body(error);
     }
-
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(

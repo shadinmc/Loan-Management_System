@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/branch/loans")
+@RequestMapping("/branch/loans")
 @RequiredArgsConstructor
 public class BranchManagerEligibilityController {
 

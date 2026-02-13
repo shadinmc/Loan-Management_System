@@ -6,7 +6,6 @@ import LoanClosure from "../pages/LoanClosure/LoanClosure";
 import Disbursement from "../pages/disbursements/Disbursements";
 import LoanApplications from "../pages/LoanApplications/LoanApplications";
 import AuthGuard from "../utils/AuthGuard";
-import KYCVerification from "../pages/kycverification/AdminKycVerification";
 
 const AdminRoutes = () => {
   return (
@@ -20,7 +19,6 @@ const AdminRoutes = () => {
         }
       >
         <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="kyc-verification" element={<KYCVerification />} />
         <Route path="loan-applications" element={<LoanApplications />} />
          <Route path="disbursements" element={<Disbursement/>} />
          <Route path="repayments" element={<Repayments />} />

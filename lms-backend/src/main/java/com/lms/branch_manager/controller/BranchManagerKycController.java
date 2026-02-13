@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/branch/kyc")
+@RequestMapping("/branch/kyc")
 @RequiredArgsConstructor
 public class BranchManagerKycController {
 
