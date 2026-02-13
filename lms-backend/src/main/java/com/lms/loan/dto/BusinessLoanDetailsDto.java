@@ -15,7 +15,4 @@ public class BusinessLoanDetailsDto {
 
     private String proofOfBusiness;
     private String proofOfIncome;
-    private String financialStatements;
-    private String taxReturns;
-    private String bankStatements;
 }

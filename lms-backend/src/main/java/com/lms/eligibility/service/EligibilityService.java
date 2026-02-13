@@ -34,7 +34,8 @@ public class EligibilityService {
                 .orElseThrow(() -> new RuntimeException("Loan not found or unauthorized"));
 
         if (loan.getStatus() != LoanStatus.APPLIED &&
-                loan.getStatus() != LoanStatus.UNDER_BRANCH_REVIEW) {
+                loan.getStatus() != LoanStatus.UNDER_BRANCH_REVIEW &&
+                loan.getStatus() != LoanStatus.NOT_ELIGIBLE) {
             throw new IllegalStateException(
                     "Eligibility cannot be checked in status: " + loan.getStatus());
         }
@@ -132,14 +133,19 @@ public class EligibilityService {
 
             BigDecimal interestRate = getInterestRateByLoanType(loan);
 
+            BigDecimal approvedAmount = result.getApprovedAmount();
+            if (approvedAmount == null || approvedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                approvedAmount = loan.getLoanAmount();
+            }
+
             BigDecimal emi = EmiCalculator.calculateEmi(
-                    result.getApprovedAmount(),
+                    approvedAmount,
                     interestRate,
                     loan.getTenureMonths()
             );
 
             loan.setStatus(LoanStatus.UNDER_BRANCH_REVIEW);
-            loan.setApprovedAmount(result.getApprovedAmount());
+            loan.setApprovedAmount(approvedAmount);
             loan.setInterestRate(interestRate);
             loan.setEmiAmount(emi);
             loan.setApprovedDate(LocalDate.now());
