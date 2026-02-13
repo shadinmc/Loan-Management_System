@@ -129,6 +129,9 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
       if (!formData.proofOfAddress) {
         newErrors.proofOfAddress = 'Proof of address is required';
       }
+      if (!formData.collateralDocuments) {
+        newErrors.collateralDocuments = 'Collateral documents are required';
+      }
     }
 
     setErrors(newErrors);
@@ -419,7 +422,16 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
                   <FileUpload label="Proof of Address" description="Utility bill/Aadhaar" name="proofOfAddress" value={formData.proofOfAddress} onChange={(file) => handleFileChange('proofOfAddress', file)} accept=".pdf,.jpg,.jpeg,.png" error={errors.proofOfAddress} required />
                 </motion.div>
                 <motion.div custom={3} variants={itemVariants} initial="hidden" animate="visible" className="document-item">
-                  <FileUpload label="Collateral Documents" description="Optional" name="collateralDocuments" value={formData.collateralDocuments} onChange={(file) => handleFileChange('collateralDocuments', file)} accept=".pdf,.jpg,.jpeg,.png" />
+                  <FileUpload
+                    label="Collateral Documents"
+                    description="Property papers / security documents"
+                    name="collateralDocuments"
+                    value={formData.collateralDocuments}
+                    onChange={(file) => handleFileChange('collateralDocuments', file)}
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    error={errors.collateralDocuments}
+                    required
+                  />
                 </motion.div>
               </div>
               <motion.div className="terms-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
