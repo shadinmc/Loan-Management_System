@@ -12,6 +12,7 @@ import com.lms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -53,7 +54,7 @@ public class BranchManagerLoanQueryService {
                         )
                 );
 
-        Kyc kyc = kycRepository.findByUserId(user.getId())
+        Kyc kyc = kycRepository.findByUserIdWithoutDocuments(user.getId())
                 .orElseThrow(() ->
                         new LoanDataIntegrityException(
                                 "KYC not found for userId: " + user.getId()
@@ -70,8 +71,13 @@ public class BranchManagerLoanQueryService {
                 "XXXX" + kyc.getPanNumber().substring(4),
                 "XXXX-XXXX-" + kyc.getAadhaarNumber().substring(8),
                 loan.getLoanType().name(),
+                loan.getLoanAmount(),
+                loan.getStatus().name(),
                 loan.getEmiEligible(),
-                loan.getEmiAmount()
+                loan.getEmiAmount(),
+                loan.getAppliedDate()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
         );
     }
 }

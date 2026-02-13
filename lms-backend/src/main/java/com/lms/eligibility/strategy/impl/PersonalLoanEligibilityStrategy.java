@@ -92,6 +92,7 @@ public class PersonalLoanEligibilityStrategy implements LoanEligibilityStrategy 
                 .newStatus(newStatus)
                 .eligible(isEligible)
                 .score(score)
+                .cibilScore(context.getCibilScore())
                 .requestedAmount(context.getRequestedAmount())
                 .approvedAmount(isEligible ? context.getRequestedAmount() : null)
                 .remarks(isEligible ? "Eligible for personal loan" : "Not eligible - check failed rules")

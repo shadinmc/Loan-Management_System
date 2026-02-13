@@ -3,10 +3,13 @@ package com.lms.regional.service;
 import com.lms.common.enums.LoanStatus;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
+import com.lms.regional.dto.RegionalDecisionResponse;
+import com.lms.regional.dto.RegionalLoanSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -15,64 +18,88 @@ public class RegionalLoanService {
 
     private final LoanRepository loanRepository;
 
-    //  Dashboard list
-    public List<Loan> getLoansForRegionalReview() {
-        return loanRepository.findByStatus(LoanStatus.PENDING_REGIONAL_REVIEW);
-    }
-
     // Open loan → move to UNDER_REGIONAL_REVIEW
     public Loan getLoanForReview(String loanId) {
 
         Loan loan = loanRepository.findByLoanId(loanId)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
-        if (loan.getStatus() != LoanStatus.PENDING_REGIONAL_REVIEW) {
+        if (loan.getStatus() != LoanStatus.BRANCH_APPROVED) {
             throw new IllegalStateException("Loan not ready for regional review");
         }
 
         loan.setStatus(LoanStatus.UNDER_REGIONAL_REVIEW);
-        loan.setUpdatedAt(LocalDateTime.now());
+        loan.setUpdatedAt(Instant.now());
 
         return loanRepository.save(loan);
     }
 
     //  Final decision
-    public Loan finalizeDecision(
+    public RegionalDecisionResponse finalizeDecision(
             String loanId,
             boolean approved,
-            String remarks,
-            String regionalManagerId
+            String remarks
     ) {
 
         Loan loan = loanRepository.findByLoanId(loanId)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
-
-
-
-        //  Regional audit fields
-        loan.setRegionalManagerId(regionalManagerId);
-        loan.setRegionalReviewedAt(LocalDateTime.now());
+        loan.setRegionalReviewedAt(Instant.now());
         loan.setRegionalRemarks(remarks);
         loan.setRegionalApproved(approved);
 
-        // Final system status
         if (approved) {
             loan.setStatus(LoanStatus.DISBURSEMENT_PENDING);
-
-            // Schedule disbursement (+1 hour)
-            loan.setDisbursementScheduledAt(
-                    LocalDateTime.now().plusHours(1)
-            );
+            loan.setDisbursementScheduledAt(Instant.now().plusSeconds(60));
         } else {
             loan.setStatus(LoanStatus.REJECTED);
             loan.setDisbursementScheduledAt(null);
         }
 
+        loan.setUpdatedAt(Instant.now());
 
-        loan.setUpdatedAt(LocalDateTime.now());
+        Loan savedLoan = loanRepository.save(loan);
 
-        return loanRepository.save(loan);
+        return RegionalDecisionResponse.builder()
+                .userId(savedLoan.getUserId())
+                .loanId(savedLoan.getLoanId())
+                .status(savedLoan.getStatus())
+                .approvedAmount(savedLoan.getApprovedAmount())
+                .regionalReviewedAt(
+                        savedLoan.getRegionalReviewedAt() == null
+                                ? null
+                                : savedLoan.getRegionalReviewedAt()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDateTime()
+                )
+                .regionalRemarks(savedLoan.getRegionalRemarks())
+                .regionalApproved(savedLoan.getRegionalApproved())
+                .build();
     }
+
+
+
+    public List<RegionalLoanSummaryResponse> getLoansForRegionalReview() {
+        return loanRepository.findByStatus(LoanStatus.BRANCH_APPROVED)
+                .stream()
+                .map(loan -> RegionalLoanSummaryResponse.builder()
+                        .loanId(loan.getLoanId())
+                        .userId(loan.getUserId())
+                        .approvedAmount(loan.getApprovedAmount())
+                        .status(loan.getStatus())
+                        .updatedAt(
+                                loan.getUpdatedAt() == null
+                                        ? null
+                                        : loan.getUpdatedAt()
+                                        .atZone(ZoneId.systemDefault())
+                                        .toLocalDateTime()
+                        )
+                        .build()
+                )
+                .toList();
+    }
+
+
+
 
 }

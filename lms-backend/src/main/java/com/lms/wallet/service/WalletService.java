@@ -9,16 +9,20 @@ import com.lms.wallet.enums.PaymentAction;
 import com.lms.wallet.repository.WalletRepository;
 import com.lms.wallet.repository.WalletTransactionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WalletService {
@@ -49,8 +53,12 @@ public class WalletService {
                 .map(this::mapTransaction);
     }
 
-    public WalletResponse creditForLoan(String loanId, BigDecimal amount) {
-        String userId = securityUtils.getCurrentUserId();
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public WalletResponse creditForLoanSystem(
+            String userId,
+            String loanId,
+            BigDecimal amount
+    ) {
         Wallet wallet = getOrCreateWallet(userId);
         ensureActive(wallet);
         ensureAmount(amount);
@@ -60,8 +68,18 @@ public class WalletService {
         Wallet saved = walletRepository.save(wallet);
 
         createTransaction(saved, userId, loanId, amount, PaymentAction.CREDIT);
+        log.info("CREDIT WALLET | userId={} loanId={} amount={}",
+                userId, loanId, amount);
+        log.info("WALLET BALANCE AFTER CREDIT = {}", saved.getBalance());
         return mapWallet(saved);
     }
+
+
+    public WalletResponse creditForLoan(String loanId, BigDecimal amount) {
+        String userId = securityUtils.getCurrentUserId();
+        return creditForLoanSystem(userId, loanId, amount);
+    }
+
 
     public WalletResponse withdraw(String loanId, BigDecimal amount) {
         String userId = securityUtils.getCurrentUserId();
@@ -102,6 +120,7 @@ public class WalletService {
     }
 
     private Wallet getOrCreateWallet(String userId) {
+        log.info("WALLET FETCH | userId={}", userId);
         return walletRepository.findByUserId(userId).orElseGet(() -> {
             Wallet wallet = Wallet.builder()
                     .userId(userId)

@@ -122,6 +122,8 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
     if (step === 3) {
       if (!formData.proofOfIdentity) newErrors.proofOfIdentity = 'Proof of identity is required';
       if (!formData.proofOfIncome) newErrors.proofOfIncome = 'Proof of income is required';
+      if (!formData.insuranceProof) newErrors.insuranceProof = 'Insurance proof is required';
+      if (!formData.downPaymentProof) newErrors.downPaymentProof = 'Down payment proof is required';
     }
 
     setErrors(newErrors);
@@ -495,8 +497,8 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
                 {[
                   { key: 'proofOfIdentity', label: 'Proof of Identity (Aadhaar/PAN/Passport)', required: true },
                   { key: 'proofOfIncome', label: 'Proof of Income (Salary Slips/ITR)', required: true },
-                  { key: 'insuranceProof', label: 'Vehicle Insurance Proof', required: false },
-                  { key: 'downPaymentProof', label: 'Down Payment Proof (if applicable)', required: false }
+                  { key: 'insuranceProof', label: 'Vehicle Insurance Proof', required: true },
+                  { key: 'downPaymentProof', label: 'Down Payment Proof', required: true }
                 ].map((doc, index) => (
                   <motion.div
                     key={doc.key}
@@ -610,8 +612,8 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
                   items={[
                     { label: 'Proof of Identity', value: formData.proofOfIdentity?.name || 'Not uploaded', status: formData.proofOfIdentity },
                     { label: 'Proof of Income', value: formData.proofOfIncome?.name || 'Not uploaded', status: formData.proofOfIncome },
-                    { label: 'Insurance Proof', value: formData.insuranceProof?.name || 'Not uploaded (Optional)', status: formData.insuranceProof || 'optional' },
-                    { label: 'Down Payment Proof', value: formData.downPaymentProof?.name || 'Not uploaded (Optional)', status: formData.downPaymentProof || 'optional' }
+                    { label: 'Insurance Proof', value: formData.insuranceProof?.name || 'Not uploaded', status: formData.insuranceProof },
+                    { label: 'Down Payment Proof', value: formData.downPaymentProof?.name || 'Not uploaded', status: formData.downPaymentProof }
                   ]}
                 />
               </div>

@@ -2,8 +2,28 @@ import "./StatusBadge.css";
 
 const StatusBadge = ({ status }) => {
   const statusConfig = {
-    PENDING_BRANCH_REVIEW: {
-      label: "Pending Branch Review",
+    UNDER_BRANCH_REVIEW: {
+      label: "Under Branch Review",
+      className: "warning",
+    },
+    ELIGIBILITY_CHECK_PASSED: {
+      label: "Eligibility Passed",
+      className: "info",
+    },
+    NOT_ELIGIBLE: {
+      label: "Not Eligible",
+      className: "danger",
+    },
+    BRANCH_APPROVED: {
+      label: "Branch Approved",
+      className: "success",
+    },
+    BRANCH_REJECTED: {
+      label: "Branch Rejected",
+      className: "danger",
+    },
+    CLARIFICATION_REQUIRED: {
+      label: "Clarification Required",
       className: "warning",
     },
     PENDING_REGIONAL_REVIEW: {

@@ -11,7 +11,7 @@ public record PendingKycResponse(
         String email,
         String aadhaarNumber,
         String panNumber,
-        List<org.bson.types.Binary> documents,
+        List<String> documents,
         KycStatus status,
         LocalDateTime createdAt
 ) {}
