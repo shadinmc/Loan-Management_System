@@ -23,6 +23,7 @@ public class IdempotencyRecord {
 
     private String resourceId;      // loanId
     private String resourceType;    // LOAN_APPLICATION
+    private String requestHash;
 
     private Instant createdAt;
 

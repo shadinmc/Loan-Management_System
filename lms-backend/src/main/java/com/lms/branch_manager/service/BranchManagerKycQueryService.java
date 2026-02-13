@@ -44,6 +44,7 @@ public class BranchManagerKycQueryService {
 
         kycRepository.save(kyc);
 
+
         return kyc.getStatus();
     }
 
