@@ -64,6 +64,7 @@ public class Loan {
     private Instant decisionAt;
     private Instant activationScheduledAt;
     private Instant activatedAt;
+    private Instant closedAt;
 
     private Boolean emiScheduleGenerated;
 

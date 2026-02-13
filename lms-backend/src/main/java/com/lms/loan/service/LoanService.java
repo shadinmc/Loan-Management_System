@@ -165,11 +165,16 @@ public class LoanService {
                 .status(loan.getStatus())
                 .loanAmount(loan.getLoanAmount())
                 .tenureMonths(loan.getTenureMonths())
-                .appliedDate(LocalDate.from(loan.getAppliedDate()))
+                .appliedDate(
+                        loan.getAppliedDate()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                )
                 .emiEligible(loan.getEmiEligible())
                 .message("Loan application submitted successfully")
                 .build();
     }
+
 
 
     public List<LoanSummaryResponse> getLoanSummaries(String userId) {
@@ -186,6 +191,7 @@ public class LoanService {
                                 .toLocalDate()
                 ))
                 .toList();
+
     }
 
 

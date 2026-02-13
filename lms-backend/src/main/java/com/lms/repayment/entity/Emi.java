@@ -23,6 +23,8 @@ public class Emi {
     private RepaymentStatus status;
 
     private Instant paidAt; // 🔑 important
+    private Instant lastPenaltyAppliedAt;
+
 
 }
 
