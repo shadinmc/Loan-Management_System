@@ -1,16 +1,19 @@
 package com.lms.regional.dto;
 
 import com.lms.common.enums.LoanStatus;
+import lombok.Builder;
+import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
-public class RegionalLoanViewDto {
+@Data
+@Builder
+public class RegionalLoanSummaryResponse {
+
     private String loanId;
-    private String applicantName;
-    private String loanType;
-    private BigDecimal loanAmount;
+    private String userId;
     private BigDecimal approvedAmount;
-    private Integer eligibilityScore;
     private LoanStatus status;
+    private LocalDateTime updatedAt;
 }
-

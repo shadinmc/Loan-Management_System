@@ -41,6 +41,7 @@ public class    SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/loans/types").permitAll()
+                        .requestMatchers("/api/repayments/**").permitAll()
                         .requestMatchers("/api/loans/**").hasRole("USER")
                         .requestMatchers("/api/kyc/**").hasRole("USER")
                         .requestMatchers("/api/branch/**").hasRole("BRANCH_MANAGER")

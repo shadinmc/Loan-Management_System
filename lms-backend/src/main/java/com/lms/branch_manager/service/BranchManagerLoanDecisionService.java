@@ -9,6 +9,7 @@ import com.lms.loan.repository.LoanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +58,7 @@ public class BranchManagerLoanDecisionService {
             }
         }
 
-        loan.setDecisionAt(LocalDateTime.now());
+        loan.setDecisionAt(Instant.now());
         loanRepository.save(loan);
 
         try {

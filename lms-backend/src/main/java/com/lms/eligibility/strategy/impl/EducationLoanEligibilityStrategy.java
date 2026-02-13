@@ -92,6 +92,7 @@ public class EducationLoanEligibilityStrategy implements LoanEligibilityStrategy
                                 : BigDecimal.ZERO
                 )
                 .score(score)
+                .cibilScore(ctx.getCibilScore())
                 .remarks(
                         eligible
                                 ? "Eligible for education loan"

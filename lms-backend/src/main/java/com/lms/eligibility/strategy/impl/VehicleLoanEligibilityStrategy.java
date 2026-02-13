@@ -79,6 +79,7 @@ public class VehicleLoanEligibilityStrategy implements LoanEligibilityStrategy {
                     .newStatus(LoanStatus.NOT_ELIGIBLE)
                     .approvedAmount(BigDecimal.ZERO)
                     .score(score)
+                    .cibilScore(ctx.getCibilScore())
                     .remarks("Vehicle loan eligibility failed")
                     .failedRules(failedRules)
                     .passedRules(passedRules)
