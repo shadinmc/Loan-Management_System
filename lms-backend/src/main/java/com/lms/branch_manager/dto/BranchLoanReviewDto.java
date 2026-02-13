@@ -1,6 +1,7 @@
 package com.lms.branch_manager.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public record BranchLoanReviewDto(
         String loanId,
@@ -10,6 +11,9 @@ public record BranchLoanReviewDto(
         String panMasked,
         String aadhaarMasked,
         String loanType,
+        BigDecimal loanAmount,
+        String status,
         Boolean eligible,
-        BigDecimal emiAmount
+        BigDecimal emiAmount,
+        LocalDate appliedDate
 ) {}

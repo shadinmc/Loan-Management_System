@@ -364,9 +364,6 @@ public class LoanService {
                 .businessVintageYears(details.getBusinessVintageYears())
                 .proofOfBusiness(decodeBase64Document(details.getProofOfBusiness()))
                 .proofOfIncome(decodeBase64Document(details.getProofOfIncome()))
-                .financialStatements(decodeBase64Document(details.getFinancialStatements()))
-                .taxReturns(decodeBase64Document(details.getTaxReturns()))
-                .bankStatements(decodeBase64Document(details.getBankStatements()))
                 .calculatedEligibleAmount(null) // Calculated during eligibility check
                 .build();
     }
@@ -428,9 +425,6 @@ public class LoanService {
         e.setBusinessVintageYears(dto.getBusinessVintageYears());
         e.setProofOfBusiness(decodeBase64Document(dto.getProofOfBusiness()));
         e.setProofOfIncome(decodeBase64Document(dto.getProofOfIncome()));
-        e.setFinancialStatements(decodeBase64Document(dto.getFinancialStatements()));
-        e.setTaxReturns(decodeBase64Document(dto.getTaxReturns()));
-        e.setBankStatements(decodeBase64Document(dto.getBankStatements()));
         return e;
     }
 

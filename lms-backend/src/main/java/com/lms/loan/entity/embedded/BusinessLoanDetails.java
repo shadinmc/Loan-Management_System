@@ -22,9 +22,6 @@ public class BusinessLoanDetails {
 
     private Binary proofOfBusiness;
     private Binary proofOfIncome;
-    private Binary financialStatements;
-    private Binary taxReturns;
-    private Binary bankStatements;
 
     private BigDecimal calculatedEligibleAmount;
 }

@@ -1,5 +1,6 @@
 package com.lms.branch_manager.controller;
 
+import com.lms.branch_manager.dto.BranchLoanReviewDetailsDto;
 import com.lms.branch_manager.dto.BranchLoanReviewDto;
 import com.lms.branch_manager.service.BranchManagerEligibilityService;
 import com.lms.branch_manager.service.BranchManagerLoanQueryService;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/branch/loans")
+@RequestMapping("/api/branch/loans")
 @RequiredArgsConstructor
 public class BranchManagerEligibilityController {
 
@@ -41,7 +42,7 @@ public class BranchManagerEligibilityController {
     }
 
     @GetMapping("/{loanId}/review")
-    public ResponseEntity<BranchLoanReviewDto> getReview(
+    public ResponseEntity<BranchLoanReviewDetailsDto> getReview(
             @PathVariable String loanId) {
 
         return ResponseEntity.ok(reviewService.getReviewData(loanId));

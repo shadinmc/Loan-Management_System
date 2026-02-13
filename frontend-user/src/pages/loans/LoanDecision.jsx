@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Clock, CheckCircle, XCircle, FileText, Download,
+  Clock, CheckCircle, XCircle, FileText,
   Phone, Mail, ChevronDown, ChevronUp, Filter, Search, AlertCircle, Banknote
 } from 'lucide-react';
 import Button from '../../components/Button';
@@ -30,6 +30,7 @@ export default function LoanDecision() {
     { value: 'all', label: 'All Applications', icon: FileText, color: '#6B7280' },
     { value: APPLICATION_STATUS.SUBMITTED, label: 'Submitted', icon: FileText, color: '#3B82F6' },
     { value: APPLICATION_STATUS.UNDER_REVIEW, label: 'Under Review', icon: Clock, color: '#F59E0B' },
+    { value: APPLICATION_STATUS.BRANCH_APPROVED, label: 'Branch Approved', icon: CheckCircle, color: '#10B981' },
     { value: APPLICATION_STATUS.APPROVED, label: 'Approved', icon: CheckCircle, color: '#2DBE60' },
     { value: APPLICATION_STATUS.REJECTED, label: 'Rejected', icon: XCircle, color: '#EF4444' },
     { value: APPLICATION_STATUS.DISBURSED, label: 'Disbursed', icon: Banknote, color: '#8B5CF6' }
@@ -43,8 +44,8 @@ export default function LoanDecision() {
       UNDER_BRANCH_REVIEW: APPLICATION_STATUS.UNDER_REVIEW,
       UNDER_REGIONAL_REVIEW: APPLICATION_STATUS.UNDER_REVIEW,
       PENDING_REGIONAL_REVIEW: APPLICATION_STATUS.UNDER_REVIEW,
-      BRANCH_APPROVED: APPLICATION_STATUS.VERIFIED,
-      REGIONAL_APPROVED: APPLICATION_STATUS.VERIFIED,
+      BRANCH_APPROVED: APPLICATION_STATUS.BRANCH_APPROVED,
+      REGIONAL_APPROVED: APPLICATION_STATUS.APPROVED,
       APPROVED: APPLICATION_STATUS.APPROVED,
       DISBURSED: APPLICATION_STATUS.DISBURSED,
       REJECTED: APPLICATION_STATUS.REJECTED,
@@ -58,13 +59,56 @@ export default function LoanDecision() {
     return map[status] || APPLICATION_STATUS.SUBMITTED;
   };
 
-  const buildTimeline = (statusLabel, appliedDate, updatedAt) => {
+  const getStage = (backendStatus) => {
+    const stageMap = {
+      APPLIED: 1,
+      ELIGIBILITY_CHECK_PASSED: 2,
+      ELIGIBLE: 2,
+      UNDER_BRANCH_REVIEW: 2,
+      NOT_ELIGIBLE: 2,
+      CLARIFICATION_REQUIRED: 2,
+      BRANCH_APPROVED: 3,
+      BRANCH_REJECTED: 3,
+      PENDING_REGIONAL_REVIEW: 4,
+      UNDER_REGIONAL_REVIEW: 4,
+      REGIONAL_APPROVED: 5,
+      REGIONAL_REJECTED: 5,
+      APPROVED: 5,
+      DISBURSEMENT_PENDING: 5,
+      DISBURSED: 6,
+      CLOSED: 6
+    };
+    return stageMap[backendStatus] || 1;
+  };
+
+  const buildTimeline = (backendStatus, appliedDate, updatedAt) => {
     const submittedDate = appliedDate ? new Date(appliedDate).toLocaleDateString() : 'Submitted';
     const updated = updatedAt ? new Date(updatedAt).toLocaleDateString() : 'In Progress';
-    return [
-      { status: 'Application Submitted', date: submittedDate, completed: true },
-      { status: statusLabel, date: updated, completed: statusLabel === 'Approved' || statusLabel === 'Disbursed' }
+    const stage = getStage(backendStatus);
+
+    const items = [
+      { status: 'Application Submitted', date: submittedDate, completed: true, current: stage === 1 },
+      { status: 'Eligibility Check', date: updated, completed: stage >= 2, current: stage === 2 },
+      {
+        status: backendStatus === 'BRANCH_REJECTED' ? 'Branch Rejected' : 'Branch Manager Approved',
+        date: updated,
+        completed: stage >= 3 && backendStatus !== 'BRANCH_REJECTED',
+        current: stage === 3
+      },
+      {
+        status: backendStatus === 'REGIONAL_REJECTED' ? 'Regional Rejected' : 'Regional Review',
+        date: updated,
+        completed: stage >= 4 && backendStatus !== 'REGIONAL_REJECTED',
+        current: stage === 4
+      },
+      { status: 'Final Approval', date: updated, completed: stage >= 5, current: stage === 5 },
+      { status: 'Disbursed', date: updated, completed: stage >= 6, current: stage === 6 }
     ];
+
+    return items.map((item) => ({
+      ...item,
+      date: item.completed || item.current ? item.date : ''
+    }));
   };
 
   const applications = useMemo(() => {
@@ -80,9 +124,12 @@ export default function LoanDecision() {
         tenure: loan.tenureMonths || 0,
         interestRate: Number(loan.interestRate || 0),
         emi: Number(loan.emiAmount || 0),
+        emiEligible: Boolean(loan.emiEligible),
         status: uiStatus,
+        backendStatus: loan.status,
+        decisionMessage: loan.decisionMessage || "",
         appliedDate: loan.appliedDate || loan.createdAt || null,
-        timeline: buildTimeline(uiStatus, loan.appliedDate || loan.createdAt, loan.updatedAt)
+        timeline: buildTimeline(loan.status, loan.appliedDate || loan.createdAt, loan.updatedAt)
       };
     });
   }, [loansQuery.data]);
@@ -101,6 +148,7 @@ export default function LoanDecision() {
     const configs = {
       [APPLICATION_STATUS.SUBMITTED]: { icon: FileText, color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)', label: 'Submitted' },
       [APPLICATION_STATUS.UNDER_REVIEW]: { icon: Clock, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)', label: 'Under Review' },
+      [APPLICATION_STATUS.BRANCH_APPROVED]: { icon: CheckCircle, color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)', label: 'Branch Approved' },
       [APPLICATION_STATUS.APPROVED]: { icon: CheckCircle, color: '#2DBE60', bg: 'rgba(45, 190, 96, 0.1)', label: 'Approved' },
       [APPLICATION_STATUS.REJECTED]: { icon: XCircle, color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)', label: 'Rejected' },
       [APPLICATION_STATUS.DISBURSED]: { icon: Banknote, color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.1)', label: 'Disbursed' }
@@ -118,7 +166,6 @@ export default function LoanDecision() {
     const matchesFilter = filterStatus === 'all' ? true : app.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
-
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -182,7 +229,7 @@ export default function LoanDecision() {
                   onClick={() => setSearchTerm('')}
                   aria-label="Clear search"
                 >
-                  ×
+                  x
                 </button>
               )}
             </div>
@@ -284,7 +331,7 @@ export default function LoanDecision() {
               initial="hidden"
               animate="visible"
             >
-              {filteredApplications.map((app, index) => {
+              {filteredApplications.map((app) => {
                 const statusConfig = getStatusConfig(app.status);
                 const StatusIcon = statusConfig.icon;
                 const isExpanded = expandedCard === app.id;
@@ -320,7 +367,7 @@ export default function LoanDecision() {
                     <div className="loan-details">
                       <div className="detail-item">
                         <span className="detail-label">Loan Amount</span>
-                        <span className="detail-value">₹{app.amount.toLocaleString()}</span>
+                        <span className="detail-value">INR {app.amount.toLocaleString()}</span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Tenure</span>
@@ -331,8 +378,16 @@ export default function LoanDecision() {
                         <span className="detail-value">{app.interestRate}% p.a.</span>
                       </div>
                       <div className="detail-item">
+                        <span className="detail-label">Eligibility</span>
+                        <span className="detail-value">
+                          {app.emiEligible ? 'Eligible' : app.backendStatus === 'NOT_ELIGIBLE' ? 'Not Eligible' : 'Pending'}
+                        </span>
+                      </div>
+                      <div className="detail-item">
                         <span className="detail-label">EMI</span>
-                        <span className="detail-value emi">₹{app.emi.toLocaleString()}/mo</span>
+                        <span className="detail-value emi">
+                          {app.emiEligible ? `INR ${app.emi.toLocaleString()}/mo` : 'Pending'}
+                        </span>
                       </div>
                     </div>
 
@@ -363,22 +418,19 @@ export default function LoanDecision() {
                                 </div>
                                 <div className="timeline-content">
                                   <span className="timeline-status">{item.status}</span>
-                                  <span className="timeline-date">{item.date}</span>
+                                  {item.date && (
+                                    <span className="timeline-date">{item.date}</span>
+                                  )}
                                 </div>
                               </div>
                             ))}
                           </div>
-
-                          <div className="card-actions">
-                            <Button variant="outline" size="small">
-                              <Download size={16} />
-                              Download Details
-                            </Button>
-                            <Button variant="outline" size="small">
-                              <Phone size={16} />
-                              Contact Support
-                            </Button>
-                          </div>
+                          {app.decisionMessage && (
+                            <div className="decision-note">
+                              <span className="decision-label">Decision Note</span>
+                              <p className="decision-text">{app.decisionMessage}</p>
+                            </div>
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -779,7 +831,7 @@ const styles = `.status-page {
 
   .loan-details {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 16px;
     padding: 0 24px 24px;
   }
@@ -897,6 +949,31 @@ const styles = `.status-page {
   .timeline-date {
     font-size: 0.8rem;
     color: var(--text-muted);
+  }
+
+  .decision-note {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: 12px;
+  }
+
+  .decision-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #92400E;
+    margin-bottom: 6px;
+  }
+
+  .decision-text {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #78350F;
+    line-height: 1.5;
   }
 
   .card-actions {
