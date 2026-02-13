@@ -1,30 +1,53 @@
-import { useState } from "react";
-import { MOCK_LOANS } from "../../constants/mockLoans";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Search } from "lucide-react";
+import { fetchBranchLoans } from "../../api/branchLoansApi";
 import LoanCard from "../../components/LoanCard";
 import StatusBadge from "../../components/StatusBadge";
 import LoanReview from "../loans/LoanReview";
-import { Search } from "lucide-react";
 import "./LoanApplications.css";
 
 const LoanApplications = () => {
   const [selectedType, setSelectedType] = useState(null);
-  const [selectedLoan, setSelectedLoan] = useState(null);
+  const [selectedLoanId, setSelectedLoanId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
 
-  const filteredLoans = MOCK_LOANS.filter((loan) => {
-    if (selectedType && loan.type !== selectedType) return false;
-    if (statusFilter !== "ALL" && loan.status !== statusFilter) return false;
-
-    if (
-      search &&
-      !loan.applicant.toLowerCase().includes(search.toLowerCase()) &&
-      !loan.id.toLowerCase().includes(search.toLowerCase())
-    )
-      return false;
-
-    return true;
+  const { data: loans = [], isLoading, isError } = useQuery({
+    queryKey: ["branch-loans", statusFilter],
+    queryFn: () => fetchBranchLoans({ status: statusFilter }),
   });
+
+  const filteredLoans = useMemo(() => {
+    return loans.filter((loan) => {
+      if (selectedType && loan.loanType !== selectedType) return false;
+
+      if (
+        search &&
+        !loan.applicantName?.toLowerCase().includes(search.toLowerCase()) &&
+        !loan.loanId?.toLowerCase().includes(search.toLowerCase())
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [loans, selectedType, search]);
+
+  const loanTypeLabel = (loanType) => {
+    switch (loanType) {
+      case "PERSONAL":
+        return "Personal Loan";
+      case "VEHICLE":
+        return "Vehicle Loan";
+      case "BUSINESS":
+        return "Business Loan";
+      case "EDUCATION":
+        return "Education Loan";
+      default:
+        return loanType || "Loan";
+    }
+  };
 
   return (
     <>
@@ -36,18 +59,21 @@ const LoanApplications = () => {
 
       {/* LOAN TYPE CARDS */}
       <div className="loan-card-grid">
-        {["Personal Loan", "Vehicle Loan", "Business Loan", "Education Loan"].map(
-          (type) => (
-            <LoanCard
-              key={type}
-              title={type}
-              active={selectedType === type}
-              onClick={() =>
-                setSelectedType(selectedType === type ? null : type)
-              }
-            />
-          )
-        )}
+        {[
+          { id: "PERSONAL", label: "Personal Loan" },
+          { id: "VEHICLE", label: "Vehicle Loan" },
+          { id: "BUSINESS", label: "Business Loan" },
+          { id: "EDUCATION", label: "Education Loan" },
+        ].map((type) => (
+          <LoanCard
+            key={type.id}
+            title={type.label}
+            active={selectedType === type.id}
+            onClick={() =>
+              setSelectedType(selectedType === type.id ? null : type.id)
+            }
+          />
+        ))}
       </div>
 
       {/* SEARCH + FILTER */}
@@ -65,11 +91,14 @@ const LoanApplications = () => {
         <select
           className="status-filter"
           onChange={(e) => setStatusFilter(e.target.value)}
+          value={statusFilter}
         >
           <option value="ALL">All Status</option>
-          <option value="PENDING_BRANCH_REVIEW">Pending My Review</option>
+          <option value="UNDER_BRANCH_REVIEW">Under Branch Review</option>
           <option value="BRANCH_APPROVED">Branch Approved</option>
           <option value="BRANCH_REJECTED">Branch Rejected</option>
+          <option value="CLARIFICATION_REQUIRED">Clarification Required</option>
+          <option value="NOT_ELIGIBLE">Not Eligible</option>
         </select>
       </div>
 
@@ -88,36 +117,56 @@ const LoanApplications = () => {
           </thead>
 
           <tbody>
-            {filteredLoans.map((loan) => (
-              <tr key={loan.id}>
-                <td>{loan.id}</td>
-                <td>{loan.type}</td>
-                <td>
-                  <strong>{loan.applicant}</strong>
-                  <div className="email">{loan.email}</div>
-                </td>
-                <td className="amount">
-                  ₹{loan.amount.toLocaleString()}
-                </td>
-                <td>
-                  <StatusBadge status={loan.status} />
-                </td>
-                <td>
-                  <button
-                    className="review-btn"
-                    onClick={() => setSelectedLoan(loan)}
-                  >
-                    👁 Review
-                  </button>
-                </td>
+            {isLoading && (
+              <tr>
+                <td colSpan={6}>Loading applications...</td>
               </tr>
-            ))}
+            )}
+            {isError && (
+              <tr>
+                <td colSpan={6}>Failed to load applications.</td>
+              </tr>
+            )}
+            {!isLoading && !isError && filteredLoans.length === 0 && (
+              <tr>
+                <td colSpan={6}>No applications found.</td>
+              </tr>
+            )}
+            {!isLoading &&
+              !isError &&
+              filteredLoans.map((loan) => (
+                <tr key={loan.loanId}>
+                  <td>{loan.loanId}</td>
+                  <td>{loanTypeLabel(loan.loanType)}</td>
+                  <td>
+                    <strong>{loan.applicantName}</strong>
+                    <div className="email">{loan.email}</div>
+                  </td>
+                  <td className="amount">
+                    INR {Number(loan.loanAmount || 0).toLocaleString()}
+                  </td>
+                  <td>
+                    <StatusBadge status={loan.status} />
+                  </td>
+                  <td>
+                    <button
+                      className="review-btn"
+                      onClick={() => setSelectedLoanId(loan.loanId)}
+                    >
+                      Review
+                    </button>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
 
-      {selectedLoan && (
-        <LoanReview loan={selectedLoan} onClose={() => setSelectedLoan(null)} />
+      {selectedLoanId && (
+        <LoanReview
+          loanId={selectedLoanId}
+          onClose={() => setSelectedLoanId(null)}
+        />
       )}
     </>
   );

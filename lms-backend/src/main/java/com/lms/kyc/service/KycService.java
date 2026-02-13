@@ -99,7 +99,7 @@ public class KycService {
     // ---------------- GET CURRENT USER KYC ----------------
     public KycResponse getMyKyc() {
         String userId = securityUtils.getCurrentUserId();
-        Kyc kyc = kycRepository.findByUserId(userId)
+        Kyc kyc = kycRepository.findByUserIdWithoutDocuments(userId)
                 .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "KYC not submitted")
                 );
@@ -110,7 +110,7 @@ public class KycService {
     // ---------------- KYC GATE FOR LOANS ----------------
     public void validateKycVerified(String userId) {
 
-        Kyc kyc = kycRepository.findByUserId(userId)
+        Kyc kyc = kycRepository.findByUserIdWithoutDocuments(userId)
                 .orElseThrow(KycNotVerifiedException::new);
 
         if (kyc.getStatus() == KycStatus.VERIFIED) {
@@ -119,7 +119,7 @@ public class KycService {
             if (!Boolean.TRUE.equals(kyc.getApprovalAuditLogged())) {
 
                 auditService.log(
-                        "SYSTEM",
+                        userId,
                         "KYC_APPROVED",
                         "KYC",
                         kyc.getId(),
@@ -145,7 +145,7 @@ public class KycService {
     // ---------------- CIBIL FETCH ----------------
     public Integer getCibilScore(String userId) {
 
-        Kyc kyc = kycRepository.findByUserId(userId)
+        Kyc kyc = kycRepository.findByUserIdWithoutDocuments(userId)
                 .orElseThrow(KycNotVerifiedException::new);
 
         if (kyc.getStatus() != KycStatus.VERIFIED) {

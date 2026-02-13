@@ -1,0 +1,17 @@
+/* Base layout styles so the footer appears on every admin page */
+.admin-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.body-layout {
+  display: flex;
+  flex: 1;
+  min-height: calc(100vh - 64px);
+}
+
+.main-content {
+  flex: 1;
+  padding: 28px 32px;
+}

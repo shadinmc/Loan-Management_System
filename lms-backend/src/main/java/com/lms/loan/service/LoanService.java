@@ -9,6 +9,8 @@ import com.lms.loan.dto.*;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.entity.embedded.*;
 import com.lms.loan.repository.LoanRepository;
+import org.bson.BsonBinarySubType;
+import org.bson.types.Binary;
 import com.lms.kyc.service.KycService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -409,9 +412,9 @@ public class LoanService {
                 .employmentType(details.getEmploymentType())
                 .monthlyIncome(details.getMonthlyIncome())
                 .employerName(details.getEmployerName())
-                .proofOfIdentity(details.getProofOfIdentity())
-                .proofOfIncome(details.getProofOfIncome())
-                .proofOfAddress(details.getProofOfAddress())
+                .proofOfIdentity(decodeBase64Document(details.getProofOfIdentity()))
+                .proofOfIncome(decodeBase64Document(details.getProofOfIncome()))
+                .proofOfAddress(decodeBase64Document(details.getProofOfAddress()))
                 .applicationStatus("SUBMITTED")
                 .build();
     }
@@ -427,10 +430,10 @@ public class LoanService {
                 .coApplicantName(details.getCoApplicantName())
                 .coApplicantIncome(details.getCoApplicantIncome())
                 .relationship(details.getRelationship())
-                .proofOfAdmission(details.getProofOfAdmission())
-                .proofOfIncome(details.getProofOfIncome())
-                .proofOfAddress(details.getProofOfAddress())
-                .collateralDocuments(details.getCollateralDocuments())
+                .proofOfAdmission(decodeBase64Document(details.getProofOfAdmission()))
+                .proofOfIncome(decodeBase64Document(details.getProofOfIncome()))
+                .proofOfAddress(decodeBase64Document(details.getProofOfAddress()))
+                .collateralDocuments(decodeBase64Document(details.getCollateralDocuments()))
                 .build();
     }
 
@@ -449,8 +452,8 @@ public class LoanService {
                 .businessType(details.getBusinessType())
                 .gstAnnualTurnover(details.getGstAnnualTurnover())
                 .businessVintageYears(details.getBusinessVintageYears())
-                .proofOfBusiness(details.getProofOfBusiness())
-                .proofOfIncome(details.getProofOfIncome())
+                .proofOfBusiness(decodeBase64Document(details.getProofOfBusiness()))
+                .proofOfIncome(decodeBase64Document(details.getProofOfIncome()))
                 .calculatedEligibleAmount(null) // Calculated during eligibility check
                 .build();
     }
@@ -466,10 +469,10 @@ public class LoanService {
                 .vehicleModel(details.getVehicleModel())
                 .downPaymentAmount(details.getDownPaymentAmount())
                 .dealerName(details.getDealerName())
-                .proofOfIdentity(details.getProofOfIdentity())
-                .proofOfIncome(details.getProofOfIncome())
-                .insuranceProof(details.getInsuranceProof())
-                .downPaymentProof(details.getDownPaymentProof())
+                .proofOfIdentity(decodeBase64Document(details.getProofOfIdentity()))
+                .proofOfIncome(decodeBase64Document(details.getProofOfIncome()))
+                .insuranceProof(decodeBase64Document(details.getInsuranceProof()))
+                .downPaymentProof(decodeBase64Document(details.getDownPaymentProof()))
                 .build();
     }
 
@@ -482,10 +485,10 @@ public class LoanService {
         e.setCoApplicantName(dto.getCoApplicantName());
         e.setCoApplicantIncome(dto.getCoApplicantIncome());
         e.setRelationship(dto.getRelationship());
-        e.setProofOfAdmission(dto.getProofOfAdmission());
-        e.setProofOfIncome(dto.getProofOfIncome());
-        e.setProofOfAddress(dto.getProofOfAddress());
-        e.setCollateralDocuments(dto.getCollateralDocuments());
+        e.setProofOfAdmission(decodeBase64Document(dto.getProofOfAdmission()));
+        e.setProofOfIncome(decodeBase64Document(dto.getProofOfIncome()));
+        e.setProofOfAddress(decodeBase64Document(dto.getProofOfAddress()));
+        e.setCollateralDocuments(decodeBase64Document(dto.getCollateralDocuments()));
         return e;
     }
 
@@ -496,9 +499,9 @@ public class LoanService {
         e.setEmploymentType(dto.getEmploymentType());
         e.setMonthlyIncome(dto.getMonthlyIncome());
         e.setEmployerName(dto.getEmployerName());
-        e.setProofOfIdentity(dto.getProofOfIdentity());
-        e.setProofOfIncome(dto.getProofOfIncome());
-        e.setProofOfAddress(dto.getProofOfAddress());
+        e.setProofOfIdentity(decodeBase64Document(dto.getProofOfIdentity()));
+        e.setProofOfIncome(decodeBase64Document(dto.getProofOfIncome()));
+        e.setProofOfAddress(decodeBase64Document(dto.getProofOfAddress()));
         return e;
     }
 
@@ -510,8 +513,8 @@ public class LoanService {
         e.setBusinessType(dto.getBusinessType());
         e.setGstAnnualTurnover(dto.getGstAnnualTurnover());
         e.setBusinessVintageYears(dto.getBusinessVintageYears());
-        e.setProofOfBusiness(dto.getProofOfBusiness());
-        e.setProofOfIncome(dto.getProofOfIncome());
+        e.setProofOfBusiness(decodeBase64Document(dto.getProofOfBusiness()));
+        e.setProofOfIncome(decodeBase64Document(dto.getProofOfIncome()));
         return e;
     }
 
@@ -524,10 +527,37 @@ public class LoanService {
         e.setVehicleModel(dto.getVehicleModel());
         e.setDownPaymentAmount(dto.getDownPaymentAmount());
         e.setDealerName(dto.getDealerName());
-        e.setProofOfIdentity(dto.getProofOfIdentity());
-        e.setProofOfIncome(dto.getProofOfIncome());
-        e.setInsuranceProof(dto.getInsuranceProof());
-        e.setDownPaymentProof(dto.getDownPaymentProof());
+        e.setProofOfIdentity(decodeBase64Document(dto.getProofOfIdentity()));
+        e.setProofOfIncome(decodeBase64Document(dto.getProofOfIncome()));
+        e.setInsuranceProof(decodeBase64Document(dto.getInsuranceProof()));
+        e.setDownPaymentProof(decodeBase64Document(dto.getDownPaymentProof()));
         return e;
+    }
+
+    private static final int MAX_DOC_SIZE_BYTES = 1_048_576; // 1 MB
+
+    private Binary decodeBase64Document(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        String base64 = value;
+        int commaIndex = value.indexOf(',');
+        if (commaIndex >= 0) {
+            base64 = value.substring(commaIndex + 1);
+        }
+
+        byte[] bytes;
+        try {
+            bytes = Base64.getDecoder().decode(base64);
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException("Invalid document encoding");
+        }
+
+        if (bytes.length > MAX_DOC_SIZE_BYTES) {
+            throw new RuntimeException("Document size exceeds 1MB limit");
+        }
+
+        return new Binary(BsonBinarySubType.BINARY, bytes);
     }
 }

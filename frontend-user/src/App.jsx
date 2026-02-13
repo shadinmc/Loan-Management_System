@@ -13,6 +13,7 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useState } from 'react';
+import SiteFooter from './components/SiteFooter';
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -45,6 +46,8 @@ export default function App() {
           </Route>
         </Routes>
       </main>
+
+      <SiteFooter />
 
       <style>{`
         .app-container {

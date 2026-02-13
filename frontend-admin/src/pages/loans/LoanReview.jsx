@@ -1,30 +1,176 @@
-import React, { useState } from "react";
-import { Eye, CheckCircle, XCircle, AlertTriangle, FileText, Download, X } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Eye,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  FileText,
+  Download,
+  X,
+} from "lucide-react";
+import {
+  fetchBranchLoanReview,
+  runEligibilityCheck,
+  submitBranchDecision,
+} from "../../api/branchLoansApi";
+import StatusBadge from "../../components/StatusBadge";
 import "./LoanReview.css";
 
-const LoanReview = ({ loan, onClose }) => {
+const LoanReview = ({ loanId, onClose }) => {
+  const queryClient = useQueryClient();
   const [decision, setDecision] = useState(null);
   const [reason, setReason] = useState("");
+  const [eligibilityResult, setEligibilityResult] = useState(null);
 
-  // DUMMY DATA PLACEHOLDERS
-  // These will be used if the 'loan' prop doesn't have the values yet
-  const dummyData = {
-    email: "meera.nair@example.com",
-    phone: "+91 98765 43210",
-    pan: "ABCDE1234F",
-    aadhaar: "XXXX-XXXX-8899"
+  const {
+    data: review,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["branch-loan-review", loanId],
+    queryFn: () => fetchBranchLoanReview(loanId),
+    enabled: Boolean(loanId),
+  });
+
+  const decisionMutation = useMutation({
+    mutationFn: (payload) => submitBranchDecision(loanId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["branch-loans"] });
+      queryClient.invalidateQueries({ queryKey: ["branch-loan-review", loanId] });
+      onClose();
+    },
+    onError: (error) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to save decision";
+      alert(message);
+    },
+  });
+
+  const eligibilityMutation = useMutation({
+    mutationFn: () => runEligibilityCheck(loanId),
+    onSuccess: (data) => {
+      setEligibilityResult(data || null);
+      queryClient.invalidateQueries({ queryKey: ["branch-loans"] });
+      queryClient.invalidateQueries({ queryKey: ["branch-loan-review", loanId] });
+    },
+    onError: (error) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Eligibility check failed";
+      alert(message);
+    },
+  });
+
+  const guessMimeType = (base64) => {
+    if (!base64) return "application/octet-stream";
+    if (base64.startsWith("JVBER")) return "application/pdf";
+    if (base64.startsWith("iVBOR")) return "image/png";
+    if (base64.startsWith("/9j/")) return "image/jpeg";
+    if (base64.startsWith("R0lGOD")) return "image/gif";
+    if (base64.startsWith("UklGR")) return "image/webp";
+    return "application/octet-stream";
   };
 
-  const confirmReject = () => {
+  const documentLinks = useMemo(() => {
+    if (!review?.documents) return [];
+    return review.documents.map((doc) => ({
+      ...doc,
+      mimeType: guessMimeType(doc.base64 || ""),
+    }));
+  }, [review]);
+
+  useEffect(() => {
+    setEligibilityResult(null);
+  }, [loanId]);
+
+  const eligibilityFailureNotes = useMemo(() => {
+    if (review?.emiEligible !== false) return [];
+    if (eligibilityResult?.failedRules?.length) return eligibilityResult.failedRules;
+    if (eligibilityResult?.remarks) return [eligibilityResult.remarks];
+    return [];
+  }, [eligibilityResult, review]);
+
+  const openDocumentInNewTab = (doc) => {
+    if (!doc?.base64) return;
+    const byteChars = atob(doc.base64);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i += 1) {
+      byteNumbers[i] = byteChars.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: doc.mimeType || "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank", "noopener,noreferrer");
+    setTimeout(() => URL.revokeObjectURL(url), 60 * 1000);
+  };
+
+  const handleApprove = () => {
+    decisionMutation.mutate({ decision: "APPROVE" });
+  };
+
+  const handleReject = () => {
     if (!reason.trim()) {
       alert("Rejection reason is required");
       return;
     }
-    alert("Loan Rejected");
-    onClose();
+    decisionMutation.mutate({ decision: "REJECT", message: reason.trim() });
   };
 
-  if (!loan) return null;
+  const handleClarification = () => {
+    if (!reason.trim()) {
+      alert("Clarification message is required");
+      return;
+    }
+    decisionMutation.mutate({
+      decision: "CLARIFICATION_REQUIRED",
+      message: reason.trim(),
+    });
+  };
+
+  if (!loanId) return null;
+
+  if (isLoading) {
+    return (
+      <div className="modal-backdrop">
+        <div className="review-modal animate-in">
+          <div className="review-header">
+            <div className="header-title">
+              <h2>Application Review</h2>
+              <p>Loading details...</p>
+            </div>
+            <button className="close-btn" onClick={onClose}>
+              <X size={20} />
+            </button>
+          </div>
+          <div className="modal-body">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !review) {
+    return (
+      <div className="modal-backdrop">
+        <div className="review-modal animate-in">
+          <div className="review-header">
+            <div className="header-title">
+              <h2>Application Review</h2>
+              <p>Failed to load review data.</p>
+            </div>
+            <button className="close-btn" onClick={onClose}>
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const applicant = review.applicant || {};
 
   return (
     <div className="modal-backdrop">
@@ -32,127 +178,214 @@ const LoanReview = ({ loan, onClose }) => {
         <div className="review-header">
           <div className="header-title">
             <h2>Application Review</h2>
-            <p>{loan.id || "LN-2026-001"} – {loan.type || "Vehicle Loan"}</p>
+            <p>{review.loanId} - {review.loanType}</p>
           </div>
-          <button className="close-btn" onClick={onClose}><X size={20} /></button>
+          <button className="close-btn" onClick={onClose}>
+            <X size={20} />
+          </button>
         </div>
 
         <div className="modal-body">
           {/* APPLICATION DETAILS */}
           <section className="review-card">
-            <h4 className="section-title"><FileText size={16} /> Application Details</h4>
+            <h4 className="section-title">
+              <FileText size={16} /> Application Details
+            </h4>
             <div className="info-grid">
-                <div className="info-item">
-                                <label>Application Number</label>
-                                <strong>{(loan.id || "LN-2026-001")}</strong>
-                              </div>
-                                <div className="info-item">
-                                                              <label>Loan Type</label>
-                                                              <strong>{loan.type || "Vehicle Loan"}</strong>
-                                                            </div>
-                              <div className="info-item">
-                                  <label>Applied Date</label>
-                                  <strong>{loan.date || "2/3/2026"}</strong>
-                              </div>
+              <div className="info-item">
+                <label>Application Number</label>
+                <strong>{review.loanId}</strong>
+              </div>
+              <div className="info-item">
+                <label>Loan Type</label>
+                <strong>{review.loanType}</strong>
+              </div>
+              <div className="info-item">
+                <label>Applied Date</label>
+                <strong>{review.appliedDate || "N/A"}</strong>
+              </div>
               <div className="info-item">
                 <label>Loan Amount</label>
-                <strong>₹{(loan.amount || 600000).toLocaleString()}</strong>
+                <strong>INR {Number(review.loanAmount || 0).toLocaleString()}</strong>
               </div>
               <div className="info-item">
                 <label>Interest Rate</label>
-                <strong>10.5% p.a</strong>
+                <strong>
+                  {review.interestRate ? `${review.interestRate}%` : "N/A"} p.a
+                </strong>
               </div>
               <div className="info-item">
                 <label>Tenure</label>
-                <strong>24 months</strong>
+                <strong>
+                  {review.tenureMonths ? `${review.tenureMonths} months` : "N/A"}
+                </strong>
               </div>
               <div className="info-item">
                 <label>Status</label>
-                <span className="badge warning">Pending Branch Review</span>
+                <StatusBadge status={review.status} />
               </div>
             </div>
           </section>
 
-          {/* APPLICANT INFO - USING DUMMY DATA FALLBACKS */}
+          {/* APPLICANT INFO */}
           <section className="review-card">
             <h4 className="section-title">Applicant Information</h4>
             <div className="info-grid">
               <div className="info-item">
                 <label>Name</label>
-                <strong>{loan.applicant || "Meera Nair"}</strong>
+                <strong>{applicant.name || "N/A"}</strong>
               </div>
               <div className="info-item">
                 <label>Email</label>
-                {/* Logic: use backend email, if null use dummy */}
-                <strong>{loan.email || dummyData.email}</strong>
+                <strong>{applicant.email || "N/A"}</strong>
               </div>
               <div className="info-item">
                 <label>Phone</label>
-                <strong>{loan.phone || dummyData.phone}</strong>
+                <strong>{applicant.phone || "N/A"}</strong>
               </div>
               <div className="info-item">
                 <label>PAN Id</label>
-                <strong>{loan.pan || dummyData.pan}</strong>
+                <strong>{applicant.panMasked || "N/A"}</strong>
               </div>
-               <div className="info-item">
-                              <label>Aadhaar Number</label>
-                              <strong>({loan.aadhaar || dummyData.aadhaar})</strong>
-                            </div>
+              <div className="info-item">
+                <label>Aadhaar Number</label>
+                <strong>{applicant.aadhaarMasked || "N/A"}</strong>
+              </div>
             </div>
           </section>
 
           {/* DOCUMENTS */}
           <section className="review-card">
             <h4 className="section-title">Uploaded Documents</h4>
-            <div className="doc-grid">
-              <button className="doc-btn blue">
-                <div className="doc-left"><Eye size={18} /><span>Aadhaar Card</span></div>
-                <div className="doc-right"><Download size={14} /></div>
-              </button>
-              <button className="doc-btn green">
-                <div className="doc-left"><Eye size={18} /><span>PAN Card</span></div>
-                <div className="doc-right"><Download size={14} /></div>
-              </button>
-            </div>
+            {documentLinks.length === 0 ? (
+              <p>No documents found.</p>
+            ) : (
+              <div className="doc-grid">
+                {documentLinks.map((doc) => (
+                  <button
+                    key={doc.name}
+                    className="doc-btn blue"
+                    type="button"
+                    onClick={() => openDocumentInNewTab(doc)}
+                  >
+                    <div className="doc-left">
+                      <Eye size={18} />
+                      <span>{doc.name}</span>
+                    </div>
+                    <div className="doc-right">
+                      <Download size={14} />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
 
-          {/* ELIGIBILITY & DECISION (Keep as per previous design) */}
+          {/* ELIGIBILITY & DECISION */}
           <section className="review-card">
             <h4 className="section-title">Eligibility Assessment</h4>
             <div className="eligibility-box">
-              <span className="badge success">Good</span>
-              <p style={{fontSize: '0.85rem', marginTop: '4px'}}>Good credit history, stable income</p>
+              <span className={`badge ${review.emiEligible ? "success" : "danger"}`}>
+                {review.emiEligible ? "Eligible" : "Not Eligible"}
+              </span>
+              <p className="eligibility-meta">
+                EMI Amount: INR {Number(review.emiAmount || 0).toLocaleString()}
+              </p>
+              {review.emiEligible === false && eligibilityFailureNotes.length > 0 && (
+                <div className="eligibility-notes">
+                  <p className="eligibility-notes-title">
+                    Eligibility Failure Reason
+                  </p>
+                  <ul className="eligibility-notes-list">
+                    {eligibilityFailureNotes.map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="eligibility-actions">
+                <button
+                  type="button"
+                  className="btn-manual"
+                  onClick={() => eligibilityMutation.mutate()}
+                  disabled={
+                    eligibilityMutation.isPending ||
+                    !["APPLIED", "UNDER_BRANCH_REVIEW", "NOT_ELIGIBLE"].includes(review.status)
+                  }
+                >
+                  {eligibilityMutation.isPending ? "Checking..." : "Run Eligibility Check"}
+                </button>
+              </div>
             </div>
           </section>
 
           <section className="review-card decision-section">
             <h4 className="section-title">Make Your Decision</h4>
+            {review.decisionMessage && (
+              <div className="decision-note">
+                <strong>Latest Decision Note:</strong> {review.decisionMessage}
+              </div>
+            )}
             <div className="decision-buttons">
-              <button className="btn-approve" onClick={() => alert("Approved!")}>
+              <button className="btn-approve" onClick={handleApprove}>
                 <CheckCircle size={20} />
-                <div className="btn-text">Approve<span>Forward to Regional</span></div>
+                <div className="btn-text">
+                  Approve<span>Forward to Regional</span>
+                </div>
               </button>
-              <button className="btn-manual" onClick={() => alert("Manual Review")}>
+              <button
+                className={`btn-manual ${
+                  decision === "CLARIFICATION_REQUIRED" ? "active" : ""
+                }`}
+                onClick={() => setDecision("CLARIFICATION_REQUIRED")}
+              >
                 <AlertTriangle size={20} />
-                <div className="btn-text">Manual<span>Needs verification</span></div>
+                <div className="btn-text">
+                  Clarification<span>Needs verification</span>
+                </div>
               </button>
-              <button className={`btn-reject ${decision === 'REJECT' ? 'active' : ''}`} onClick={() => setDecision("REJECT")}>
+              <button
+                className={`btn-reject ${decision === "REJECT" ? "active" : ""}`}
+                onClick={() => setDecision("REJECT")}
+              >
                 <XCircle size={20} />
-                <div className="btn-text">Reject<span>Provide reason</span></div>
+                <div className="btn-text">
+                  Reject<span>Provide reason</span>
+                </div>
               </button>
             </div>
 
-            {decision === "REJECT" && (
+            {(decision === "REJECT" || decision === "CLARIFICATION_REQUIRED") && (
               <div className="reject-box animate-in">
-                <label>Rejection Reason</label>
+                <label>
+                  {decision === "REJECT" ? "Rejection Reason" : "Clarification Message"}
+                </label>
                 <textarea
-                  placeholder="Enter reason..."
+                  placeholder="Enter message..."
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                 />
                 <div className="reject-actions">
-                  <button className="btn-cancel" onClick={() => setDecision(null)}>Cancel</button>
-                  <button className="btn-confirm-reject" onClick={confirmReject}>Confirm</button>
+                  <button className="btn-cancel" onClick={() => setDecision(null)}>
+                    Cancel
+                  </button>
+                  {decision === "REJECT" ? (
+                    <button
+                      className="btn-confirm-reject"
+                      onClick={handleReject}
+                      disabled={decisionMutation.isPending}
+                    >
+                      Confirm
+                    </button>
+                  ) : (
+                    <button
+                      className="btn-confirm-reject"
+                      onClick={handleClarification}
+                      disabled={decisionMutation.isPending}
+                    >
+                      Send
+                    </button>
+                  )}
                 </div>
               </div>
             )}

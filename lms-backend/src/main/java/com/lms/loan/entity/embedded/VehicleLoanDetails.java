@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import org.bson.types.Binary;
 
 @Data
 @Builder
@@ -20,8 +21,8 @@ public class VehicleLoanDetails {
     private BigDecimal downPaymentAmount;
     private String dealerName;
 
-    private String proofOfIdentity;
-    private String proofOfIncome;
-    private String insuranceProof;
-    private String downPaymentProof;
+    private Binary proofOfIdentity;
+    private Binary proofOfIncome;
+    private Binary insuranceProof;
+    private Binary downPaymentProof;
 }

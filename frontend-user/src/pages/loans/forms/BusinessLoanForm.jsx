@@ -37,14 +37,12 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
     businessName: '',
     businessType: '',
     yearEstablished: '',
-    annualRevenue: '',
+    gstAnnualTurnover: '',
     loanPurpose: '',
     loanAmount: '',
     tenureMonths: '',
     proofOfBusiness: null,
-    financialStatements: null,
-    taxReturns: null,
-    bankStatements: null
+    proofOfIncome: null
   });
 
   const [errors, setErrors] = useState({});
@@ -87,10 +85,10 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
     }
 
     if (step === 2) {
-      if (!validateRequired(formData.annualRevenue)) {
-        newErrors.annualRevenue = 'Annual revenue is required';
-      } else if (Number(formData.annualRevenue) <= 0) {
-        newErrors.annualRevenue = 'Revenue must be greater than 0';
+      if (!validateRequired(formData.gstAnnualTurnover)) {
+        newErrors.gstAnnualTurnover = 'GST annual turnover is required';
+      } else if (Number(formData.gstAnnualTurnover) <= 0) {
+        newErrors.gstAnnualTurnover = 'GST annual turnover must be greater than 0';
       }
       if (!validateRequired(formData.loanPurpose)) newErrors.loanPurpose = 'Loan purpose is required';
     }
@@ -104,8 +102,7 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
 
     if (step === 4) {
       if (!formData.proofOfBusiness) newErrors.proofOfBusiness = 'Proof of business is required';
-      if (!formData.financialStatements) newErrors.financialStatements = 'Financial statements are required';
-      if (!formData.taxReturns) newErrors.taxReturns = 'Tax returns are required';
+      if (!formData.proofOfIncome) newErrors.proofOfIncome = 'Proof of income is required';
     }
 
     setErrors(newErrors);
@@ -126,6 +123,11 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
 
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
+    const [proofOfBusiness, proofOfIncome] = await Promise.all([
+      fileToBase64(formData.proofOfBusiness),
+      fileToBase64(formData.proofOfIncome)
+    ]);
+
     const payload = {
       loanType: 'BUSINESS',
       loanAmount: Number(formData.loanAmount),
@@ -135,12 +137,11 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
         businessName: formData.businessName.trim(),
         businessType: formData.businessType,
         yearEstablished: Number(formData.yearEstablished),
-        annualRevenue: Number(formData.annualRevenue),
+        gstAnnualTurnover: Number(formData.gstAnnualTurnover),
+        businessVintageYears,
         loanPurpose: formData.loanPurpose,
-        proofOfBusiness: formData.proofOfBusiness?.name || '',
-        financialStatements: formData.financialStatements?.name || '',
-        taxReturns: formData.taxReturns?.name || '',
-        bankStatements: formData.bankStatements?.name || null
+        proofOfBusiness,
+        proofOfIncome
       }
     };
 
@@ -157,6 +158,15 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
     }
   };
 
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    if (!file) return resolve(null);
+    if (file.size > 1 * 1024 * 1024) return reject(new Error('File size must be <= 1MB'));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('File read failed'));
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
+
   const handleReset = () => {
     setIsSuccess(false);
     setSubmissionResult(null);
@@ -165,14 +175,12 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
       businessName: '',
       businessType: '',
       yearEstablished: '',
-      annualRevenue: '',
+      gstAnnualTurnover: '',
       loanPurpose: '',
       loanAmount: '',
       tenureMonths: '',
       proofOfBusiness: null,
-      financialStatements: null,
-      taxReturns: null,
-      bankStatements: null
+      proofOfIncome: null
     });
     setErrors({});
   };
@@ -221,6 +229,10 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
 
   const totalPayable = emi * Number(formData.tenureMonths || 0);
   const totalInterest = totalPayable - Number(formData.loanAmount || 0);
+  const currentYear = new Date().getFullYear();
+  const businessVintageYears = formData.yearEstablished
+    ? Math.max(0, currentYear - Number(formData.yearEstablished))
+    : 0;
 
   const progressPercentage = ((currentStep - 1) / (steps.length - 1)) * 100;
 
@@ -515,13 +527,13 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
               <div className="form-grid">
                 <motion.div custom={0} variants={itemVariants} initial="hidden" animate="visible" className="form-field">
                   <Input
-                    label="Annual Revenue (₹)"
-                    name="annualRevenue"
+                    label="GST Annual Turnover (₹)"
+                    name="gstAnnualTurnover"
                     type="number"
-                    value={formData.annualRevenue}
+                    value={formData.gstAnnualTurnover}
                     onChange={handleChange}
                     placeholder="e.g., 5000000"
-                    error={errors.annualRevenue}
+                    error={errors.gstAnnualTurnover}
                     required
                     min="0"
                   />
@@ -685,38 +697,14 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
                 </motion.div>
                 <motion.div custom={1} variants={itemVariants} initial="hidden" animate="visible" className="document-item">
                   <FileUpload
-                    label="Financial Statements"
-                    description="Last 2 years audited statements"
-                    name="financialStatements"
-                    value={formData.financialStatements}
-                    onChange={(file) => handleFileChange('financialStatements', file)}
+                    label="Proof of Income"
+                    description="Income proof / ITR"
+                    name="proofOfIncome"
+                    value={formData.proofOfIncome}
+                    onChange={(file) => handleFileChange('proofOfIncome', file)}
                     accept=".pdf,.jpg,.jpeg,.png"
-                    error={errors.financialStatements}
+                    error={errors.proofOfIncome}
                     required
-                    icon={Upload}
-                  />
-                </motion.div>
-                <motion.div custom={2} variants={itemVariants} initial="hidden" animate="visible" className="document-item">
-                  <FileUpload
-                    label="Tax Returns"
-                    description="ITR for last 2 years"
-                    name="taxReturns"
-                    value={formData.taxReturns}
-                    onChange={(file) => handleFileChange('taxReturns', file)}
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    error={errors.taxReturns}
-                    required
-                    icon={Upload}
-                  />
-                </motion.div>
-                <motion.div custom={3} variants={itemVariants} initial="hidden" animate="visible" className="document-item optional">
-                  <FileUpload
-                    label="Bank Statements"
-                    description="Last 6 months (Optional)"
-                    name="bankStatements"
-                    value={formData.bankStatements}
-                    onChange={(file) => handleFileChange('bankStatements', file)}
-                    accept=".pdf,.jpg,.jpeg,.png"
                     icon={Upload}
                   />
                 </motion.div>
@@ -778,6 +766,7 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
                     { label: 'Business Name', value: formData.businessName },
                     { label: 'Business Type', value: formData.businessType.replace('_', ' ') },
                     { label: 'Year Established', value: formData.yearEstablished },
+                    { label: 'Business Vintage (Years)', value: businessVintageYears.toString() }
                   ]}
                 />
 
@@ -785,7 +774,7 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
                   title="Financial Information"
                   icon={<TrendingUp size={20} />}
                   items={[
-                    { label: 'Annual Revenue', value: `₹${Number(formData.annualRevenue).toLocaleString()}` },
+                    { label: 'GST Annual Turnover', value: `₹${Number(formData.gstAnnualTurnover).toLocaleString()}` },
                     { label: 'Loan Purpose', value: formData.loanPurpose.replace('_', ' ') }
                   ]}
                 />
@@ -816,9 +805,7 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
                   icon={<FileText size={20} />}
                   items={[
                     { label: 'Proof of Business', value: formData.proofOfBusiness?.name || 'Not uploaded', status: formData.proofOfBusiness },
-                    { label: 'Financial Statements', value: formData.financialStatements?.name || 'Not uploaded', status: formData.financialStatements },
-                    { label: 'Tax Returns', value: formData.taxReturns?.name || 'Not uploaded', status: formData.taxReturns },
-                    { label: 'Bank Statements', value: formData.bankStatements?.name || 'Not uploaded (Optional)', status: formData.bankStatements || 'optional' }
+                    { label: 'Proof of Income', value: formData.proofOfIncome?.name || 'Not uploaded', status: formData.proofOfIncome }
                   ]}
                 />
               </div>

@@ -136,14 +136,19 @@ public class EligibilityService {
 
             BigDecimal interestRate = getInterestRateByLoanType(loan);
 
+            BigDecimal approvedAmount = result.getApprovedAmount();
+            if (approvedAmount == null || approvedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                approvedAmount = loan.getLoanAmount();
+            }
+
             BigDecimal emi = EmiCalculator.calculateEmi(
-                    result.getApprovedAmount(),
+                    approvedAmount,
                     interestRate,
                     loan.getTenureMonths()
             );
 
             loan.setStatus(LoanStatus.UNDER_BRANCH_REVIEW);
-            loan.setApprovedAmount(result.getApprovedAmount());
+            loan.setApprovedAmount(approvedAmount);
             loan.setInterestRate(interestRate);
             loan.setEmiAmount(emi);
             loan.setApprovedDate(Instant.now());

@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import RegionalSidebar from "../components/RegionalSidebar";
 import Topbar from "../components/Topbar";
+import SiteFooter from "../components/SiteFooter";
 
 const RegionalLayout = () => {
   return (
@@ -13,6 +14,8 @@ const RegionalLayout = () => {
           <Outlet />
         </main>
       </div>
+
+      <SiteFooter />
     </div>
   );
 };
