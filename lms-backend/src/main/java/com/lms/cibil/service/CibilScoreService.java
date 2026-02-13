@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +45,11 @@ public class CibilScoreService {
         score = Math.max(MIN_SCORE, Math.min(MAX_SCORE, score));
 
         kyc.setCibilScore(score);
-        kyc.setUpdatedAt(LocalDateTime.from(Instant.now()));
+        kyc.setUpdatedAt(
+                Instant.now()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime()
+        );
 
         kycRepository.save(kyc);
     }

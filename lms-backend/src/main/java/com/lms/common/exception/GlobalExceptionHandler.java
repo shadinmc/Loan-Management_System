@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,15 +18,15 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(KycNotVerifiedException.class)
-    public ResponseEntity<Map<String, Object>> handleKycNotVerified(KycNotVerifiedException ex) {
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(Map.of(
-                        "status", 403,
-                        "error", "Forbidden",
-                        "message", ex.getMessage(),
-                        "timestamp", LocalDateTime.now().toString()
-                ));
+    public ResponseEntity<Map<String, Object>> handleKycNotVerified(
+            KycNotVerifiedException ex) {
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "status", 403,
+                "error", "Forbidden",
+                "message", ex.getMessage(),
+                "timestamp", Instant.now()
+        ));
     }
 
     @ExceptionHandler(LoanDataIntegrityException.class)
@@ -38,57 +37,60 @@ public class GlobalExceptionHandler {
         error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
         error.put("error", "Data Integrity Error");
         error.put("message", ex.getMessage());
-        error.put("timestamp", LocalDateTime.now().toString());
+        error.put("timestamp", Instant.now());
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(
+            RuntimeException ex,
+            HttpServletRequest request) {
 
+        Map<String, Object> body = new HashMap<>();
+        body.put("correlationId", MDC.get("correlationId"));
+        body.put("error", ex.getMessage());
+        body.put("path", request.getRequestURI());
+        body.put("timestamp", Instant.now());
 
-   @ExceptionHandler(RuntimeException.class)
-public ResponseEntity<Map<String, Object>> handleRuntimeException(
-        RuntimeException ex,
-        HttpServletRequest request) {
-    Map<String, Object> body = new HashMap<>();
-    body.put("correlationId", MDC.get("correlationId"));
-    body.put("error", ex.getMessage());
-    body.put("path", request.getRequestURI());
-    body.put("timestamp", Instant.now());
-    return ResponseEntity.badRequest().body(body);
-}
+        return ResponseEntity.badRequest().body(body);
+    }
 
     @ExceptionHandler(Exception.class)
-public ResponseEntity<Map<String, Object>> handleGenericException(
-        Exception ex,
-        HttpServletRequest request
-) {
-    Map<String, Object> body = new HashMap<>();
-    body.put("correlationId", MDC.get("correlationId"));
-    body.put("error", "Internal server error");
-    body.put("path", request.getRequestURI());
-    body.put("timestamp", Instant.now());
+    public ResponseEntity<Map<String, Object>> handleGenericException(
+            Exception ex,
+            HttpServletRequest request) {
 
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
-}
+        Map<String, Object> body = new HashMap<>();
+        body.put("correlationId", MDC.get("correlationId"));
+        body.put("error", "Internal server error");
+        body.put("path", request.getRequestURI());
+        body.put("timestamp", Instant.now());
 
-
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(body);
+    }
 
     @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<Map<String, Object>> handleResponseStatus(ResponseStatusException ex) {
+    public ResponseEntity<Map<String, Object>> handleResponseStatus(
+            ResponseStatusException ex) {
+
         Map<String, Object> error = new HashMap<>();
         error.put("status", ex.getStatusCode().value());
         error.put("error", ex.getStatusCode().toString());
         error.put("message", ex.getReason());
-        error.put("timestamp", LocalDateTime.now().toString());
+        error.put("timestamp", Instant.now());
+
         return ResponseEntity.status(ex.getStatusCode()).body(error);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
+
         Map<String, String> fieldErrors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
+        ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             fieldErrors.put(fieldName, errorMessage);
@@ -99,7 +101,7 @@ public ResponseEntity<Map<String, Object>> handleGenericException(
         response.put("error", "Validation Error");
         response.put("message", "Validation failed");
         response.put("fieldErrors", fieldErrors);
-        response.put("timestamp", LocalDateTime.now().toString());
+        response.put("timestamp", Instant.now());
 
         return ResponseEntity.badRequest().body(response);
     }
