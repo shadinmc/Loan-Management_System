@@ -51,13 +51,13 @@ const RegionalDashboard = () => {
           </div>
         </div>
 
-        <div className="stat-card info">
-          <DollarSign />
-          <div>
-            <p>Total Disbursed</p>
-            <h3>₹0.14Cr</h3>
-          </div>
-        </div>
+{/*         <div className="stat-card info"> */}
+{/*           <DollarSign /> */}
+{/*           <div> */}
+{/*             <p>Total Disbursed</p> */}
+{/*             <h3>₹0.14Cr</h3> */}
+{/*           </div> */}
+{/*         </div> */}
       </section>
 
       {/* SECOND ROW */}
@@ -103,25 +103,25 @@ const RegionalDashboard = () => {
           <div>
             <span>Personal Loan</span>
             <strong>3 loans</strong>
-            <small>₹12.50L</small>
+
           </div>
 
           <div>
             <span>Vehicle Loan</span>
             <strong>2 loans</strong>
-            <small>₹13.50L</small>
+
           </div>
 
           <div>
             <span>Business Loan</span>
             <strong>2 loans</strong>
-            <small>₹35.00L</small>
+
           </div>
 
           <div>
             <span>Education Loan</span>
             <strong>2 loans</strong>
-            <small>₹18.00L</small>
+
           </div>
         </div>
       </section>
