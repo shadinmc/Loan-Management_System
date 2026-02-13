@@ -74,6 +74,7 @@ public class BusinessLoanEligibilityStrategy implements LoanEligibilityStrategy 
                     .score(score)
                     .remarks("Business loan eligibility failed")
                     .failedRules(failedRules)
+                    .cibilScore(cibil)
                     .passedRules(passedRules)
                     .build();
         }
@@ -84,6 +85,7 @@ public class BusinessLoanEligibilityStrategy implements LoanEligibilityStrategy 
                 .newStatus(LoanStatus.UNDER_BRANCH_REVIEW)
                 .approvedAmount(ctx.getRequestedAmount())
                 .score(score)
+                .cibilScore(cibil)
                 .remarks("Eligible for business loan")
                 .passedRules(passedRules)
                 .failedRules(failedRules)

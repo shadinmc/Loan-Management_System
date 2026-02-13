@@ -12,6 +12,7 @@ import com.lms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -75,6 +76,8 @@ public class BranchManagerLoanQueryService {
                 loan.getEmiEligible(),
                 loan.getEmiAmount(),
                 loan.getAppliedDate()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
         );
     }
 }

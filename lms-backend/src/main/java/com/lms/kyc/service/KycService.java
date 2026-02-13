@@ -11,7 +11,6 @@ import com.lms.kyc.enums.KycStatus;
 import com.lms.kyc.repository.KycRepository;
 import lombok.RequiredArgsConstructor;
 import org.bson.BsonBinarySubType;
-import org.bson.types.Binary;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -67,7 +66,7 @@ public class KycService {
                 .userId(userId)
                 .aadhaarNumber(request.getAadhaarNumber())
                 .panNumber(request.getPanNumber())
-                .documents(mapDocumentsToBinary(request.getDocuments()))
+                .documents((request.getDocuments()))
                 .cibilScore(generateCibilScore())
                 .status(KycStatus.PENDING)
                 .createdAt(LocalDateTime.now())
@@ -120,7 +119,7 @@ public class KycService {
             if (!Boolean.TRUE.equals(kyc.getApprovalAuditLogged())) {
 
                 auditService.log(
-                        "SYSTEM",
+                        userId,
                         "KYC_APPROVED",
                         "KYC",
                         kyc.getId(),
@@ -170,42 +169,6 @@ public class KycService {
         );
     }
 
-    private static final int MAX_DOC_SIZE_BYTES = 1_048_576; // 1 MB
-
-    private List<Binary> mapDocumentsToBinary(List<String> documents) {
-        if (documents == null || documents.isEmpty()) {
-            throw new RuntimeException("Documents are required");
-        }
-
-        return documents.stream()
-                .map(this::decodeBase64Document)
-                .collect(Collectors.toList());
-    }
-
-    private Binary decodeBase64Document(String value) {
-        if (value == null || value.isBlank()) {
-            throw new RuntimeException("Invalid document data");
-        }
-
-        String base64 = value;
-        int commaIndex = value.indexOf(',');
-        if (commaIndex >= 0) {
-            base64 = value.substring(commaIndex + 1);
-        }
-
-        byte[] bytes;
-        try {
-            bytes = Base64.getDecoder().decode(base64);
-        } catch (IllegalArgumentException ex) {
-            throw new RuntimeException("Invalid document encoding");
-        }
-
-        if (bytes.length > MAX_DOC_SIZE_BYTES) {
-            throw new RuntimeException("Document size exceeds 1MB limit");
-        }
-
-        return new Binary(BsonBinarySubType.BINARY, bytes);
-    }
 
     private String maskAadhaar(String a) {
         return "XXXX-XXXX-" + a.substring(8);

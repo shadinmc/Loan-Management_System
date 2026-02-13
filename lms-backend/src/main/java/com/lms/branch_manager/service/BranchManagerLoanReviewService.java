@@ -4,6 +4,8 @@ package com.lms.branch_manager.service;
 import com.lms.branch_manager.dto.BranchApplicantDto;
 import com.lms.branch_manager.dto.BranchLoanDocumentDto;
 import com.lms.branch_manager.dto.BranchLoanReviewDetailsDto;
+import com.lms.branch_manager.dto.BranchLoanReviewDto;
+import com.lms.common.exception.LoanDataIntegrityException;
 import com.lms.kyc.entity.Kyc;
 import com.lms.kyc.repository.KycRepository;
 import com.lms.loan.entity.Loan;
@@ -33,13 +35,25 @@ public class BranchManagerLoanReviewService {
     public BranchLoanReviewDetailsDto getReviewData(String loanId) {
 
         Loan loan = loanRepository.findByLoanId(loanId)
-                .orElseThrow();
+                .orElseThrow(() ->
+                        new LoanDataIntegrityException(
+                                "Loan not found for loanId: " + loanId
+                        )
+                );
 
         User user = userRepository.findById(loan.getUserId())
-                .orElseThrow();
+                .orElseThrow(() ->
+                        new LoanDataIntegrityException(
+                                "User not found for loanId: " + loan.getLoanId()
+                        )
+                );
 
-        Kyc kyc = kycRepository.findByUserIdWithoutDocuments(user.getId())
-                .orElseThrow();
+        Kyc kyc = kycRepository.findByUserId(user.getId())
+                .orElseThrow(() ->
+                        new LoanDataIntegrityException(
+                                "KYC not found for userId: " + user.getId()
+                        )
+                );
 
         BranchApplicantDto applicant = new BranchApplicantDto(
                 user.getFullName(),

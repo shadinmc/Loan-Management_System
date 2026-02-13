@@ -7,7 +7,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import org.bson.types.Binary;
 
 @Data
 @Builder
@@ -24,7 +23,7 @@ public class Kyc {
     private String aadhaarNumber;
     private String panNumber;
 
-    private List<Binary> documents;
+    private List<String> documents;
 
     private Integer cibilScore;
 

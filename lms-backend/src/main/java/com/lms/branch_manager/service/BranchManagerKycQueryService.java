@@ -1,5 +1,14 @@
 package com.lms.branch_manager.service;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.lms.audit.service.AuditService;
 import com.lms.auth.security.SecurityUtils;
 import com.lms.branch_manager.dto.PendingKycResponse;
 import com.lms.kyc.entity.Kyc;
@@ -7,33 +16,40 @@ import com.lms.kyc.enums.KycStatus;
 import com.lms.kyc.repository.KycRepository;
 import com.lms.user.repository.UserBasicProjection;
 import com.lms.user.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BranchManagerKycQueryService {
 
     private final KycRepository kycRepository;
     private final UserRepository userRepository;
+    private final AuditService auditService;
+    private final SecurityUtils securityUtils;
+
+
 
     @Transactional
     public KycStatus reviewKyc(String userId, Boolean approved, String rejectionReason) {
 
+        String actorUserId = securityUtils.getCurrentUserId();
+
         Kyc kyc = kycRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("KYC not found"));
 
-        if (kyc.getStatus() != KycStatus.PENDING) {
+        KycStatus previousStatus = kyc.getStatus();
+
+        if (previousStatus != KycStatus.PENDING) {
             throw new IllegalStateException(
-                    "KYC already reviewed: " + kyc.getStatus());
+                    "KYC already reviewed: " + previousStatus);
         }
 
         if (Boolean.TRUE.equals(approved)) {
             kyc.setStatus(KycStatus.VERIFIED);
+            kyc.setRejectionReason(null);
         } else {
             kyc.setStatus(KycStatus.REJECTED);
             kyc.setRejectionReason(rejectionReason);
@@ -41,12 +57,35 @@ public class BranchManagerKycQueryService {
 
         kyc.setReviewedAt(LocalDateTime.now());
         kyc.setUpdatedAt(LocalDateTime.now());
-
         kycRepository.save(kyc);
 
+        try {
+            Map<String, Object> requestPayload = new HashMap<>();
+            requestPayload.put("previousStatus", previousStatus);
+            requestPayload.put("approved", approved);
+
+            Map<String, Object> responsePayload = new HashMap<>();
+            responsePayload.put("currentStatus", kyc.getStatus());
+            responsePayload.put("rejectionReason", kyc.getRejectionReason());
+
+            auditService.log(
+                    actorUserId,
+                    "KYC_DECISION",
+                    "KYC",
+                    kyc.getId(),
+                    requestPayload,
+                    responsePayload,
+                    200,
+                    true
+            );
+        } catch (Exception e) {
+            log.error("AUDIT FAILED — request still successful", e);
+        }
 
         return kyc.getStatus();
     }
+
+
 
 
     public List<PendingKycResponse> getPendingKycs() {
