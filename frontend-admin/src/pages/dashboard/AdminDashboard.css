@@ -224,6 +224,7 @@ body {
   font-weight: 600;
 }
 
+
 /* ============================= */
 /* LOAN TYPES */
 /* ============================= */
@@ -326,4 +327,10 @@ th:nth-child(5) { width: 30%; }
 .badge.danger {
   background: #fee2e2;
   color: #991b1b;
+}
+
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

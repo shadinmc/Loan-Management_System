@@ -1,5 +1,13 @@
 package com.lms.branch_manager.service;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.lms.audit.service.AuditService;
 import com.lms.auth.security.SecurityUtils;
 import com.lms.branch_manager.dto.PendingKycResponse;
@@ -8,14 +16,8 @@ import com.lms.kyc.enums.KycStatus;
 import com.lms.kyc.repository.KycRepository;
 import com.lms.user.repository.UserBasicProjection;
 import com.lms.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

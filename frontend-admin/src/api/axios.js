@@ -7,11 +7,19 @@ const api = axios.create({
   },
 });
 
+const getAuthToken = () => {
+  const rawAuth = localStorage.getItem("adminAuth");
+  const parsedAuth = rawAuth ? JSON.parse(rawAuth) : null;
+  const token = localStorage.getItem("token") || parsedAuth?.token;
+  if (!token) return null;
+  return token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+};
+
 // Attach token automatically
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = token;
   }
   return config;
 });

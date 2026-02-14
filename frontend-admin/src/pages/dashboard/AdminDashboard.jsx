@@ -4,7 +4,6 @@ import {
   MdOutlineTrendingUp
 } from "react-icons/md";
 import { FiCheckCircle } from "react-icons/fi";
-import "./AdminDashboard.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { fetchBranchLoans } from "../../api/branchLoansApi";

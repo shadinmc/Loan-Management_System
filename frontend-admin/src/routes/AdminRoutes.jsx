@@ -5,6 +5,7 @@ import Repayments from "../pages/Repayments/Repayments";
 import LoanClosure from "../pages/LoanClosure/LoanClosure";
 import Disbursement from "../pages/disbursements/Disbursements";
 import LoanApplications from "../pages/LoanApplications/LoanApplications";
+import BranchKycVerification from "../pages/KycVerification/BranchKycVerification";
 import AuthGuard from "../utils/AuthGuard";
 
 const AdminRoutes = () => {
@@ -22,6 +23,7 @@ const AdminRoutes = () => {
         <Route path="loan-applications" element={<LoanApplications />} />
          <Route path="disbursements" element={<Disbursement/>} />
          <Route path="repayments" element={<Repayments />} />
+         <Route path="kyc" element={<BranchKycVerification />} />
             <Route path="closure" element={<LoanClosure />} />
       </Route>
     </Routes>

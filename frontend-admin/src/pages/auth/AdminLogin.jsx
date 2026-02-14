@@ -29,6 +29,7 @@ const AdminLogin = () => {
   //  Clear previous session when login page loads
   useEffect(() => {
     localStorage.removeItem("adminAuth");
+    localStorage.removeItem("token");
   }, []);
 
  const handleSubmit = async (e) => {
