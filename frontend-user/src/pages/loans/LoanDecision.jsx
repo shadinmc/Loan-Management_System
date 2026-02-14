@@ -441,27 +441,7 @@ export default function LoanDecision() {
           )}
         </AnimatePresence>
 
-        <motion.div
-          className="help-section"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-        >
-          <div className="help-content">
-            <h3>Need Help?</h3>
-            <p>Our support team is available 24/7 to assist you</p>
-          </div>
-          <div className="help-actions">
-            <a href="tel:1800-123-4567" className="help-link">
-              <Phone size={18} />
-              1800-123-4567
-            </a>
-            <a href="mailto:support@loanwiser.com" className="help-link">
-              <Mail size={18} />
-              support@loanwiser.com
-            </a>
-          </div>
-        </motion.div>
+
       </div>
 
       <style>{styles}</style>

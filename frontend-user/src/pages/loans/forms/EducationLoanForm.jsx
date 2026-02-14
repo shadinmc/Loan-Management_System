@@ -1,7 +1,7 @@
 // src/pages/loans/forms/EducationLoanForm.jsx
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GraduationCap, Users, CreditCard, FileText, ChevronRight, ChevronLeft, AlertCircle, Calculator, CheckCircle2, Sparkles } from 'lucide-react';
+import { GraduationCap, Users, CreditCard, FileText, ChevronRight, ChevronLeft, AlertCircle, Calculator, CheckCircle2, Sparkles, Eye, Check } from 'lucide-react';
 import Input from '../../../components/Input';
 import FileUpload from '../../../components/FileUpload';
 import Button from '../../../components/Button';
@@ -64,7 +64,8 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
     { id: 1, title: 'Course', icon: GraduationCap, description: 'Course details' },
     { id: 2, title: 'Co-applicant', icon: Users, description: 'Guardian details' },
     { id: 3, title: 'Loan', icon: CreditCard, description: 'Amount & tenure' },
-    { id: 4, title: 'Documents', icon: FileText, description: 'Upload files' }
+    { id: 4, title: 'Documents', icon: FileText, description: 'Upload files' },
+    { id: 5, title: 'Review', icon: Eye, description: 'Review & submit' }
   ];
 
   const handleChange = (e) => {
@@ -150,9 +151,7 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
     setCurrentStep(prev => prev - 1);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleFinalSubmit = async () => {
     if (!validateStep(currentStep)) {
       return;
     }
@@ -235,13 +234,16 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
     visible: (i) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, type: 'spring', stiffness: 100 } })
   };
 
-  const emi = formData.loanAmount && formData.tenureMonths
-    ? calculateEMI(Number(formData.loanAmount), loanConfig.interestRate || 8.5, Number(formData.tenureMonths))
+  const loanAmountValue = Number(formData.loanAmount || 0);
+  const emi = loanAmountValue && formData.tenureMonths
+    ? calculateEMI(loanAmountValue, loanConfig.interestRate || 8.5, Number(formData.tenureMonths))
     : 0;
+  const totalPayable = emi * Number(formData.tenureMonths || 0);
+  const totalInterest = totalPayable - loanAmountValue;
 
   return (
     <motion.form
-      onSubmit={handleSubmit}
+      onSubmit={(e) => e.preventDefault()}
       className="loan-form"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -287,7 +289,7 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
           })}
         </div>
         <div className="progress-bar">
-          <motion.div className="progress-fill" animate={{ width: `${((currentStep - 1) / 3) * 100}%` }} />
+          <motion.div className="progress-fill" animate={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }} />
         </div>
       </div>
 
@@ -442,6 +444,86 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
               </motion.div>
             </motion.div>
           )}
+
+          {currentStep === 5 && (
+            <motion.div key="step5" className="form-step" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit">
+              <div className="step-header">
+                <div className="header-icon review-icon"><Eye size={28} /></div>
+                <div>
+                  <h3 className="step-title-main">Review Your Application</h3>
+                  <p className="step-subtitle">Please verify all details before submission</p>
+                </div>
+              </div>
+
+              {error && (
+                <motion.div className="error-banner" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <AlertCircle size={20} /><p>{error}</p>
+                </motion.div>
+              )}
+
+              <div className="review-sections">
+                <ReviewSection
+                  title="Course Details"
+                  icon={<GraduationCap size={20} />}
+                  items={[
+                    { label: 'Course Name', value: formData.courseName },
+                    { label: 'Course Duration', value: `${formData.courseDurationMonths} Months` }
+                  ]}
+                />
+
+                <ReviewSection
+                  title="Co-applicant Details"
+                  icon={<Users size={20} />}
+                  items={[
+                    { label: 'Co-applicant Name', value: formData.coApplicantName },
+                    { label: 'Relationship', value: formData.relationship.replace('_', ' ') },
+                    { label: 'Annual Income', value: `₹${Number(formData.coApplicantIncome).toLocaleString()}` }
+                  ]}
+                />
+
+                <ReviewSection
+                  title="Loan Details"
+                  icon={<CreditCard size={20} />}
+                  items={[
+                    { label: 'Loan Amount', value: `₹${Number(formData.loanAmount).toLocaleString()}` },
+                    { label: 'Tenure', value: `${formData.tenureMonths} Months (${formData.tenureMonths / 12} Years)` },
+                    { label: 'Interest Rate', value: `${loanConfig.interestRate}% p.a.` }
+                  ]}
+                />
+
+                <ReviewSection
+                  title="EMI Breakdown"
+                  icon={<Calculator size={20} />}
+                  highlighted
+                  items={[
+                    { label: 'Monthly EMI', value: `₹${emi.toLocaleString()}`, highlight: true },
+                    { label: 'Total Amount Payable', value: `₹${totalPayable.toLocaleString()}` },
+                    { label: 'Total Interest', value: `₹${totalInterest.toLocaleString()}` },
+                    { label: 'Principal Amount', value: `₹${loanAmountValue.toLocaleString()}` }
+                  ]}
+                />
+
+                <ReviewSection
+                  title="Documents Uploaded"
+                  icon={<FileText size={20} />}
+                  items={[
+                    { label: 'Proof of Admission', value: formData.proofOfAdmission?.name || 'Not uploaded', status: formData.proofOfAdmission },
+                    { label: 'Proof of Income', value: formData.proofOfIncome?.name || 'Not uploaded', status: formData.proofOfIncome },
+                    { label: 'Proof of Address', value: formData.proofOfAddress?.name || 'Not uploaded', status: formData.proofOfAddress },
+                    { label: 'Collateral Documents', value: formData.collateralDocuments?.name || 'Not uploaded', status: formData.collateralDocuments }
+                  ]}
+                />
+              </div>
+
+              <motion.div className="review-disclaimer" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <AlertCircle size={18} />
+                <p>
+                  By submitting this application, you confirm that all information provided is accurate and complete.
+                  The loan is subject to approval and verification of documents.
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
@@ -453,14 +535,41 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
           </Button>
         )}
         <div className="action-spacer" />
-        {currentStep < 4 ? (
+        {currentStep < 5 ? (
           <Button type="button" onClick={handleNext}>Next Step<ChevronRight size={18} /></Button>
         ) : (
-          <Button type="submit" loading={loading || externalLoading}><Sparkles size={18} />Submit Application</Button>
+          <Button type="button" onClick={handleFinalSubmit} loading={loading || externalLoading}><Sparkles size={18} />Submit Application</Button>
         )}
       </motion.div>
       <style>{formStyles}</style>
     </motion.form>
+  );
+}
+
+function ReviewSection({ title, icon, items, highlighted }) {
+  return (
+    <motion.div
+      className={`review-section ${highlighted ? 'highlighted' : ''}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="review-section-header">
+        <div className="review-icon">{icon}</div>
+        <h4>{title}</h4>
+      </div>
+      <div className="review-items">
+        {items.map((item, index) => (
+          <div key={index} className="review-item">
+            <span className="review-label">{item.label}</span>
+            <span className={`review-value ${item.highlight ? 'highlight' : ''}`}>
+              {item.status && item.status !== 'optional' && <Check size={16} className="check-icon" />}
+              {item.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </motion.div>
   );
 }
 
@@ -648,6 +757,11 @@ const formStyles = `
     justify-content: center;
     color: #2DBE60;
     box-shadow: 0 2px 12px rgba(45, 190, 96, 0.15);
+  }
+
+  .header-icon.review-icon {
+    background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+    color: #7C3AED;
   }
 
   .step-title-main {
@@ -839,6 +953,123 @@ const formStyles = `
     text-decoration: underline;
   }
 
+  .review-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: #1a3563;
+  }
+
+  .review-section {
+    background: #1a3563;
+    border: 1.5px solid #E6EFEA;
+    border-radius: 13px;
+    padding: 22px;
+  }
+
+  .review-section.highlighted {
+    background: #1a3563;
+    border-color: #2DBE60;
+  }
+
+  .review-section.highlighted .review-section-header h4,
+  .review-section.highlighted .review-label,
+  .review-section.highlighted .review-value {
+    color: #FFFFFF;
+  }
+
+  .review-section.highlighted .review-value.highlight {
+    color: #FFFFFF;
+  }
+
+  .review-section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1.5px solid #E6EFEA;
+  }
+
+  .review-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #E9F8EF 0%, #D1F4DD 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2DBE60;
+  }
+
+  .review-section-header h4 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: #F1F5FF;
+  }
+
+  .review-items {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .review-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(230, 239, 234, 0.5);
+  }
+
+  .review-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .review-label {
+    font-size: 14px;
+    color: #B8C7E3;
+    font-weight: 500;
+  }
+
+  .review-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #F1F5FF;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .review-value.highlight {
+    font-size: 22px;
+    color: #2DBE60;
+  }
+
+  .check-icon {
+    color: #2DBE60;
+  }
+
+  .review-disclaimer {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 24px;
+    padding: 18px;
+    background: #EFF6FF;
+    border: 1.5px solid #BFDBFE;
+    border-radius: 12px;
+  }
+
+  .review-disclaimer p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #475569;
+  }
+
   .form-actions {
     display: flex;
     align-items: center;
@@ -898,6 +1129,12 @@ const formStyles = `
 
     .action-spacer {
       display: none;
+    }
+
+    .review-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
     }
   }
 `;

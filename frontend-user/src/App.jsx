@@ -9,6 +9,7 @@ import LoanDecision from './pages/loans/LoanDecision';
 import KYCPage from './pages/KYCPage';
 import WalletPage from './pages/WalletPage';
 import WalletTransactionPage from './components/WalletTransaction';
+import RepaymentPage from './pages/repayments/RepaymentPage';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/kyc" element={<KYCPage />} />
             <Route path="/wallet" element={<WalletPage />} />
             <Route path="/wallet/transactions" element={<WalletTransactionPage />} />
+            <Route path="/repayments" element={<RepaymentPage />} />
             <Route path="/loan/apply" element={<LoanApply />} />
             <Route path="/loan/apply/:loanType" element={<LoanApply />} />
             <Route path="/loan/confirm" element={<LoanConfirmation />} />
