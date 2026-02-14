@@ -4,7 +4,8 @@ import {
   FileText,
   IndianRupee,
   Repeat,
-  CheckCircle
+  CheckCircle,
+  FileCheck
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -40,6 +41,11 @@ const Sidebar = () => {
         <NavLink to="/admin/repayments" className="nav-link">
           <Repeat size={18} />
           Repayments
+        </NavLink>
+
+        <NavLink to="/admin/kyc" className="nav-link">
+          <FileCheck size={18} />
+          KYC Verification
         </NavLink>
 
         <NavLink to="/admin/closure" className="nav-link">

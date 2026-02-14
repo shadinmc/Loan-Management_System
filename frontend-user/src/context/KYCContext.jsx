@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getMyKyc as getMyKycApi, submitKyc as submitKycApi } from '../api/kycApi';
+import { getUser } from '../api/authApi';
 
 const KYCContext = createContext(null);
 
@@ -17,18 +18,24 @@ export function KYCProvider({ children }) {
     return 'not_submitted';
   };
 
+  const user = getUser();
+  const userId = user?.userId || null;
+  const token = localStorage.getItem('token');
+
   const kycQuery = useQuery({
-    queryKey: ['kyc', 'me'],
+    queryKey: ['kyc', 'me', userId],
     queryFn: getMyKycApi,
-    enabled: !!localStorage.getItem('token'),
+    enabled: !!token,
     retry: false,
     refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
   });
 
   useEffect(() => {
     if (!kycQuery.data) return;
 
     const data = kycQuery.data;
+    console.log('[KYC] GET /kyc/me response:', data);
     const normalizedStatus = mapBackendStatus(data?.status);
 
     const submissionData = {
@@ -39,11 +46,19 @@ export function KYCProvider({ children }) {
 
     setKYCData(submissionData);
     setKYCStatus(normalizedStatus);
-    setRejectionReason(null);
+    const apiRejectionReason = data?.rejectionReason ?? null;
+    setRejectionReason(apiRejectionReason);
 
     localStorage.setItem('kycData', JSON.stringify(submissionData));
     localStorage.setItem('kycStatus', normalizedStatus);
-    localStorage.removeItem('kycRejectionReason');
+    if (userId) {
+      localStorage.setItem('kycUserId', userId);
+    }
+    if (normalizedStatus === 'rejected' && apiRejectionReason) {
+      localStorage.setItem('kycRejectionReason', apiRejectionReason);
+    } else {
+      localStorage.removeItem('kycRejectionReason');
+    }
   }, [kycQuery.data]);
 
   useEffect(() => {
@@ -61,7 +76,15 @@ export function KYCProvider({ children }) {
   });
 
   useEffect(() => {
-    // Load KYC data from localStorage on mount
+    // Prefer API data when authenticated; avoid stale localStorage
+    if (token && userId) return;
+
+    const savedUserId = localStorage.getItem('kycUserId');
+    if (savedUserId && userId && savedUserId !== userId) {
+      clearKYC();
+      return;
+    }
+
     const savedKYC = localStorage.getItem('kycData');
     const savedStatus = localStorage.getItem('kycStatus');
     const savedRejectionReason = localStorage.getItem('kycRejectionReason');
@@ -82,7 +105,7 @@ export function KYCProvider({ children }) {
     if (savedRejectionReason) {
       setRejectionReason(savedRejectionReason);
     }
-  }, []);
+  }, [token, userId]);
 
   const submitKYC = async (data) => {
     try {
@@ -107,6 +130,9 @@ export function KYCProvider({ children }) {
 
       localStorage.setItem('kycData', JSON.stringify(submissionData));
       localStorage.setItem('kycStatus', 'pending');
+      if (userId) {
+        localStorage.setItem('kycUserId', userId);
+      }
       localStorage.removeItem('kycRejectionReason');
 
       return { success: true };
@@ -146,6 +172,7 @@ export function KYCProvider({ children }) {
     localStorage.removeItem('kycStatus');
     localStorage.removeItem('kycRejectionReason');
     localStorage.removeItem('kycStatusUpdatedAt');
+    localStorage.removeItem('kycUserId');
   };
 
   const resubmitKYC = (data) => {

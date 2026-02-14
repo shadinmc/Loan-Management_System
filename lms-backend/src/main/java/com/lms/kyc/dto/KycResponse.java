@@ -12,4 +12,5 @@ public class KycResponse {
     private String panNumber;     // masked
     private Integer cibilScore;
     private KycStatus status;
+    private String rejectionReason;
 }
