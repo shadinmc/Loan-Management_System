@@ -173,7 +173,7 @@ const RegionalLoanApplications = () => {
       {selectedLoan && (
         <RegionalLoanReview
           loan={selectedLoan}
-          onClose={() => setSelectedLoan(null)}
+          onClose={() => setSelectedLoan(null)}No
         />
       )}
     </>
