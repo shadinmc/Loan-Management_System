@@ -7,14 +7,13 @@ import com.lms.regional.dto.RegionalLoanSummaryResponse;
 import com.lms.regional.service.RegionalLoanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/regional/loans")
-//@PreAuthorize("hasRole('REGIONAL_MANAGER')")
+@PreAuthorize("hasRole('REGIONAL_MANAGER')")
 @RequiredArgsConstructor
 public class RegionalLoanController {
 

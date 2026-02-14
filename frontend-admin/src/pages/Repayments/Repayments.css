@@ -177,9 +177,19 @@ td {
   color: #1d4ed8;
 }
 
+.badge.paid {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
 .badge.overdue {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.badge.closed {
+  background: #e2e8f0;
+  color: #334155;
 }
 
 /* =====================
@@ -242,6 +252,14 @@ td {
 
 .modal-header svg {
   cursor: pointer;
+}
+
+.detail-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
 }
 
 /* =====================
