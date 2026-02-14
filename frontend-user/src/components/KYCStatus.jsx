@@ -4,7 +4,9 @@ import { CheckCircle, Clock, XCircle, FileText, Image as ImageIcon } from 'lucid
 import { useKYC } from '../context/KYCContext';
 
 export default function KYCStatus() {
-  const { kycData, kycStatus } = useKYC();
+  const { kycData, kycStatus, rejectionReason } = useKYC();
+  const resolvedReason = rejectionReason || kycData?.rejectionReason || localStorage.getItem('kycRejectionReason');
+  console.log('[KYC] status view', { kycStatus, rejectionReason, resolvedReason, kycData });
 
   const statusMeta = useMemo(() => {
     if (kycStatus === 'approved') {
@@ -56,6 +58,15 @@ export default function KYCStatus() {
             <span className="detail-value">{kycData?.panNumber || 'N/A'}</span>
           </div>
         </div>
+
+        {kycStatus === 'rejected' && (
+          <div className="kyc-section">
+            <div className="section-title">Rejection Reason</div>
+            <div className="rejection-box">
+              <p>{resolvedReason || 'No reason provided yet.'}</p>
+            </div>
+          </div>
+        )}
 
         <div className="kyc-section">
           <div className="section-title">Submitted Documents</div>
@@ -231,6 +242,16 @@ export default function KYCStatus() {
           color: #0F766E;
           text-decoration: none;
           font-weight: 600;
+        }
+
+        .rejection-box {
+          background: rgba(239, 68, 68, 0.08);
+          border: 1px solid rgba(239, 68, 68, 0.2);
+          border-radius: 10px;
+          padding: 12px;
+          color: #B91C1C;
+          font-size: 0.9rem;
+          line-height: 1.4;
         }
       `}</style>
     </div>

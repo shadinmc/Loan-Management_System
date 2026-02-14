@@ -13,9 +13,18 @@ const LoanApplications = () => {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
 
+  const token = localStorage.getItem("token");
+  const authRaw = localStorage.getItem("adminAuth");
+  const auth = authRaw ? JSON.parse(authRaw) : null;
+  const roles = auth?.roles || [];
+  const canViewLoans = !!token && roles.includes("BRANCH_MANAGER");
+
   const { data: loans = [], isLoading, isError } = useQuery({
-    queryKey: ["branch-loans", statusFilter],
+    queryKey: ["branch-loans", statusFilter, token],
     queryFn: () => fetchBranchLoans({ status: statusFilter }),
+    enabled: canViewLoans,
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   const filteredLoans = useMemo(() => {

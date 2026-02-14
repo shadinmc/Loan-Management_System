@@ -10,18 +10,15 @@ import com.lms.kyc.entity.Kyc;
 import com.lms.kyc.enums.KycStatus;
 import com.lms.kyc.repository.KycRepository;
 import lombok.RequiredArgsConstructor;
-import org.bson.BsonBinarySubType;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 
 import java.time.LocalDateTime;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -66,7 +63,7 @@ public class KycService {
                 .userId(userId)
                 .aadhaarNumber(request.getAadhaarNumber())
                 .panNumber(request.getPanNumber())
-                .documents((request.getDocuments()))
+                .documents(request.getDocuments())
                 .cibilScore(generateCibilScore())
                 .status(KycStatus.PENDING)
                 .createdAt(LocalDateTime.now())
@@ -119,7 +116,7 @@ public class KycService {
             if (!Boolean.TRUE.equals(kyc.getApprovalAuditLogged())) {
 
                 auditService.log(
-                        userId,
+                        "SYSTEM",
                         "KYC_APPROVED",
                         "KYC",
                         kyc.getId(),
@@ -165,10 +162,10 @@ public class KycService {
                 maskAadhaar(kyc.getAadhaarNumber()),
                 maskPan(kyc.getPanNumber()),
                 kyc.getCibilScore(),
-                kyc.getStatus()
+                kyc.getStatus(),
+                kyc.getRejectionReason()
         );
     }
-
 
     private String maskAadhaar(String a) {
         return "XXXX-XXXX-" + a.substring(8);

@@ -23,14 +23,16 @@ const LoanReview = ({ loanId, onClose }) => {
   const [reason, setReason] = useState("");
   const [eligibilityResult, setEligibilityResult] = useState(null);
 
+  const token = localStorage.getItem("token");
+
   const {
     data: review,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["branch-loan-review", loanId],
+    queryKey: ["branch-loan-review", loanId, token],
     queryFn: () => fetchBranchLoanReview(loanId),
-    enabled: Boolean(loanId),
+    enabled: Boolean(loanId) && !!token,
   });
 
   const decisionMutation = useMutation({
