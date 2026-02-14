@@ -6,77 +6,68 @@ import {
 import { FiCheckCircle } from "react-icons/fi";
 import "./AdminDashboard.css";
 import { useNavigate } from "react-router-dom";
-
-
+import { useEffect, useState } from "react";
+import { fetchBranchLoans } from "../../api/branchLoansApi";
 
 const AdminDashboard = () => {
-    const navigate = useNavigate();
-  // MOCK DATA (temporary until backend API)
-  const mockLoans = [
-    {
-      id: "LN-2026-006",
-      applicant: "Meera Nair",
-      type: "Vehicle Loan",
-      amount: 600000,
-      status: "PENDING_BRANCH"
-    },
-    {
-      id: "LN-2026-008",
-      applicant: "Kavita Shah",
-      type: "Business Loan",
-      amount: 1500000,
-      status: "PENDING_BRANCH"
-    },
-    {
-      id: "LN-2026-001",
-      applicant: "Amit Patel",
-      type: "Personal Loan",
-      amount: 500000,
-      status: "PENDING_BRANCH"
-    },
-    {
-      id: "LN-2026-005",
-      applicant: "Rahul Verma",
-      type: "Personal Loan",
-      amount: 300000,
-      status: "BRANCH_REJECTED"
-    },
-    {
-      id: "LN-2026-002",
-      applicant: "Sneha Reddy",
-      type: "Vehicle Loan",
-      amount: 750000,
-      status: "ACTIVE"
+  const navigate = useNavigate();
+  const [loans, setLoans] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchLoans();
+  }, []);
+
+  const fetchLoans = async () => {
+    try {
+      const data = await fetchBranchLoans();
+      setLoans(Array.isArray(data) ? data : data.data || []);
+    } catch (err) {
+      console.error("Error loading dashboard loans", err);
+    } finally {
+      setLoading(false);
     }
-  ];
-
-  // KPI Calculations
-  const pending = mockLoans.filter(l => l.status === "PENDING_BRANCH").length;
-  const rejected = mockLoans.filter(l => l.status === "BRANCH_REJECTED").length;
-  const active = mockLoans.filter(l => l.status === "ACTIVE").length;
-  const approved = 0;
-
-  // Loan type counts
-  const loanTypes = {
-    personal: mockLoans.filter(l => l.type === "Personal Loan").length,
-    vehicle: mockLoans.filter(l => l.type === "Vehicle Loan").length,
-    business: mockLoans.filter(l => l.type === "Business Loan").length,
-    education: 2
   };
 
+  if (loading) return <p>Loading dashboard...</p>;
+
+  // ===== KPI calculations =====
+  const pending = loans.filter(l => l.status === "UNDER_BRANCH_REVIEW").length;
+  const rejected = loans.filter(l => l.status === "BRANCH_REJECTED").length;
+  const approved = loans.filter(l => l.status === "BRANCH_APPROVED").length;
+  const active = loans.filter(l => l.status === "ACTIVE").length;
+
+  // ===== Loan type counts =====
+  const loanTypes = {
+    personal: loans.filter(l => l.loanType === "PERSONAL").length,
+    vehicle: loans.filter(l => l.loanType === "VEHICLE").length,
+    business: loans.filter(l => l.loanType === "BUSINESS").length,
+    education: loans.filter(l => l.loanType === "EDUCATION").length
+  };
+
+  // ===== Badge helpers (UNCHANGED) =====
   const getBadgeClass = (status) => {
-    if (status === "PENDING_BRANCH") return "badge warning";
+    if (status === "UNDER_BRANCH_REVIEW") return "badge warning";
     if (status === "BRANCH_REJECTED") return "badge danger";
     if (status === "ACTIVE") return "badge success";
+    if (status === "BRANCH_APPROVED") return "badge success";
     return "badge";
   };
 
   const getStatusText = (status) => {
-    if (status === "PENDING_BRANCH") return "Pending Branch Review";
+    if (status === "UNDER_BRANCH_REVIEW") return "Pending Branch Review";
     if (status === "BRANCH_REJECTED") return "Branch Rejected";
+    if (status === "BRANCH_APPROVED") return "Branch Approved";
     if (status === "ACTIVE") return "Active Loan";
     return status;
   };
+
+  // ✅ ONLY 5 PENDING APPLICATIONS FOR DASHBOARD
+  const pendingApplications = loans
+    .filter(l =>   l.status === "UNDER_BRANCH_REVIEW" ||
+                       l.status === "APPLIED")
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5);
 
   return (
     <>
@@ -130,17 +121,14 @@ const AdminDashboard = () => {
             <span>Personal Loan</span>
             <strong>{loanTypes.personal}</strong>
           </div>
-
           <div>
             <span>Vehicle Loan</span>
             <strong>{loanTypes.vehicle}</strong>
           </div>
-
           <div>
             <span>Business Loan</span>
             <strong>{loanTypes.business}</strong>
           </div>
-
           <div>
             <span>Education Loan</span>
             <strong>{loanTypes.education}</strong>
@@ -148,10 +136,10 @@ const AdminDashboard = () => {
         </div>
       </section>
 
-      {/* RECENT APPLICATIONS */}
+      {/* PENDING APPLICATIONS (LIMIT 5) */}
       <section className="card">
         <div className="card-header">
-          <h3>Recent Applications</h3>
+          <h3>Pending Applications</h3>
           <span
             className="link"
             onClick={() => navigate("/admin/loan-applications")}
@@ -173,21 +161,29 @@ const AdminDashboard = () => {
           </thead>
 
           <tbody>
-            {mockLoans.slice(0, 3).map((loan) => (
-              <tr key={loan.id}>
-                <td>{loan.id}</td>
-                <td>{loan.applicant}</td>
-                <td>{loan.type}</td>
-                <td className="amount">
-                  ₹{loan.amount.toLocaleString()}
-                </td>
-                <td>
-                  <span className={getBadgeClass(loan.status)}>
-                    {getStatusText(loan.status)}
-                  </span>
+            {pendingApplications.length === 0 ? (
+              <tr>
+                <td colSpan="5" style={{ textAlign: "center" }}>
+                  No pending applications
                 </td>
               </tr>
-            ))}
+            ) : (
+              pendingApplications.map((loan) => (
+                <tr key={loan.loanId}>
+                  <td>{loan.loanId}</td>
+                  <td>{loan.applicantName}</td>
+                  <td>{loan.loanType}</td>
+                  <td className="amount">
+                    ₹{loan.loanAmount?.toLocaleString?.() || "-"}
+                  </td>
+                  <td>
+                    <span className={getBadgeClass(loan.status)}>
+                      {getStatusText(loan.status)}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </section>
