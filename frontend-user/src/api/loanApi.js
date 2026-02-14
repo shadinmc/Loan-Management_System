@@ -59,7 +59,10 @@ export const getAllLoans = async (userId) => {
 export const getMyLoans = async () => {
   try {
     const response = await axiosInstance.get('/loans/my-loans');
-    return response.data;
+    const data = response.data;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.content)) return data.content;
+    return [];
   } catch (error) {
     console.error('Error fetching user loans:', error);
     throw error;

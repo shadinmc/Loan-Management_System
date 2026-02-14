@@ -2,9 +2,11 @@ import { X, CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  fetchRegionalEligibilityByLoanId,
   fetchRegionalLoanReview,
   submitRegionalLoanDecision,
 } from "../../api/regionalLoansApi";
+import StatusBadge from "../../components/StatusBadge";
 import "./RegionalLoanReview.css";
 
 const toLabel = (value) =>
@@ -20,6 +22,7 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
   const [showApproveConsent, setShowApproveConsent] = useState(false);
   const [approveConsentChecked, setApproveConsentChecked] = useState(false);
   const [localDecisionLocked, setLocalDecisionLocked] = useState(false);
+  const [eligibilityResult, setEligibilityResult] = useState(null);
 
   const loanQuery = useQuery({
     queryKey: ["regional-loan-review", loan.loanId],
@@ -43,8 +46,44 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
     },
   });
 
+  const eligibilityMutation = useMutation({
+    mutationFn: () => fetchRegionalEligibilityByLoanId(loan.loanId),
+    onSuccess: (data) => {
+      setEligibilityResult(data || null);
+    },
+    onError: (error) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to fetch eligibility";
+      alert(message);
+    },
+  });
+
   const details = loanQuery.data;
+  const eligibilityData = eligibilityResult || details || {};
   const currentStatus = details?.status || loan.status;
+  const eligibilityScore = Number(
+    eligibilityData?.eligibilityScore ?? eligibilityData?.score ?? 0
+  );
+  const cibilScore = eligibilityData?.cibilScore ?? null;
+  const approvedAmount = Number(
+    eligibilityData?.approvedAmount || details?.approvedAmount || loan.approvedAmount || 0
+  );
+  const recommendedStatus =
+    eligibilityData?.recommendedStatus || eligibilityData?.newStatus || currentStatus;
+  const eligibilityRemarks = eligibilityData?.eligibilityRemarks || eligibilityData?.remarks || null;
+  const rawPassedRules = Array.isArray(eligibilityData?.passedRules) ? eligibilityData.passedRules : [];
+  const rawFailedRules = Array.isArray(eligibilityData?.failedRules) ? eligibilityData.failedRules : [];
+  const normalizedPassedRules = rawPassedRules
+    .filter(Boolean)
+    .map((r) => String(r).trim())
+    .filter((r) => r.length > 0);
+  const normalizedFailedRules = rawFailedRules
+    .filter(Boolean)
+    .map((r) => String(r).trim())
+    .filter((r) => r.length > 0)
+    .filter((r) => !/eligible for/i.test(r));
   const canTakeRegionalAction =
     !localDecisionLocked &&
     ["BRANCH_APPROVED", "UNDER_REGIONAL_REVIEW"].includes(currentStatus);
@@ -96,9 +135,9 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
             <section className="card soft-blue">
               <h4>Application Details</h4>
               <div className="grid-2">
-                <div><label>Approved Amount</label><strong>INR {Number(loan.approvedAmount || 0).toLocaleString()}</strong></div>
+                <div><label>Approved Amount</label><strong>INR {approvedAmount.toLocaleString()}</strong></div>
                 <div><label>Loan Type</label><strong>{toLabel(loan.loanType)}</strong></div>
-                <div><label>Status</label><strong>{currentStatus}</strong></div>
+                <div><label>Status</label><strong><StatusBadge status={currentStatus} /></strong></div>
                 <div><label>User ID</label><strong>{loan.userId}</strong></div>
               </div>
             </section>
@@ -108,6 +147,68 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
               <div className="grid-2">
                 <div><label>Name</label><strong>{loan.fullName || "N/A"}</strong></div>
                 <div><label>Email</label><strong>{loan.email || "N/A"}</strong></div>
+              </div>
+            </section>
+
+            <section className="card soft-purple">
+              <h4>Eligibility Snapshot (Branch Check)</h4>
+              <div className="decision-actions">
+                <button
+                  className="approve"
+                  type="button"
+                  onClick={() => eligibilityMutation.mutate()}
+                  disabled={eligibilityMutation.isPending}
+                >
+                  {eligibilityMutation.isPending ? "Fetching..." : "Fetch Eligibility"}
+                </button>
+              </div>
+              <div className="eligibility-list">
+                <div className="eligibility-list-item">
+                  <label>Eligibility Score</label>
+                  <strong>{eligibilityScore}</strong>
+                  <div className="score-progress">
+                    <span style={{ width: `${Math.max(0, Math.min(eligibilityScore, 100))}%` }} />
+                  </div>
+                </div>
+                <div className="eligibility-list-item">
+                  <label>CIBIL Score</label>
+                  <strong>{cibilScore ?? "N/A"}</strong>
+                </div>
+                <div className="eligibility-list-item">
+                  <label>Approved Amount</label>
+                  <strong>INR {approvedAmount.toLocaleString()}</strong>
+                </div>
+                <div className="eligibility-list-item">
+                  <label>Recommended Status</label>
+                  <strong>{recommendedStatus}</strong>
+                </div>
+              </div>
+              {eligibilityRemarks && (
+                <p className="notes">{eligibilityRemarks}</p>
+              )}
+
+              <div className="rules-stack">
+                <label>Passed Rules</label>
+                {normalizedPassedRules.length ? (
+                  <ul className="rules-list passed">
+                    {normalizedPassedRules.map((rule, idx) => (
+                      <li key={`${rule}-${idx}`}>{rule}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="notes">No passed rule data available.</p>
+                )}
+
+                <label>Failed Rules</label>
+                {normalizedFailedRules.length ? (
+                  <ul className="rules-list failed">
+                    {normalizedFailedRules.map((rule, idx) => (
+                      <li key={`${rule}-${idx}`}>{rule}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="notes">No failed rule data available.</p>
+                )}
               </div>
             </section>
 

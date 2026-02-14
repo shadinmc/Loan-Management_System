@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,12 +33,6 @@ public class RegionalLoanService {
         if (loan.getStatus() != LoanStatus.BRANCH_APPROVED
                 && loan.getStatus() != LoanStatus.UNDER_REGIONAL_REVIEW) {
             throw new IllegalStateException("Loan not ready for regional review");
-        }
-
-        if (loan.getStatus() == LoanStatus.BRANCH_APPROVED) {
-            loan.setStatus(LoanStatus.UNDER_REGIONAL_REVIEW);
-            loan.setUpdatedAt(Instant.now());
-            return loanRepository.save(loan);
         }
 
         return loan;
@@ -95,8 +90,11 @@ public class RegionalLoanService {
     }
 
     public RegionalLoanPageResponse getLoansForRegionalReview(int page, int size) {
-        List<RegionalLoanSummaryResponse> sorted = loanRepository.findByStatus(LoanStatus.BRANCH_APPROVED)
-                .stream()
+        List<Loan> queueLoans = new ArrayList<>();
+        queueLoans.addAll(loanRepository.findByStatus(LoanStatus.BRANCH_APPROVED));
+        queueLoans.addAll(loanRepository.findByStatus(LoanStatus.UNDER_REGIONAL_REVIEW));
+
+        List<RegionalLoanSummaryResponse> sorted = queueLoans.stream()
                 .sorted(Comparator.comparing(Loan::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
                 .map(loan -> {
                     Optional<User> userOpt = userRepository.findById(loan.getUserId());

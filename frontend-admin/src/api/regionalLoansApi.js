@@ -12,7 +12,13 @@ export const fetchRegionalLoanReview = async (loanId) => {
   return response.data;
 };
 
+export const fetchRegionalEligibilityByLoanId = async (loanId) => {
+  const response = await api.get(`/branch/eligibility/loan/${loanId}`);
+  return response.data;
+};
+
 export const submitRegionalLoanDecision = async (loanId, payload) => {
   const response = await api.post(`/regional/loans/${loanId}/decision`, payload);
   return response.data;
 };
+

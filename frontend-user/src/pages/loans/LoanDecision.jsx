@@ -116,7 +116,8 @@ export default function LoanDecision() {
     return items.map((loan) => {
       const loanTypeKey = loan.loanType || '';
       const config = LOAN_CONFIG[loanTypeKey] || {};
-      const uiStatus = mapBackendStatus(loan.status);
+      const backendStatus = loan.status || loan.loanStatus || 'APPLIED';
+      const uiStatus = mapBackendStatus(backendStatus);
       return {
         id: loan.loanId || loan.id,
         loanType: config.name || loanTypeKey,
@@ -126,10 +127,10 @@ export default function LoanDecision() {
         emi: Number(loan.emiAmount || 0),
         emiEligible: Boolean(loan.emiEligible),
         status: uiStatus,
-        backendStatus: loan.status,
+        backendStatus,
         decisionMessage: loan.decisionMessage || "",
         appliedDate: loan.appliedDate || loan.createdAt || null,
-        timeline: buildTimeline(loan.status, loan.appliedDate || loan.createdAt, loan.updatedAt)
+        timeline: buildTimeline(backendStatus, loan.appliedDate || loan.createdAt, loan.updatedAt)
       };
     });
   }, [loansQuery.data]);

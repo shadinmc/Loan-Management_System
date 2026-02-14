@@ -103,16 +103,27 @@ const LoanReview = ({ loanId, onClose }) => {
     return Boolean(review?.emiEligible);
   }, [latestEligibility, review]);
 
-  const eligibilityFailureNotes = useMemo(() => {
-    if (latestEligibility?.failedRules?.length) return latestEligibility.failedRules;
-    if (latestEligibility?.remarks) return [latestEligibility.remarks];
-    return [];
+  const eligibilityPassedNotes = useMemo(() => {
+    const list = Array.isArray(latestEligibility?.passedRules)
+      ? latestEligibility.passedRules
+      : [];
+    return list
+      .filter(Boolean)
+      .map((item) => String(item).trim())
+      .filter((item) => item.length > 0);
   }, [latestEligibility]);
 
-  const eligibilityPassedNotes = useMemo(() => {
-    if (latestEligibility?.passedRules?.length) return latestEligibility.passedRules;
-    return [];
-  }, [latestEligibility]);
+  const eligibilityFailureNotes = useMemo(() => {
+    const list = Array.isArray(latestEligibility?.failedRules)
+      ? latestEligibility.failedRules
+      : [];
+    const normalizedFailed = list
+      .filter(Boolean)
+      .map((item) => String(item).trim())
+      .filter((item) => item.length > 0);
+    const passedSet = new Set(eligibilityPassedNotes.map((item) => item.toLowerCase()));
+    return normalizedFailed.filter((item) => !passedSet.has(item.toLowerCase()));
+  }, [latestEligibility, eligibilityPassedNotes]);
 
   const eligibilityScore = useMemo(() => {
     if (typeof latestEligibility?.score === "number") return latestEligibility.score;
@@ -123,6 +134,31 @@ const LoanReview = ({ loanId, onClose }) => {
     if (typeof latestEligibility?.cibilScore === "number") return latestEligibility.cibilScore;
     return null;
   }, [latestEligibility]);
+
+  const approvedAmount = useMemo(() => {
+    if (latestEligibility?.approvedAmount !== undefined && latestEligibility?.approvedAmount !== null) {
+      return Number(latestEligibility.approvedAmount);
+    }
+    if (review?.approvedAmount !== undefined && review?.approvedAmount !== null) {
+      return Number(review.approvedAmount);
+    }
+    return null;
+  }, [latestEligibility, review]);
+
+  const recommendedStatus = useMemo(
+    () => latestEligibility?.newStatus || null,
+    [latestEligibility]
+  );
+
+  const eligibilityRemarks = useMemo(
+    () => latestEligibility?.remarks || null,
+    [latestEligibility]
+  );
+
+  const hasEligibilityPayload = useMemo(
+    () => Boolean(latestEligibility),
+    [latestEligibility]
+  );
 
   const isDecisionAlreadySubmitted = useMemo(() => (
     ["BRANCH_APPROVED", "BRANCH_REJECTED", "CLARIFICATION_REQUIRED"].includes(review?.status)
@@ -331,42 +367,6 @@ const LoanReview = ({ loanId, onClose }) => {
           <section className="review-card">
             <h4 className="section-title">Eligibility Assessment</h4>
             <div className="eligibility-box">
-              <span className={`badge ${isEligible ? "success" : "danger"}`}>
-                {isEligible ? "Eligible" : "Not Eligible"}
-              </span>
-              <p className="eligibility-meta">
-                EMI Amount: INR {Number(review.emiAmount || 0).toLocaleString()}
-              </p>
-              {eligibilityScore !== null && (
-                <p className="eligibility-meta">
-                  Eligibility Score: {eligibilityScore}
-                </p>
-              )}
-              {cibilScore !== null && (
-                <p className="eligibility-meta">
-                  CIBIL Score: {cibilScore}
-                </p>
-              )}
-              {eligibilityPassedNotes.length > 0 && (
-                <div className="eligibility-notes">
-                  <p className="eligibility-notes-title">Passed Rules</p>
-                  <ul className="eligibility-notes-list">
-                    {eligibilityPassedNotes.map((note, index) => (
-                      <li key={`${note}-${index}`}>{note}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {eligibilityFailureNotes.length > 0 && (
-                <div className="eligibility-notes">
-                  <p className="eligibility-notes-title">Failed Rules</p>
-                  <ul className="eligibility-notes-list">
-                    {eligibilityFailureNotes.map((note, index) => (
-                      <li key={`${note}-${index}`}>{note}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
               <div className="eligibility-actions">
                 <button
                   type="button"
@@ -380,6 +380,72 @@ const LoanReview = ({ loanId, onClose }) => {
                   {eligibilityMutation.isPending ? "Checking..." : "Run Eligibility Check"}
                 </button>
               </div>
+
+              <div className="eligibility-top">
+                <span className={`badge ${isEligible ? "success" : "danger"}`}>
+                  {isEligible ? "Eligible" : "Not Eligible"}
+                </span>
+                {!hasEligibilityPayload && (
+                  <span className="eligibility-hint">
+                    Run check to refresh score, rule-wise reasons and recommendation.
+                  </span>
+                )}
+              </div>
+
+              <div className="eligibility-summary-grid">
+                <div className="eligibility-summary-item">
+                  <label>EMI Amount</label>
+                  <strong>INR {Number(review.emiAmount || 0).toLocaleString()}</strong>
+                </div>
+                <div className="eligibility-summary-item">
+                  <label>Approved Amount</label>
+                  <strong>
+                    {approvedAmount !== null
+                      ? `INR ${approvedAmount.toLocaleString()}`
+                      : "N/A"}
+                  </strong>
+                </div>
+                <div className="eligibility-summary-item">
+                  <label>Eligibility Score</label>
+                  <strong>{eligibilityScore !== null ? eligibilityScore : "N/A"}</strong>
+                </div>
+                <div className="eligibility-summary-item">
+                  <label>CIBIL Score</label>
+                  <strong>{cibilScore !== null ? cibilScore : "N/A"}</strong>
+                </div>
+                <div className="eligibility-summary-item">
+                  <label>Recommended Status</label>
+                  <strong>{recommendedStatus || "N/A"}</strong>
+                </div>
+              </div>
+
+              {eligibilityRemarks && (
+                <div className="eligibility-remarks">
+                  <p className="eligibility-notes-title">Remarks</p>
+                  <p className="eligibility-meta">{eligibilityRemarks}</p>
+                </div>
+              )}
+
+              {eligibilityPassedNotes.length > 0 && (
+                <div className="eligibility-notes">
+                  <p className="eligibility-notes-title">Passed Rules</p>
+                  <ul className="eligibility-notes-list passed">
+                    {eligibilityPassedNotes.map((note, index) => (
+                      <li key={`${note}-${index}`}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {eligibilityFailureNotes.length > 0 && (
+                <div className="eligibility-notes">
+                  <p className="eligibility-notes-title">Failed Rules</p>
+                  <ul className="eligibility-notes-list failed">
+                    {eligibilityFailureNotes.map((note, index) => (
+                      <li key={`${note}-${index}`}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </section>
 

@@ -17,8 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +53,25 @@ public class EligibilityService {
         updateLoanWithEligibility(loan, result);
 
         return result;
+    }
+
+    @Transactional(readOnly = true)
+    public EligibilityResult getEligibilitySnapshot(String loanId) {
+        Loan loan = loanRepository.findByLoanId(loanId)
+                .orElseThrow(() -> new RuntimeException("Loan not found or unauthorized"));
+
+        return EligibilityResult.builder()
+                .loanId(loan.getLoanId())
+                .cibilScore(loan.getCibilScore())
+                .eligible(Boolean.TRUE.equals(loan.getEmiEligible()))
+                .score(loan.getEligibilityScore() == null ? 0 : loan.getEligibilityScore())
+                .newStatus(loan.getRecommendedStatus())
+                .approvedAmount(loan.getApprovedAmount())
+                .requestedAmount(loan.getLoanAmount())
+                .remarks(loan.getEligibilityRemarks())
+                .failedRules(loan.getFailedRules() == null ? List.of() : new ArrayList<>(loan.getFailedRules()))
+                .passedRules(loan.getPassedRules() == null ? List.of() : new ArrayList<>(loan.getPassedRules()))
+                .build();
     }
 
     private BigDecimal getInterestRateByLoanType(Loan loan) {
@@ -131,6 +150,12 @@ public class EligibilityService {
     private void updateLoanWithEligibility(Loan loan, EligibilityResult result) {
 
         loan.setEligibilityCheckedAt(Instant.now());
+        loan.setEligibilityScore(result.getScore());
+        loan.setCibilScore(result.getCibilScore());
+        loan.setEligibilityRemarks(result.getRemarks());
+        loan.setPassedRules(result.getPassedRules() == null ? List.of() : new ArrayList<>(result.getPassedRules()));
+        loan.setFailedRules(result.getFailedRules() == null ? List.of() : new ArrayList<>(result.getFailedRules()));
+        loan.setRecommendedStatus(result.getNewStatus());
 
         if (result.isEligible()) {
 
@@ -158,6 +183,7 @@ public class EligibilityService {
             loan.setStatus(LoanStatus.NOT_ELIGIBLE);
             loan.setEmiAmount(BigDecimal.ZERO);
             loan.setEmiEligible(false);
+            loan.setApprovedAmount(result.getApprovedAmount());
         }
 
         loan.setUpdatedAt(Instant.now());

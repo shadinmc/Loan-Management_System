@@ -1,6 +1,5 @@
 package com.lms.eligibility.controller;
 
-import com.lms.auth.security.SecurityUtils;
 import com.lms.eligibility.dto.EligibilityResult;
 import com.lms.eligibility.service.EligibilityService;
 import lombok.RequiredArgsConstructor;
@@ -14,14 +13,13 @@ import org.springframework.web.bind.annotation.*;
 public class EligibilityController {
 
     private final EligibilityService eligibilityService;
-    private final SecurityUtils securityUtils;
 
     // Check eligibility for an existing loan application
-    @PreAuthorize("hasRole('BRANCH_MANAGER')")
+    @PreAuthorize("hasAnyRole('BRANCH_MANAGER','REGIONAL_MANAGER')")
     @GetMapping("/loan/{loanId}")
     public ResponseEntity<EligibilityResult> checkLoanEligibility(@PathVariable String loanId) {
-        String userId = securityUtils.getCurrentUserId();
-        EligibilityResult result = eligibilityService.checkEligibilityForBranch(loanId);
+        EligibilityResult result = eligibilityService.getEligibilitySnapshot(loanId);
         return ResponseEntity.ok(result);
     }
 }
+

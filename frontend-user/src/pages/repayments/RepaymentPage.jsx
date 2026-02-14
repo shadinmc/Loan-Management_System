@@ -22,11 +22,17 @@ export default function RepaymentPage() {
 
   const loanOptions = useMemo(() => {
     const items = loansQuery.data || [];
-    return items.map((loan) => ({
-      id: loan.loanId || loan.id,
-      label: `${loan.loanId || loan.id} · ${loan.loanType || 'Loan'}`,
-      status: loan.status,
-    }));
+    const allowedStatuses = new Set(['ACTIVE', 'CLOSED']);
+    return items
+      .map((loan) => {
+        const status = loan.status || loan.loanStatus || '';
+        return {
+          id: loan.loanId || loan.id,
+          label: `${loan.loanId || loan.id} · ${loan.loanType || 'Loan'}`,
+          status,
+        };
+      })
+      .filter((loan) => allowedStatuses.has(loan.status));
   }, [loansQuery.data]);
 
   const selectedLoan = useMemo(
