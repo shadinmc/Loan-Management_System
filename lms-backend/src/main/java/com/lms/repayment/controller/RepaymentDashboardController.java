@@ -1,12 +1,16 @@
 package com.lms.repayment.controller;
 
 import com.lms.repayment.dto.RepaymentDashboardResponse;
+import com.lms.repayment.dto.ManagerRepaymentDetailResponse;
+import com.lms.repayment.dto.ManagerRepaymentPageResponse;
 import com.lms.repayment.service.RepaymentDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -23,5 +27,22 @@ public class RepaymentDashboardController {
         return ResponseEntity.ok(
                 dashboardService.getMyLoanRepayment(loanId)
         );
+    }
+
+    @GetMapping("/manager")
+    @PreAuthorize("hasAnyRole('BRANCH_MANAGER','REGIONAL_MANAGER')")
+    public ResponseEntity<ManagerRepaymentPageResponse> getManagerRepayments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(dashboardService.getManagerRepaymentSummaries(page, size));
+    }
+
+    @GetMapping("/manager/{loanId}")
+    @PreAuthorize("hasAnyRole('BRANCH_MANAGER','REGIONAL_MANAGER')")
+    public ResponseEntity<ManagerRepaymentDetailResponse> getManagerRepaymentDetail(
+            @PathVariable String loanId
+    ) {
+        return ResponseEntity.ok(dashboardService.getLoanRepaymentForManager(loanId));
     }
 }

@@ -12,6 +12,8 @@ const LoanApplications = () => {
   const [selectedLoanId, setSelectedLoanId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
 
   const token = localStorage.getItem("token");
   const authRaw = localStorage.getItem("adminAuth");
@@ -19,13 +21,14 @@ const LoanApplications = () => {
   const roles = auth?.roles || [];
   const canViewLoans = !!token && roles.includes("BRANCH_MANAGER");
 
-  const { data: loans = [], isLoading, isError } = useQuery({
-    queryKey: ["branch-loans", statusFilter, token],
-    queryFn: () => fetchBranchLoans({ status: statusFilter }),
+  const { data: loanPage, isLoading, isError } = useQuery({
+    queryKey: ["branch-loans", statusFilter, page, pageSize, token],
+    queryFn: () => fetchBranchLoans({ status: statusFilter, page, size: pageSize }),
     enabled: canViewLoans,
     retry: false,
     refetchOnWindowFocus: false,
   });
+  const loans = loanPage?.content || [];
 
   const filteredLoans = useMemo(() => {
     return loans.filter((loan) => {
@@ -78,9 +81,10 @@ const LoanApplications = () => {
             key={type.id}
             title={type.label}
             active={selectedType === type.id}
-            onClick={() =>
-              setSelectedType(selectedType === type.id ? null : type.id)
-            }
+            onClick={() => {
+              setSelectedType(selectedType === type.id ? null : type.id);
+              setPage(0);
+            }}
           />
         ))}
       </div>
@@ -93,16 +97,23 @@ const LoanApplications = () => {
             type="text"
             placeholder="Search by application #, name..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
           />
         </div>
 
         <select
           className="status-filter"
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(0);
+          }}
           value={statusFilter}
         >
           <option value="ALL">All Status</option>
+          <option value="APPLIED">Applied</option>
           <option value="UNDER_BRANCH_REVIEW">Under Branch Review</option>
           <option value="BRANCH_APPROVED">Branch Approved</option>
           <option value="BRANCH_REJECTED">Branch Rejected</option>
@@ -169,6 +180,28 @@ const LoanApplications = () => {
               ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="pagination-bar">
+        <button
+          type="button"
+          className="review-btn"
+          disabled={loanPage?.first || isLoading}
+          onClick={() => setPage((p) => Math.max(p - 1, 0))}
+        >
+          Previous
+        </button>
+        <span>
+          Page {(loanPage?.page ?? 0) + 1} of {Math.max(loanPage?.totalPages ?? 1, 1)}
+        </span>
+        <button
+          type="button"
+          className="review-btn"
+          disabled={loanPage?.last || isLoading}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Next
+        </button>
       </div>
 
       {selectedLoanId && (

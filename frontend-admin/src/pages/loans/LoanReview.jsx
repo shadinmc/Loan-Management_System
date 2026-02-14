@@ -22,6 +22,8 @@ const LoanReview = ({ loanId, onClose }) => {
   const [decision, setDecision] = useState(null);
   const [reason, setReason] = useState("");
   const [eligibilityResult, setEligibilityResult] = useState(null);
+  const [showApproveConsent, setShowApproveConsent] = useState(false);
+  const [approveConsentChecked, setApproveConsentChecked] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -89,12 +91,81 @@ const LoanReview = ({ loanId, onClose }) => {
     setEligibilityResult(null);
   }, [loanId]);
 
+  const latestEligibility = useMemo(
+    () => eligibilityResult || null,
+    [eligibilityResult]
+  );
+
+  const isEligible = useMemo(() => {
+    if (typeof latestEligibility?.eligible === "boolean") {
+      return latestEligibility.eligible;
+    }
+    return Boolean(review?.emiEligible);
+  }, [latestEligibility, review]);
+
+  const eligibilityPassedNotes = useMemo(() => {
+    const list = Array.isArray(latestEligibility?.passedRules)
+      ? latestEligibility.passedRules
+      : [];
+    return list
+      .filter(Boolean)
+      .map((item) => String(item).trim())
+      .filter((item) => item.length > 0);
+  }, [latestEligibility]);
+
   const eligibilityFailureNotes = useMemo(() => {
-    if (review?.emiEligible !== false) return [];
-    if (eligibilityResult?.failedRules?.length) return eligibilityResult.failedRules;
-    if (eligibilityResult?.remarks) return [eligibilityResult.remarks];
-    return [];
-  }, [eligibilityResult, review]);
+    const list = Array.isArray(latestEligibility?.failedRules)
+      ? latestEligibility.failedRules
+      : [];
+    const normalizedFailed = list
+      .filter(Boolean)
+      .map((item) => String(item).trim())
+      .filter((item) => item.length > 0);
+    const passedSet = new Set(eligibilityPassedNotes.map((item) => item.toLowerCase()));
+    return normalizedFailed.filter((item) => !passedSet.has(item.toLowerCase()));
+  }, [latestEligibility, eligibilityPassedNotes]);
+
+  const eligibilityScore = useMemo(() => {
+    if (typeof latestEligibility?.score === "number") return latestEligibility.score;
+    return null;
+  }, [latestEligibility]);
+
+  const cibilScore = useMemo(() => {
+    if (typeof latestEligibility?.cibilScore === "number") return latestEligibility.cibilScore;
+    return null;
+  }, [latestEligibility]);
+
+  const approvedAmount = useMemo(() => {
+    if (latestEligibility?.approvedAmount !== undefined && latestEligibility?.approvedAmount !== null) {
+      return Number(latestEligibility.approvedAmount);
+    }
+    if (review?.approvedAmount !== undefined && review?.approvedAmount !== null) {
+      return Number(review.approvedAmount);
+    }
+    return null;
+  }, [latestEligibility, review]);
+
+  const recommendedStatus = useMemo(
+    () => latestEligibility?.newStatus || null,
+    [latestEligibility]
+  );
+
+  const eligibilityRemarks = useMemo(
+    () => latestEligibility?.remarks || null,
+    [latestEligibility]
+  );
+
+  const hasEligibilityPayload = useMemo(
+    () => Boolean(latestEligibility),
+    [latestEligibility]
+  );
+
+  const isDecisionAlreadySubmitted = useMemo(() => (
+    ["BRANCH_APPROVED", "BRANCH_REJECTED", "CLARIFICATION_REQUIRED"].includes(review?.status)
+  ), [review]);
+  const canTakeDecision = useMemo(() => (
+    ["NOT_ELIGIBLE", "APPLIED", "UNDER_BRANCH_REVIEW"].includes(review?.status)
+  ), [review]);
 
   const openDocumentInNewTab = (doc) => {
     if (!doc?.base64) return;
@@ -111,6 +182,15 @@ const LoanReview = ({ loanId, onClose }) => {
   };
 
   const handleApprove = () => {
+    setApproveConsentChecked(false);
+    setShowApproveConsent(true);
+  };
+
+  const handleConfirmApprove = () => {
+    if (!approveConsentChecked) {
+      alert("Please confirm manager consent before approving");
+      return;
+    }
     decisionMutation.mutate({ decision: "APPROVE" });
   };
 
@@ -287,24 +367,6 @@ const LoanReview = ({ loanId, onClose }) => {
           <section className="review-card">
             <h4 className="section-title">Eligibility Assessment</h4>
             <div className="eligibility-box">
-              <span className={`badge ${review.emiEligible ? "success" : "danger"}`}>
-                {review.emiEligible ? "Eligible" : "Not Eligible"}
-              </span>
-              <p className="eligibility-meta">
-                EMI Amount: INR {Number(review.emiAmount || 0).toLocaleString()}
-              </p>
-              {review.emiEligible === false && eligibilityFailureNotes.length > 0 && (
-                <div className="eligibility-notes">
-                  <p className="eligibility-notes-title">
-                    Eligibility Failure Reason
-                  </p>
-                  <ul className="eligibility-notes-list">
-                    {eligibilityFailureNotes.map((note) => (
-                      <li key={note}>{note}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
               <div className="eligibility-actions">
                 <button
                   type="button"
@@ -318,81 +380,202 @@ const LoanReview = ({ loanId, onClose }) => {
                   {eligibilityMutation.isPending ? "Checking..." : "Run Eligibility Check"}
                 </button>
               </div>
+
+              <div className="eligibility-top">
+                <span className={`badge ${isEligible ? "success" : "danger"}`}>
+                  {isEligible ? "Eligible" : "Not Eligible"}
+                </span>
+                {!hasEligibilityPayload && (
+                  <span className="eligibility-hint">
+                    Run check to refresh score, rule-wise reasons and recommendation.
+                  </span>
+                )}
+              </div>
+
+              <div className="eligibility-summary-grid">
+                <div className="eligibility-summary-item">
+                  <label>EMI Amount</label>
+                  <strong>INR {Number(review.emiAmount || 0).toLocaleString()}</strong>
+                </div>
+                <div className="eligibility-summary-item">
+                  <label>Approved Amount</label>
+                  <strong>
+                    {approvedAmount !== null
+                      ? `INR ${approvedAmount.toLocaleString()}`
+                      : "N/A"}
+                  </strong>
+                </div>
+                <div className="eligibility-summary-item">
+                  <label>Eligibility Score</label>
+                  <strong>{eligibilityScore !== null ? eligibilityScore : "N/A"}</strong>
+                </div>
+                <div className="eligibility-summary-item">
+                  <label>CIBIL Score</label>
+                  <strong>{cibilScore !== null ? cibilScore : "N/A"}</strong>
+                </div>
+                <div className="eligibility-summary-item">
+                  <label>Recommended Status</label>
+                  <strong>{recommendedStatus || "N/A"}</strong>
+                </div>
+              </div>
+
+              {eligibilityRemarks && (
+                <div className="eligibility-remarks">
+                  <p className="eligibility-notes-title">Remarks</p>
+                  <p className="eligibility-meta">{eligibilityRemarks}</p>
+                </div>
+              )}
+
+              {eligibilityPassedNotes.length > 0 && (
+                <div className="eligibility-notes">
+                  <p className="eligibility-notes-title">Passed Rules</p>
+                  <ul className="eligibility-notes-list passed">
+                    {eligibilityPassedNotes.map((note, index) => (
+                      <li key={`${note}-${index}`}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {eligibilityFailureNotes.length > 0 && (
+                <div className="eligibility-notes">
+                  <p className="eligibility-notes-title">Failed Rules</p>
+                  <ul className="eligibility-notes-list failed">
+                    {eligibilityFailureNotes.map((note, index) => (
+                      <li key={`${note}-${index}`}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </section>
 
-          <section className="review-card decision-section">
-            <h4 className="section-title">Make Your Decision</h4>
-            {review.decisionMessage && (
+          {!isDecisionAlreadySubmitted && canTakeDecision ? (
+            <section className="review-card decision-section">
+              <h4 className="section-title">Make Your Decision</h4>
+              {review.decisionMessage && (
+                <div className="decision-note">
+                  <strong>Latest Decision Note:</strong> {review.decisionMessage}
+                </div>
+              )}
+              <div className="decision-buttons">
+                <button
+                  className="btn-approve"
+                  onClick={handleApprove}
+                  disabled={decisionMutation.isPending}
+                >
+                  <CheckCircle size={20} />
+                  <div className="btn-text">
+                    Approve<span>Forward to Regional</span>
+                  </div>
+                </button>
+                <button
+                  className={`btn-manual ${
+                    decision === "CLARIFICATION_REQUIRED" ? "active" : ""
+                  }`}
+                  onClick={() => setDecision("CLARIFICATION_REQUIRED")}
+                >
+                  <AlertTriangle size={20} />
+                  <div className="btn-text">
+                    Clarification<span>Needs verification</span>
+                  </div>
+                </button>
+                <button
+                  className={`btn-reject ${decision === "REJECT" ? "active" : ""}`}
+                  onClick={() => setDecision("REJECT")}
+                >
+                  <XCircle size={20} />
+                  <div className="btn-text">
+                    Reject<span>Provide reason</span>
+                  </div>
+                </button>
+              </div>
+
+              {(decision === "REJECT" || decision === "CLARIFICATION_REQUIRED") && (
+                <div className="reject-box animate-in">
+                  <label>
+                    {decision === "REJECT" ? "Rejection Reason" : "Clarification Message"}
+                  </label>
+                  <textarea
+                    placeholder="Enter message..."
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                  />
+                  <div className="reject-actions">
+                    <button className="btn-cancel" onClick={() => setDecision(null)}>
+                      Cancel
+                    </button>
+                    {decision === "REJECT" ? (
+                      <button
+                        className="btn-confirm-reject"
+                        onClick={handleReject}
+                        disabled={decisionMutation.isPending}
+                      >
+                        Confirm
+                      </button>
+                    ) : (
+                      <button
+                        className="btn-confirm-reject"
+                        onClick={handleClarification}
+                        disabled={decisionMutation.isPending}
+                      >
+                        Send
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </section>
+          ) : (
+            <section className="review-card decision-section">
+              <h4 className="section-title">Decision View</h4>
               <div className="decision-note">
-                <strong>Latest Decision Note:</strong> {review.decisionMessage}
+                <strong>Current Status:</strong> {review.status}
+                {review.decisionMessage ? ` | Note: ${review.decisionMessage}` : ""}
               </div>
-            )}
-            <div className="decision-buttons">
-              <button className="btn-approve" onClick={handleApprove}>
-                <CheckCircle size={20} />
-                <div className="btn-text">
-                  Approve<span>Forward to Regional</span>
-                </div>
-              </button>
-              <button
-                className={`btn-manual ${
-                  decision === "CLARIFICATION_REQUIRED" ? "active" : ""
-                }`}
-                onClick={() => setDecision("CLARIFICATION_REQUIRED")}
-              >
-                <AlertTriangle size={20} />
-                <div className="btn-text">
-                  Clarification<span>Needs verification</span>
-                </div>
-              </button>
-              <button
-                className={`btn-reject ${decision === "REJECT" ? "active" : ""}`}
-                onClick={() => setDecision("REJECT")}
-              >
-                <XCircle size={20} />
-                <div className="btn-text">
-                  Reject<span>Provide reason</span>
-                </div>
-              </button>
-            </div>
-
-            {(decision === "REJECT" || decision === "CLARIFICATION_REQUIRED") && (
-              <div className="reject-box animate-in">
-                <label>
-                  {decision === "REJECT" ? "Rejection Reason" : "Clarification Message"}
-                </label>
-                <textarea
-                  placeholder="Enter message..."
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                />
-                <div className="reject-actions">
-                  <button className="btn-cancel" onClick={() => setDecision(null)}>
-                    Cancel
-                  </button>
-                  {decision === "REJECT" ? (
-                    <button
-                      className="btn-confirm-reject"
-                      onClick={handleReject}
-                      disabled={decisionMutation.isPending}
-                    >
-                      Confirm
-                    </button>
-                  ) : (
-                    <button
-                      className="btn-confirm-reject"
-                      onClick={handleClarification}
-                      disabled={decisionMutation.isPending}
-                    >
-                      Send
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </section>
+            </section>
+          )}
         </div>
+
+        {showApproveConsent && (
+          <div className="consent-overlay">
+            <div className="consent-modal animate-in">
+              <h4>Manager Approval Consent</h4>
+              <p>
+                Please verify all documents and eligibility results before approval.
+              </p>
+              <label className="consent-check">
+                <input
+                  type="checkbox"
+                  checked={approveConsentChecked}
+                  onChange={(e) => setApproveConsentChecked(e.target.checked)}
+                />
+                <span>
+                  I confirm that this application has been reviewed and approved by manager consent.
+                </span>
+              </label>
+              <div className="consent-actions">
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={() => {
+                    setShowApproveConsent(false);
+                    setApproveConsentChecked(false);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-approve"
+                  onClick={handleConfirmApprove}
+                  disabled={!approveConsentChecked || decisionMutation.isPending}
+                >
+                  {decisionMutation.isPending ? "Approving..." : "Confirm Approval"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

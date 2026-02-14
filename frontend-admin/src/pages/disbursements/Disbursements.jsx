@@ -1,133 +1,153 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Search,
-  Clock,
-  CheckCircle,
-  XCircle,
-  RefreshCcw
-} from "lucide-react";
+import { Search, Clock, CheckCircle, XCircle, RefreshCcw } from "lucide-react";
 import "./Disbursements.css";
 import { getDisbursements } from "../../api/disbursementApi";
 
 const normalize = (v) => (v ?? "").toLowerCase();
+const ALLOWED_STATUSES = [
+  "DISBURSEMENT_PENDING",
+  "DISBURSED",
+  "ACTIVE",
+  "CLOSED",
+];
+const STATUS_LABELS = {
+  DISBURSEMENT_PENDING: "Disbursement Pending",
+  DISBURSED: "Disbursed",
+  ACTIVE: "Active",
+  CLOSED: "Closed",
+};
 
 const Disbursements = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
+
   const disbursementsQuery = useQuery({
-    queryKey: ["disbursements"],
-    queryFn: getDisbursements,
+    queryKey: ["disbursements", page, pageSize],
+    queryFn: () => getDisbursements({ page, size: pageSize }),
     enabled: !!localStorage.getItem("token"),
     retry: false,
   });
+  const disbursementPage = disbursementsQuery.data;
 
   const disbursements = useMemo(() => {
-    const items = disbursementsQuery.data || [];
-    return items.map((loan) => {
-      const status = loan.status === "DISBURSEMENT_PENDING" ? "PENDING" : "COMPLETED";
-      return {
-        id: loan.loanId || loan.id,
-        applicant: loan.userId,
-        amount: Number(loan.loanAmount || 0),
-        date: loan.disbursementScheduledAt || loan.disbursedAt || loan.updatedAt || null,
-        status,
-        txnId: loan.transactionId || "-"
-      };
-    });
-  }, [disbursementsQuery.data]);
+    const items = disbursementPage?.content || [];
+    return items
+      .map((loan) => {
+        const status = loan.status;
+        if (!ALLOWED_STATUSES.includes(status)) return null;
 
-  /* =====================
-     FILTERED DATA
-     ===================== */
+        return {
+          id: loan.loanId || loan.id,
+          applicant: loan.userId,
+          amount: Number(loan.amount || loan.loanAmount || 0),
+          date:
+            loan.transactionDoneAt ||
+            loan.disbursementScheduledAt ||
+            loan.disbursedAt ||
+            loan.updatedAt ||
+            null,
+          status,
+          txnId: loan.transactionId || "-",
+        };
+      })
+      .filter(Boolean);
+  }, [disbursementPage]);
+
   const filteredData = disbursements.filter((d) => {
     if (statusFilter !== "ALL" && d.status !== statusFilter) return false;
+    if (!search) return true;
 
-    if (search) {
-      const q = normalize(search);
-      return (
-        normalize(d.id).includes(q) ||
-        normalize(d.applicant).includes(q) ||
-        normalize(d.txnId).includes(q)
-      );
-    }
-
-    return true;
+    const q = normalize(search);
+    return (
+      normalize(d.id).includes(q) ||
+      normalize(d.applicant).includes(q) ||
+      normalize(d.txnId).includes(q)
+    );
   });
 
-  /* =====================
-     KPI COUNTS
-     ===================== */
-  const count = (status) =>
-    disbursements.filter((d) => d.status === status).length;
+  const count = (status) => disbursements.filter((d) => d.status === status).length;
 
   return (
     <>
-      {/* PAGE TITLE */}
       <div className="page-title">
         <h2>Disbursement Management</h2>
-        <p>Manage loan disbursements and monitor transaction status</p>
+        <p>Track loan disbursements for branch and regional operations</p>
       </div>
 
-      {/* KPI CARDS */}
       <div className="stats-grid">
         <div
-          className={`stat-card warning ${statusFilter === "PENDING" ? "active" : ""}`}
-          onClick={() => setStatusFilter("PENDING")}
+          className={`stat-card warning ${statusFilter === "DISBURSEMENT_PENDING" ? "active" : ""}`}
+          onClick={() => {
+            setStatusFilter("DISBURSEMENT_PENDING");
+            setPage(0);
+          }}
         >
           <Clock />
-          <span>Pending</span>
-          <strong>{count("PENDING")}</strong>
+          <span>Disbursement Pending</span>
+          <strong>{count("DISBURSEMENT_PENDING")}</strong>
         </div>
 
         <div
-          className={`stat-card info ${statusFilter === "IN_PROGRESS" ? "active" : ""}`}
-          onClick={() => setStatusFilter("IN_PROGRESS")}
+          className={`stat-card info ${statusFilter === "DISBURSED" ? "active" : ""}`}
+          onClick={() => {
+            setStatusFilter("DISBURSED");
+            setPage(0);
+          }}
         >
           <RefreshCcw />
-          <span>In Progress</span>
-          <strong>{count("IN_PROGRESS")}</strong>
+          <span>Disbursed</span>
+          <strong>{count("DISBURSED")}</strong>
         </div>
 
         <div
-          className={`stat-card success ${statusFilter === "COMPLETED" ? "active" : ""}`}
-          onClick={() => setStatusFilter("COMPLETED")}
+          className={`stat-card success ${statusFilter === "ACTIVE" ? "active" : ""}`}
+          onClick={() => {
+            setStatusFilter("ACTIVE");
+            setPage(0);
+          }}
         >
           <CheckCircle />
-          <span>Completed</span>
-          <strong>{count("COMPLETED")}</strong>
+          <span>Active</span>
+          <strong>{count("ACTIVE")}</strong>
         </div>
 
         <div
-          className={`stat-card danger ${statusFilter === "FAILED" ? "active" : ""}`}
-          onClick={() => setStatusFilter("FAILED")}
+          className={`stat-card danger ${statusFilter === "CLOSED" ? "active" : ""}`}
+          onClick={() => {
+            setStatusFilter("CLOSED");
+            setPage(0);
+          }}
         >
           <XCircle />
-          <span>Failed</span>
-          <strong>{count("FAILED")}</strong>
+          <span>Closed</span>
+          <strong>{count("CLOSED")}</strong>
         </div>
       </div>
 
-      {/* SEARCH */}
       <div className="filter-bar">
         <div className="search-box">
           <Search size={18} />
           <input
-            placeholder="Search by application #, name or transaction ID..."
+            placeholder="Search by loan ID, user ID or transaction ID..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
           />
         </div>
       </div>
 
-      {/* TABLE */}
       <div className="table-card">
         <table>
           <thead>
             <tr>
               <th>Loan Details</th>
               <th>Amount</th>
-              <th>Scheduled Date</th>
+              <th>Date</th>
               <th>Status</th>
               <th>Transaction ID</th>
             </tr>
@@ -148,18 +168,18 @@ const Disbursements = () => {
               </tr>
             ) : (
               filteredData.map((d) => (
-                <tr key={d.id}>
+                <tr key={`${d.id}-${d.txnId}`}>
                   <td>
                     <strong>{d.id}</strong>
                     <div className="sub">{d.applicant}</div>
                   </td>
 
-                  <td>₹{d.amount.toLocaleString()}</td>
+                  <td>INR {d.amount.toLocaleString()}</td>
                   <td>{d.date ? new Date(d.date).toLocaleString() : "-"}</td>
 
                   <td>
                     <span className={`badge ${d.status.toLowerCase()}`}>
-                      {d.status}
+                      {STATUS_LABELS[d.status] || d.status}
                     </span>
                   </td>
 
@@ -169,6 +189,28 @@ const Disbursements = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="pagination-bar">
+        <button
+          type="button"
+          className="pager-btn"
+          disabled={disbursementPage?.first || disbursementsQuery.isLoading}
+          onClick={() => setPage((p) => Math.max(p - 1, 0))}
+        >
+          Previous
+        </button>
+        <span>
+          Page {(disbursementPage?.page ?? 0) + 1} of {Math.max(disbursementPage?.totalPages ?? 1, 1)}
+        </span>
+        <button
+          type="button"
+          className="pager-btn"
+          disabled={disbursementPage?.last || disbursementsQuery.isLoading}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Next
+        </button>
       </div>
     </>
   );

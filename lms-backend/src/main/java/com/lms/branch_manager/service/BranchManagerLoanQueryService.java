@@ -12,7 +12,11 @@ import com.lms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import com.lms.branch_manager.dto.BranchLoanPageResponse;
+
 import java.time.ZoneId;
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -23,9 +27,11 @@ public class BranchManagerLoanQueryService {
     private final UserRepository userRepository;
     private final KycRepository kycRepository;
 
-    public List<BranchLoanReviewDto> getLoans(
+    public BranchLoanPageResponse getLoans(
             LoanStatus status,
-            Boolean emiEligible
+            Boolean emiEligible,
+            int page,
+            int size
     ) {
 
         List<Loan> loans = List.of();
@@ -40,9 +46,47 @@ public class BranchManagerLoanQueryService {
             loans = loanRepository.findAll();
         }
 
-        return loans.stream()
+        List<BranchLoanReviewDto> sorted = loans.stream()
                 .map(this::mapToDto)
+                .sorted(Comparator
+                        .comparingInt((BranchLoanReviewDto dto) -> statusOrder(dto.status()))
+                        .thenComparing(
+                                (BranchLoanReviewDto dto) ->
+                                        dto.appliedDate() == null
+                                                ? Instant.EPOCH
+                                                : dto.appliedDate()
+                                                .atStartOfDay(ZoneId.systemDefault())
+                                                .toInstant(),
+                                Comparator.reverseOrder()
+                        ))
                 .toList();
+
+        int safeSize = Math.max(size, 1);
+        int safePage = Math.max(page, 0);
+        int fromIndex = Math.min(safePage * safeSize, sorted.size());
+        int toIndex = Math.min(fromIndex + safeSize, sorted.size());
+        List<BranchLoanReviewDto> content = sorted.subList(fromIndex, toIndex);
+        int totalPages = (int) Math.ceil(sorted.size() / (double) safeSize);
+
+        return new BranchLoanPageResponse(
+                content,
+                safePage,
+                safeSize,
+                sorted.size(),
+                totalPages,
+                safePage == 0,
+                totalPages == 0 || safePage >= totalPages - 1
+        );
+    }
+
+    private int statusOrder(String status) {
+        if ("APPLIED".equals(status)) return 0;
+        if ("UNDER_BRANCH_REVIEW".equals(status)) return 1;
+        if ("CLARIFICATION_REQUIRED".equals(status)) return 2;
+        if ("NOT_ELIGIBLE".equals(status)) return 3;
+        if ("BRANCH_APPROVED".equals(status)) return 4;
+        if ("BRANCH_REJECTED".equals(status)) return 5;
+        return 9;
     }
 
     private BranchLoanReviewDto mapToDto(Loan loan) {
