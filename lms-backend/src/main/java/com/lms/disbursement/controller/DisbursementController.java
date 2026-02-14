@@ -1,6 +1,7 @@
 package com.lms.disbursement.controller;
 
 import com.lms.common.enums.LoanStatus;
+import com.lms.disbursement.dto.DisbursementPageResponse;
 import com.lms.disbursement.dto.DisbursementResponse;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Comparator;
@@ -29,7 +31,10 @@ public class DisbursementController {
     private final WalletTransactionRepository walletTransactionRepository;
 
     @GetMapping
-    public List<DisbursementResponse> getDisbursementQueue() {
+    public DisbursementPageResponse getDisbursementQueue(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
         List<Loan> loans = loanRepository.findByStatusIn(
                 List.of(
                         LoanStatus.DISBURSEMENT_PENDING,
@@ -40,7 +45,7 @@ public class DisbursementController {
         );
 
         if (loans.isEmpty()) {
-            return List.of();
+            return toPage(List.of(), page, size);
         }
 
         List<String> loanIds = loans.stream()
@@ -57,7 +62,7 @@ public class DisbursementController {
                                 (existing, ignored) -> existing
                         ));
 
-        return loans.stream()
+        List<DisbursementResponse> sorted = loans.stream()
                 .sorted(Comparator.comparing(Loan::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
                 .map(loan -> {
                     WalletTransaction tx = latestCreditTxByLoanId.get(loan.getLoanId());
@@ -74,5 +79,30 @@ public class DisbursementController {
                     );
                 })
                 .toList();
+
+        return toPage(sorted, page, size);
+    }
+
+    private DisbursementPageResponse toPage(
+            List<DisbursementResponse> items,
+            int page,
+            int size
+    ) {
+        int safeSize = Math.max(size, 1);
+        int safePage = Math.max(page, 0);
+        int fromIndex = Math.min(safePage * safeSize, items.size());
+        int toIndex = Math.min(fromIndex + safeSize, items.size());
+        List<DisbursementResponse> content = items.subList(fromIndex, toIndex);
+        int totalPages = (int) Math.ceil(items.size() / (double) safeSize);
+
+        return new DisbursementPageResponse(
+                content,
+                safePage,
+                safeSize,
+                items.size(),
+                totalPages,
+                safePage == 0,
+                totalPages == 0 || safePage >= totalPages - 1
+        );
     }
 }

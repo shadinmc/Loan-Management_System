@@ -21,16 +21,19 @@ const STATUS_LABELS = {
 const Disbursements = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
 
   const disbursementsQuery = useQuery({
-    queryKey: ["disbursements"],
-    queryFn: getDisbursements,
+    queryKey: ["disbursements", page, pageSize],
+    queryFn: () => getDisbursements({ page, size: pageSize }),
     enabled: !!localStorage.getItem("token"),
     retry: false,
   });
+  const disbursementPage = disbursementsQuery.data;
 
   const disbursements = useMemo(() => {
-    const items = disbursementsQuery.data || [];
+    const items = disbursementPage?.content || [];
     return items
       .map((loan) => {
         const status = loan.status;
@@ -51,7 +54,7 @@ const Disbursements = () => {
         };
       })
       .filter(Boolean);
-  }, [disbursementsQuery.data]);
+  }, [disbursementPage]);
 
   const filteredData = disbursements.filter((d) => {
     if (statusFilter !== "ALL" && d.status !== statusFilter) return false;
@@ -77,7 +80,10 @@ const Disbursements = () => {
       <div className="stats-grid">
         <div
           className={`stat-card warning ${statusFilter === "DISBURSEMENT_PENDING" ? "active" : ""}`}
-          onClick={() => setStatusFilter("DISBURSEMENT_PENDING")}
+          onClick={() => {
+            setStatusFilter("DISBURSEMENT_PENDING");
+            setPage(0);
+          }}
         >
           <Clock />
           <span>Disbursement Pending</span>
@@ -86,7 +92,10 @@ const Disbursements = () => {
 
         <div
           className={`stat-card info ${statusFilter === "DISBURSED" ? "active" : ""}`}
-          onClick={() => setStatusFilter("DISBURSED")}
+          onClick={() => {
+            setStatusFilter("DISBURSED");
+            setPage(0);
+          }}
         >
           <RefreshCcw />
           <span>Disbursed</span>
@@ -95,7 +104,10 @@ const Disbursements = () => {
 
         <div
           className={`stat-card success ${statusFilter === "ACTIVE" ? "active" : ""}`}
-          onClick={() => setStatusFilter("ACTIVE")}
+          onClick={() => {
+            setStatusFilter("ACTIVE");
+            setPage(0);
+          }}
         >
           <CheckCircle />
           <span>Active</span>
@@ -104,7 +116,10 @@ const Disbursements = () => {
 
         <div
           className={`stat-card danger ${statusFilter === "CLOSED" ? "active" : ""}`}
-          onClick={() => setStatusFilter("CLOSED")}
+          onClick={() => {
+            setStatusFilter("CLOSED");
+            setPage(0);
+          }}
         >
           <XCircle />
           <span>Closed</span>
@@ -118,7 +133,10 @@ const Disbursements = () => {
           <input
             placeholder="Search by loan ID, user ID or transaction ID..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
           />
         </div>
       </div>
@@ -171,6 +189,28 @@ const Disbursements = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="pagination-bar">
+        <button
+          type="button"
+          className="pager-btn"
+          disabled={disbursementPage?.first || disbursementsQuery.isLoading}
+          onClick={() => setPage((p) => Math.max(p - 1, 0))}
+        >
+          Previous
+        </button>
+        <span>
+          Page {(disbursementPage?.page ?? 0) + 1} of {Math.max(disbursementPage?.totalPages ?? 1, 1)}
+        </span>
+        <button
+          type="button"
+          className="pager-btn"
+          disabled={disbursementPage?.last || disbursementsQuery.isLoading}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Next
+        </button>
       </div>
     </>
   );

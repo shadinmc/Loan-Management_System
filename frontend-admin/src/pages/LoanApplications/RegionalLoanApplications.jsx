@@ -21,15 +21,18 @@ const RegionalLoanApplications = () => {
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
 
   const loansQuery = useQuery({
-    queryKey: ["regional-pending-loans"],
-    queryFn: fetchRegionalPendingLoans,
+    queryKey: ["regional-pending-loans", page, pageSize],
+    queryFn: () => fetchRegionalPendingLoans({ page, size: pageSize }),
     enabled: !!localStorage.getItem("token"),
     retry: false,
   });
 
-  const loans = useMemo(() => loansQuery.data || [], [loansQuery.data]);
+  const loanPage = loansQuery.data;
+  const loans = useMemo(() => loanPage?.content || [], [loanPage]);
 
   const filteredLoans = useMemo(() => {
     return loans.filter((loan) => {
@@ -58,7 +61,10 @@ const RegionalLoanApplications = () => {
           <div
             key={type}
             className={`loan-type-card ${selectedType === type ? "active" : ""}`}
-            onClick={() => setSelectedType(selectedType === type ? null : type)}
+            onClick={() => {
+              setSelectedType(selectedType === type ? null : type);
+              setPage(0);
+            }}
           >
             {toLabel(type)} ({countByType(type)})
           </div>
@@ -72,7 +78,10 @@ const RegionalLoanApplications = () => {
             type="text"
             placeholder="Search by loan ID, applicant, email"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
           />
         </div>
       </div>
@@ -125,6 +134,28 @@ const RegionalLoanApplications = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="pagination-bar">
+        <button
+          type="button"
+          className="review-btn"
+          disabled={loanPage?.first || loansQuery.isLoading}
+          onClick={() => setPage((p) => Math.max(p - 1, 0))}
+        >
+          Previous
+        </button>
+        <span>
+          Page {(loanPage?.page ?? 0) + 1} of {Math.max(loanPage?.totalPages ?? 1, 1)}
+        </span>
+        <button
+          type="button"
+          className="review-btn"
+          disabled={loanPage?.last || loansQuery.isLoading}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Next
+        </button>
       </div>
 
       {selectedLoan && (

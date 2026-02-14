@@ -18,13 +18,15 @@ const RegionalDashboard = () => {
   const navigate = useNavigate();
 
   const pendingLoansQuery = useQuery({
-    queryKey: ["regional-pending-loans"],
-    queryFn: fetchRegionalPendingLoans,
+    queryKey: ["regional-pending-loans", "dashboard"],
+    queryFn: () => fetchRegionalPendingLoans({ page: 0, size: 500 }),
     enabled: !!localStorage.getItem("token"),
     retry: false,
   });
 
-  const pendingLoans = useMemo(() => pendingLoansQuery.data || [], [pendingLoansQuery.data]);
+  const pendingLoanPage = pendingLoansQuery.data;
+  const pendingLoans = useMemo(() => pendingLoanPage?.content || [], [pendingLoanPage]);
+  const totalPending = pendingLoanPage?.totalElements ?? pendingLoans.length;
 
   const typeCounts = useMemo(() => {
     return LOAN_TYPES.reduce((acc, type) => {
@@ -48,7 +50,7 @@ const RegionalDashboard = () => {
           <Users />
           <div>
             <p>Branch Approved Queue</p>
-            <h3>{pendingLoans.length}</h3>
+            <h3>{totalPending}</h3>
             <span>Open queue -></span>
           </div>
         </div>
@@ -65,7 +67,7 @@ const RegionalDashboard = () => {
           <FileText />
           <div>
             <p>Total Applications</p>
-            <h3>{pendingLoans.length}</h3>
+            <h3>{totalPending}</h3>
           </div>
         </div>
       </section>

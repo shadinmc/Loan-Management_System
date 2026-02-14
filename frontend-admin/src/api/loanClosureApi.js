@@ -1,7 +1,9 @@
 import api from "./axios";
 
-export const getManagerLoanClosures = async () => {
-  const response = await api.get("/manager/loan-closure");
+export const getManagerLoanClosures = async ({ page = 0, size = 10 } = {}) => {
+  const response = await api.get("/manager/loan-closure", {
+    params: { page, size },
+  });
   return response.data;
 };
 

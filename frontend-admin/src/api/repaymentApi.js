@@ -1,7 +1,9 @@
 import api from "./axios";
 
-export const getManagerRepayments = async () => {
-  const response = await api.get("/repayments/manager");
+export const getManagerRepayments = async ({ page = 0, size = 10 } = {}) => {
+  const response = await api.get("/repayments/manager", {
+    params: { page, size },
+  });
   return response.data;
 };
 

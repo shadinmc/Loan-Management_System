@@ -25,10 +25,12 @@ const RepaymentMonitoring = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");
   const [selectedLoanId, setSelectedLoanId] = useState(null);
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
 
   const repaymentsQuery = useQuery({
-    queryKey: ["manager-repayments"],
-    queryFn: getManagerRepayments,
+    queryKey: ["manager-repayments", page, pageSize],
+    queryFn: () => getManagerRepayments({ page, size: pageSize }),
     enabled: !!localStorage.getItem("token"),
     retry: false,
   });
@@ -40,7 +42,8 @@ const RepaymentMonitoring = () => {
     retry: false,
   });
 
-  const loans = useMemo(() => repaymentsQuery.data || [], [repaymentsQuery.data]);
+  const repaymentPage = repaymentsQuery.data;
+  const loans = useMemo(() => repaymentPage?.content || [], [repaymentPage]);
 
   const filteredLoans = useMemo(() => {
     return loans.filter((loan) => {
@@ -83,14 +86,20 @@ const RepaymentMonitoring = () => {
           <input
             placeholder="Search by Loan ID or Full Name..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
           />
         </div>
 
         <select
           className="status-filter"
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+          onChange={(e) => {
+            setFilter(e.target.value);
+            setPage(0);
+          }}
         >
           <option value="ALL">All Status</option>
           <option value="ACTIVE">Active</option>
@@ -164,6 +173,28 @@ const RepaymentMonitoring = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="pagination-bar">
+        <button
+          type="button"
+          className="pager-btn"
+          disabled={repaymentPage?.first || repaymentsQuery.isLoading}
+          onClick={() => setPage((p) => Math.max(p - 1, 0))}
+        >
+          Previous
+        </button>
+        <span>
+          Page {(repaymentPage?.page ?? 0) + 1} of {Math.max(repaymentPage?.totalPages ?? 1, 1)}
+        </span>
+        <button
+          type="button"
+          className="pager-btn"
+          disabled={repaymentPage?.last || repaymentsQuery.isLoading}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Next
+        </button>
       </div>
 
       {selectedLoanId && (

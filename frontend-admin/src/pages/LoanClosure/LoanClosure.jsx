@@ -14,10 +14,12 @@ const LoanClosure = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
 
   const closuresQuery = useQuery({
-    queryKey: ["manager-loan-closures"],
-    queryFn: getManagerLoanClosures,
+    queryKey: ["manager-loan-closures", page, pageSize],
+    queryFn: () => getManagerLoanClosures({ page, size: pageSize }),
     enabled: !!localStorage.getItem("token"),
     retry: false,
   });
@@ -38,7 +40,8 @@ const LoanClosure = () => {
     },
   });
 
-  const loans = useMemo(() => closuresQuery.data || [], [closuresQuery.data]);
+  const closurePage = closuresQuery.data;
+  const loans = useMemo(() => closurePage?.content || [], [closurePage]);
 
   const filteredLoans = useMemo(() => {
     return loans.filter((loan) => {
@@ -64,7 +67,10 @@ const LoanClosure = () => {
       <div className="stats-grid">
         <div
           className={`stat-card info ${filter === "ACTIVE" ? "active" : ""}`}
-          onClick={() => setFilter("ACTIVE")}
+          onClick={() => {
+            setFilter("ACTIVE");
+            setPage(0);
+          }}
         >
           <Lock />
           <span>Active Loans</span>
@@ -73,7 +79,10 @@ const LoanClosure = () => {
 
         <div
           className={`stat-card success ${filter === "CLOSED" ? "active" : ""}`}
-          onClick={() => setFilter("CLOSED")}
+          onClick={() => {
+            setFilter("CLOSED");
+            setPage(0);
+          }}
         >
           <CheckCircle />
           <span>Closed Loans</span>
@@ -82,11 +91,14 @@ const LoanClosure = () => {
 
         <div
           className={`stat-card neutral ${filter === "ALL" ? "active" : ""}`}
-          onClick={() => setFilter("ALL")}
+          onClick={() => {
+            setFilter("ALL");
+            setPage(0);
+          }}
         >
           <CheckCircle />
           <span>All Loans</span>
-          <strong>{loans.length}</strong>
+          <strong>{closurePage?.totalElements ?? loans.length}</strong>
         </div>
       </div>
 
@@ -96,7 +108,10 @@ const LoanClosure = () => {
           <input
             placeholder="Search by loan ID or borrower name..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
           />
         </div>
       </div>
@@ -165,6 +180,28 @@ const LoanClosure = () => {
           </div>
         ))
       )}
+
+      <div className="pagination-bar">
+        <button
+          type="button"
+          className="pager-btn"
+          disabled={closurePage?.first || closuresQuery.isLoading}
+          onClick={() => setPage((p) => Math.max(p - 1, 0))}
+        >
+          Previous
+        </button>
+        <span>
+          Page {(closurePage?.page ?? 0) + 1} of {Math.max(closurePage?.totalPages ?? 1, 1)}
+        </span>
+        <button
+          type="button"
+          className="pager-btn"
+          disabled={closurePage?.last || closuresQuery.isLoading}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Next
+        </button>
+      </div>
     </>
   );
 };

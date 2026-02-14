@@ -256,3 +256,39 @@ strong {
   background: #dc2626;
   color: white;
 }
+
+.consent-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.consent-modal {
+  width: min(420px, 92vw);
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.consent-modal h4 {
+  margin: 0 0 8px 0;
+}
+
+.consent-modal p {
+  margin: 0 0 12px 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.consent-check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 13px;
+  margin-bottom: 12px;
+}

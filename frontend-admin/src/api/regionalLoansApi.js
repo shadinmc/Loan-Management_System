@@ -1,7 +1,9 @@
 import api from "./axios";
 
-export const fetchRegionalPendingLoans = async () => {
-  const response = await api.get("/regional/loans/pending");
+export const fetchRegionalPendingLoans = async ({ page = 0, size = 10 } = {}) => {
+  const response = await api.get("/regional/loans/pending", {
+    params: { page, size },
+  });
   return response.data;
 };
 

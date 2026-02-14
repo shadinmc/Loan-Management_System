@@ -5,6 +5,7 @@ import com.lms.cibil.service.CibilScoreService;
 import com.lms.common.enums.LoanStatus;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
+import com.lms.repayment.dto.ManagerLoanClosurePageResponse;
 import com.lms.repayment.dto.ManagerLoanClosureResponse;
 import com.lms.repayment.entity.RepaymentSchedule;
 import com.lms.repayment.enums.RepaymentStatus;
@@ -28,19 +29,26 @@ public class ManagerLoanClosureService {
     private final UserRepository userRepository;
     private final CibilScoreService cibilScoreService;
 
-    public List<ManagerLoanClosureResponse> getLoanClosureRecords() {
-        return repaymentScheduleRepository.findAll().stream()
+    public ManagerLoanClosurePageResponse getLoanClosureRecords(int page, int size) {
+        List<ManagerLoanClosureResponse> sorted = repaymentScheduleRepository.findAll().stream()
                 .map(schedule -> {
                     Loan loan = loanRepository.findByLoanId(schedule.getLoanId()).orElse(null);
-                    if (loan == null) return null;
+                    if (loan == null) {
+                        return null;
+                    }
                     if (loan.getStatus() != LoanStatus.ACTIVE && loan.getStatus() != LoanStatus.CLOSED) {
                         return null;
                     }
                     return mapToResponse(schedule, loan);
                 })
                 .filter(record -> record != null)
-                .sorted(Comparator.comparing(ManagerLoanClosureResponse::getLoanId))
+                .sorted(Comparator
+                        .comparingInt((ManagerLoanClosureResponse record) -> statusOrder(record.getStatus()))
+                        .thenComparing(ManagerLoanClosureResponse::getClosedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(ManagerLoanClosureResponse::getLoanId, Comparator.reverseOrder()))
                 .toList();
+
+        return toPage(sorted, page, size);
     }
 
     @Transactional
@@ -95,6 +103,39 @@ public class ManagerLoanClosureService {
                 loan.getStatus(),
                 loan.getClosedAt()
         );
+    }
+
+    private ManagerLoanClosurePageResponse toPage(
+            List<ManagerLoanClosureResponse> items,
+            int page,
+            int size
+    ) {
+        int safeSize = Math.max(size, 1);
+        int safePage = Math.max(page, 0);
+        int fromIndex = Math.min(safePage * safeSize, items.size());
+        int toIndex = Math.min(fromIndex + safeSize, items.size());
+        List<ManagerLoanClosureResponse> content = items.subList(fromIndex, toIndex);
+        int totalPages = (int) Math.ceil(items.size() / (double) safeSize);
+
+        return new ManagerLoanClosurePageResponse(
+                content,
+                safePage,
+                safeSize,
+                items.size(),
+                totalPages,
+                safePage == 0,
+                totalPages == 0 || safePage >= totalPages - 1
+        );
+    }
+
+    private int statusOrder(LoanStatus status) {
+        if (status == LoanStatus.ACTIVE) {
+            return 0;
+        }
+        if (status == LoanStatus.CLOSED) {
+            return 1;
+        }
+        return 9;
     }
 
     private boolean isClosureEligible(RepaymentSchedule schedule) {

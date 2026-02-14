@@ -4,6 +4,7 @@ import com.lms.common.enums.LoanStatus;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
 import com.lms.regional.dto.RegionalDecisionResponse;
+import com.lms.regional.dto.RegionalLoanPageResponse;
 import com.lms.regional.dto.RegionalLoanSummaryResponse;
 import com.lms.user.entity.User;
 import com.lms.user.repository.UserRepository;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,7 +24,6 @@ public class RegionalLoanService {
     private final LoanRepository loanRepository;
     private final UserRepository userRepository;
 
-    // Open loan → move to UNDER_REGIONAL_REVIEW
     public Loan getLoanForReview(String loanId) {
 
         Loan loan = loanRepository.findByLoanId(loanId)
@@ -42,7 +43,6 @@ public class RegionalLoanService {
         return loan;
     }
 
-    //  Final decision
     public RegionalDecisionResponse finalizeDecision(
             String loanId,
             boolean approved,
@@ -94,18 +94,17 @@ public class RegionalLoanService {
                 .build();
     }
 
-
-
-    public List<RegionalLoanSummaryResponse> getLoansForRegionalReview() {
-        return loanRepository.findByStatus(LoanStatus.BRANCH_APPROVED)
+    public RegionalLoanPageResponse getLoansForRegionalReview(int page, int size) {
+        List<RegionalLoanSummaryResponse> sorted = loanRepository.findByStatus(LoanStatus.BRANCH_APPROVED)
                 .stream()
+                .sorted(Comparator.comparing(Loan::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
                 .map(loan -> {
                     Optional<User> userOpt = userRepository.findById(loan.getUserId());
                     return RegionalLoanSummaryResponse.builder()
                             .loanId(loan.getLoanId())
                             .userId(loan.getUserId())
-                            .fullName(userOpt.map(u -> u.getFullName()).orElse(loan.getUserId()))
-                            .email(userOpt.map(u -> u.getEmail()).orElse("N/A"))
+                            .fullName(userOpt.map(User::getFullName).orElse(loan.getUserId()))
+                            .email(userOpt.map(User::getEmail).orElse("N/A"))
                             .loanType(loan.getLoanType())
                             .approvedAmount(loan.getApprovedAmount())
                             .status(loan.getStatus())
@@ -119,9 +118,30 @@ public class RegionalLoanService {
                             .build();
                 })
                 .toList();
+
+        return toPage(sorted, page, size);
     }
 
+    private RegionalLoanPageResponse toPage(
+            List<RegionalLoanSummaryResponse> items,
+            int page,
+            int size
+    ) {
+        int safeSize = Math.max(size, 1);
+        int safePage = Math.max(page, 0);
+        int fromIndex = Math.min(safePage * safeSize, items.size());
+        int toIndex = Math.min(fromIndex + safeSize, items.size());
+        List<RegionalLoanSummaryResponse> content = items.subList(fromIndex, toIndex);
+        int totalPages = (int) Math.ceil(items.size() / (double) safeSize);
 
-
-
+        return new RegionalLoanPageResponse(
+                content,
+                safePage,
+                safeSize,
+                items.size(),
+                totalPages,
+                safePage == 0,
+                totalPages == 0 || safePage >= totalPages - 1
+        );
+    }
 }

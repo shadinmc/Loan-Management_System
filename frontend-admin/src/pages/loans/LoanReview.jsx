@@ -128,7 +128,7 @@ const LoanReview = ({ loanId, onClose }) => {
     ["BRANCH_APPROVED", "BRANCH_REJECTED", "CLARIFICATION_REQUIRED"].includes(review?.status)
   ), [review]);
   const canTakeDecision = useMemo(() => (
-    ["APPLIED", "UNDER_BRANCH_REVIEW", "CLARIFICATION_REQUIRED"].includes(review?.status)
+    ["NOT_ELIGIBLE", "APPLIED", "UNDER_BRANCH_REVIEW"].includes(review?.status)
   ), [review]);
 
   const openDocumentInNewTab = (doc) => {

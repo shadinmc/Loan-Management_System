@@ -17,6 +17,9 @@ const toLabel = (value) =>
 const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
   const [decision, setDecision] = useState(null);
   const [reason, setReason] = useState("");
+  const [showApproveConsent, setShowApproveConsent] = useState(false);
+  const [approveConsentChecked, setApproveConsentChecked] = useState(false);
+  const [localDecisionLocked, setLocalDecisionLocked] = useState(false);
 
   const loanQuery = useQuery({
     queryKey: ["regional-loan-review", loan.loanId],
@@ -28,6 +31,7 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
   const decisionMutation = useMutation({
     mutationFn: (payload) => submitRegionalLoanDecision(loan.loanId, payload),
     onSuccess: () => {
+      setLocalDecisionLocked(true);
       onDecisionDone?.();
     },
     onError: (error) => {
@@ -40,8 +44,21 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
   });
 
   const details = loanQuery.data;
+  const currentStatus = details?.status || loan.status;
+  const canTakeRegionalAction =
+    !localDecisionLocked &&
+    ["BRANCH_APPROVED", "UNDER_REGIONAL_REVIEW"].includes(currentStatus);
 
-  const handleApprove = () => {
+  const handleApproveClick = () => {
+    setApproveConsentChecked(false);
+    setShowApproveConsent(true);
+  };
+
+  const handleApproveConfirm = () => {
+    if (!approveConsentChecked) {
+      alert("Please confirm regional consent before approving");
+      return;
+    }
     decisionMutation.mutate({
       approved: true,
       remarks: "Approved by regional manager",
@@ -81,7 +98,7 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
               <div className="grid-2">
                 <div><label>Approved Amount</label><strong>INR {Number(loan.approvedAmount || 0).toLocaleString()}</strong></div>
                 <div><label>Loan Type</label><strong>{toLabel(loan.loanType)}</strong></div>
-                <div><label>Status</label><strong>{details?.status || loan.status}</strong></div>
+                <div><label>Status</label><strong>{currentStatus}</strong></div>
                 <div><label>User ID</label><strong>{loan.userId}</strong></div>
               </div>
             </section>
@@ -103,8 +120,8 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
               <div className="decision-actions">
                 <button
                   className="approve"
-                  onClick={handleApprove}
-                  disabled={decisionMutation.isPending}
+                  onClick={handleApproveClick}
+                  disabled={decisionMutation.isPending || !canTakeRegionalAction}
                 >
                   <CheckCircle /> Final Approval
                 </button>
@@ -112,13 +129,19 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
                 <button
                   className="reject"
                   onClick={() => setDecision("REJECT")}
-                  disabled={decisionMutation.isPending}
+                  disabled={decisionMutation.isPending || !canTakeRegionalAction}
                 >
                   <XCircle /> Final Rejection
                 </button>
               </div>
 
-              {decision === "REJECT" && (
+              {!canTakeRegionalAction && (
+                <p className="notes">
+                  Decision actions are disabled for status: {currentStatus}
+                </p>
+              )}
+
+              {canTakeRegionalAction && decision === "REJECT" && (
                 <div className="reject-box">
                   <label>Why are you rejecting this application?</label>
                   <textarea
@@ -139,6 +162,35 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
                 </div>
               )}
             </section>
+
+            {showApproveConsent && (
+              <div className="consent-overlay">
+                <div className="consent-modal">
+                  <h4>Regional Approval Consent</h4>
+                  <p>Please confirm this loan is verified for final regional approval.</p>
+                  <label className="consent-check">
+                    <input
+                      type="checkbox"
+                      checked={approveConsentChecked}
+                      onChange={(e) => setApproveConsentChecked(e.target.checked)}
+                    />
+                    <span>I confirm final regional verification and approve this loan.</span>
+                  </label>
+                  <div className="actions">
+                    <button className="cancel" onClick={() => setShowApproveConsent(false)}>
+                      Cancel
+                    </button>
+                    <button
+                      className="confirm-reject"
+                      disabled={!approveConsentChecked || decisionMutation.isPending}
+                      onClick={handleApproveConfirm}
+                    >
+                      {decisionMutation.isPending ? "Approving..." : "Confirm Final Approval"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
