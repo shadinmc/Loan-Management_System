@@ -390,7 +390,7 @@ export default function EMICalculator({ isModal = false, onClose }) {
                     style={{
                       '--fill-percent': `${tenurePercent}%`,
                       '--slider-color': config.color
-                    }}
+                    }}  
                   />
                   <input
                     type="range"

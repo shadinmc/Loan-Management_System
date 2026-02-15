@@ -1,63 +1,68 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import StatusBadge from "../../components/StatusBadge";
 import RegionalLoanReview from "../loans/RegionalLoanReview";
+import { fetchRegionalPendingLoans } from "../../api/regionalLoansApi";
 import "./RegionalLoanApplications.css";
 
-/* ===========================
-   DUMMY DATA
-   =========================== */
-const REGIONAL_LOANS = [
-  {
-    id: "LN-2026-002",
-    applicant: "Sneha Reddy",
-    email: "sneha.r@email.com",
-    type: "Vehicle Loan",
-    amount: 750000,
-    status: "PENDING_REGIONAL_REVIEW"
-  },
-  {
-    id: "LN-2026-003",
-    applicant: "Arjun Rao",
-    email: "arjun.rao@email.com",
-    type: "Personal Loan",
-    amount: 500000,
-    status: "APPROVED"
-  },
-  {
-    id: "LN-2026-004",
-    applicant: "Meena Patel",
-    email: "meena.p@email.com",
-    type: "Business Loan",
-    amount: 1200000,
-    status: "REJECTED"
-  }
+const LOAN_TYPES = [
+  { value: "PERSONAL", label: "Personal Loan" },
+  { value: "VEHICLE", label: "Vehicle Loan" },
+  { value: "BUSINESS", label: "Business Loan" },
+  { value: "EDUCATION", label: "Education Loan" }
 ];
 
-const LOAN_TYPES = [
-  "Personal Loan",
-  "Vehicle Loan",
-  "Business Loan",
-  "Education Loan"
-];
+const formatLoanType = (loanType) => {
+  const match = LOAN_TYPES.find((type) => type.value === loanType);
+  if (match) return match.label;
+  if (!loanType) return "N/A";
+  return loanType.replaceAll("_", " ");
+};
+
+const getStoredToken = () => {
+  const rawAuth = localStorage.getItem("adminAuth");
+  const parsedAuth = rawAuth ? JSON.parse(rawAuth) : null;
+  return localStorage.getItem("token") || parsedAuth?.token || null;
+};
 
 const RegionalLoanApplications = () => {
-  const [selectedLoan, setSelectedLoan] = useState(null);
+  const [selectedLoanId, setSelectedLoanId] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
 
+  const token = getStoredToken();
+
+  const loansQuery = useQuery({
+    queryKey: ["regional-loans-pending"],
+    queryFn: fetchRegionalPendingLoans,
+    enabled: !!token,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const loans = useMemo(() => {
+    const items = loansQuery.data || [];
+    return items.map((loan) => ({
+      id: loan.loanId || loan.id,
+      applicant: loan.applicantName || loan.userName || loan.userId || "N/A",
+      email: loan.email || loan.userEmail || "N/A",
+      type: formatLoanType(loan.loanType),
+      amount: Number(loan.approvedAmount ?? loan.loanAmount ?? 0),
+      status: loan.status || "BRANCH_APPROVED",
+      raw: loan,
+    }));
+  }, [loansQuery.data]);
+
   /* ===========================
      FILTER LOGIC
      =========================== */
-  const filteredLoans = REGIONAL_LOANS.filter((loan) => {
-    // Card filter
-    if (selectedType && loan.type !== selectedType) return false;
+  const filteredLoans = loans.filter((loan) => {
+    if (selectedType && loan.raw?.loanType !== selectedType) return false;
 
-    // Status filter
     if (statusFilter !== "ALL" && loan.status !== statusFilter) return false;
 
-    // Search filter
     if (search) {
       const q = search.toLowerCase();
       const applicant = loan.applicant?.toLowerCase() || "";
@@ -81,15 +86,15 @@ const RegionalLoanApplications = () => {
       <div className="loan-card-grid">
         {LOAN_TYPES.map((type) => (
           <div
-            key={type}
+            key={type.value}
             className={`loan-type-card ${
-              selectedType === type ? "active" : ""
+              selectedType === type.value ? "active" : ""
             }`}
             onClick={() =>
-              setSelectedType(selectedType === type ? null : type)
+              setSelectedType(selectedType === type.value ? null : type.value)
             }
           >
-            {type}
+            {type.label}
           </div>
         ))}
       </div>
@@ -112,8 +117,8 @@ const RegionalLoanApplications = () => {
           onChange={(e) => setStatusFilter(e.target.value)}
         >
           <option value="ALL">All Status</option>
-          <option value="PENDING_REGIONAL_REVIEW">Pending My Review</option>
-          <option value="APPROVED">Approved</option>
+          <option value="BRANCH_APPROVED">Pending My Review</option>
+          <option value="DISBURSEMENT_PENDING">Approved</option>
           <option value="REJECTED">Rejected</option>
         </select>
       </div>
@@ -133,7 +138,19 @@ const RegionalLoanApplications = () => {
           </thead>
 
           <tbody>
-            {filteredLoans.length === 0 ? (
+            {loansQuery.isLoading ? (
+              <tr>
+                <td colSpan="6" className="empty-state">
+                  Loading applications...
+                </td>
+              </tr>
+            ) : loansQuery.isError ? (
+              <tr>
+                <td colSpan="6" className="empty-state">
+                  Failed to load applications
+                </td>
+              </tr>
+            ) : filteredLoans.length === 0 ? (
               <tr>
                 <td colSpan="6" className="empty-state">
                   No applications found
@@ -149,7 +166,7 @@ const RegionalLoanApplications = () => {
                     <div className="email">{loan.email}</div>
                   </td>
                   <td className="amount">
-                    ₹{loan.amount.toLocaleString()}
+                    INR {loan.amount.toLocaleString()}
                   </td>
                   <td>
                     <StatusBadge status={loan.status} />
@@ -157,9 +174,9 @@ const RegionalLoanApplications = () => {
                   <td>
                     <button
                       className="review-btn"
-                      onClick={() => setSelectedLoan(loan)}
+                      onClick={() => setSelectedLoanId(loan.id)}
                     >
-                      👁 Review
+                      Review
                     </button>
                   </td>
                 </tr>
@@ -170,10 +187,10 @@ const RegionalLoanApplications = () => {
       </div>
 
       {/* REVIEW MODAL */}
-      {selectedLoan && (
+      {selectedLoanId && (
         <RegionalLoanReview
-          loan={selectedLoan}
-          onClose={() => setSelectedLoan(null)}
+          loanId={selectedLoanId}
+          onClose={() => setSelectedLoanId(null)}
         />
       )}
     </>
