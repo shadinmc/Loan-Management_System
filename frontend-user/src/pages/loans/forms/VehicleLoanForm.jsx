@@ -6,12 +6,13 @@ import Input from '../../../components/Input';
 import FileUpload from '../../../components/FileUpload';
 import Button from '../../../components/Button';
 import { validateRequired, validateAmount } from '../../../utils/validators';
-import { LOAN_CONFIG, LOAN_TYPES } from '../../../utils/constants';
+import { LOAN_CONFIG, LOAN_TYPES, VEHICLE_TYPES } from '../../../utils/constants';
 import { useCreateLoan } from '../../../hooks/useCreateLoan';
 
 export default function VehicleLoanForm({ onSubmit, loading: externalLoading, config }) {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
   const { createLoan, loading, error: apiError } = useCreateLoan(
-    'http://localhost:8080/api/loans/apply',
+    `${apiBaseUrl}/loans/apply`,
     { loanType: 'VEHICLE', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false }
   );
 
@@ -62,17 +63,28 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
     { id: 4, title: 'Review', icon: Eye, description: 'Review & submit' }
   ];
 
+  const getCalculatedLoanAmount = (nextFormData = formData) => {
+    const price = Number(nextFormData.vehiclePrice);
+    const down = Number(nextFormData.downPayment);
+    if (!Number.isFinite(price) || !Number.isFinite(down)) return NaN;
+    if (price <= 0) return NaN;
+    if (down < 0 || down >= price) return NaN;
+    return price - down;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-
-    if (name === 'vehiclePrice' || name === 'downPayment') {
-      const price = name === 'vehiclePrice' ? Number(value) : Number(formData.vehiclePrice);
-      const down = name === 'downPayment' ? Number(value) : Number(formData.downPayment);
-      if (price && down) {
-        setFormData(prev => ({ ...prev, loanAmount: (price - down).toString() }));
+    setFormData(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === 'vehiclePrice' || name === 'downPayment') {
+        const calculated = getCalculatedLoanAmount(next);
+        return {
+          ...next,
+          loanAmount: Number.isFinite(calculated) ? calculated.toString() : ''
+        };
       }
-    }
+      return next;
+    });
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -112,7 +124,7 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
         newErrors.downPayment = 'Down payment must be less than vehicle price';
       }
 
-      const calculatedLoanAmount = Number(formData.vehiclePrice) - Number(formData.downPayment);
+      const calculatedLoanAmount = getCalculatedLoanAmount();
       if (!validateAmount(calculatedLoanAmount, loanConfig.minAmount, loanConfig.maxAmount)) {
         newErrors.loanAmount = `Loan amount must be between ₹${loanConfig.minAmount.toLocaleString()} and ₹${loanConfig.maxAmount.toLocaleString()}`;
       }
@@ -150,18 +162,18 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
       fileToBase64(formData.insuranceProof),
       fileToBase64(formData.downPaymentProof)
     ]);
+    const calculatedLoanAmount = getCalculatedLoanAmount();
     const payload = {
       loanType: 'VEHICLE',
-      loanAmount: Number(formData.loanAmount),
+      loanAmount: Number.isFinite(calculatedLoanAmount) ? Number(calculatedLoanAmount) : Number(formData.loanAmount),
       tenureMonths: Number(formData.tenureMonths),
       interestRate: loanConfig.interestRate || 9.5,
       vehicleLoanDetails: {
         vehicleType: formData.vehicleType,
         vehicleBrand: formData.vehicleBrand,  // Added
         vehicleModel: formData.vehicleModel.trim(),
-        vehiclePrice: Number(formData.vehiclePrice),
-        downPayment: Number(formData.downPayment),
-        vehicleRegistrationNumber: formData.vehicleRegistrationNumber?.trim() || null,
+        downPaymentAmount: Number(formData.downPayment),
+        dealerName: `${formData.vehicleBrand} Dealer`,
         proofOfIdentity,
         proofOfIncome,
         insuranceProof,
@@ -193,10 +205,7 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
 
   const vehicleTypes = [
     { value: '', label: 'Select Vehicle Type' },
-    { value: 'TWO_WHEELER', label: 'Two Wheeler' },
-    { value: 'CAR', label: 'Car' },
-    { value: 'SUV', label: 'SUV' },
-    { value: 'COMMERCIAL', label: 'Commercial Vehicle' }
+    ...VEHICLE_TYPES
   ];
 
   const tenureOptions = [
@@ -218,12 +227,14 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
     visible: (i) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, type: 'spring', stiffness: 100 } })
   };
 
-  const emi = formData.loanAmount && formData.tenureMonths
-    ? calculateEMI(Number(formData.loanAmount), loanConfig.interestRate || 9.5, Number(formData.tenureMonths))
+  const calculatedLoanAmount = getCalculatedLoanAmount();
+  const effectiveLoanAmount = Number.isFinite(calculatedLoanAmount) ? calculatedLoanAmount : 0;
+  const emi = effectiveLoanAmount && formData.tenureMonths
+    ? calculateEMI(effectiveLoanAmount, loanConfig.interestRate || 9.5, Number(formData.tenureMonths))
     : 0;
 
   const totalPayable = emi * Number(formData.tenureMonths || 0);
-  const totalInterest = totalPayable - Number(formData.loanAmount || 0);
+  const totalInterest = totalPayable - effectiveLoanAmount;
 
   if (showSuccess) {
     return <SuccessScreen loanId={submittedLoanId} loanType="Vehicle" onClose={() => onSubmit?.()} />;
@@ -417,9 +428,9 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
                     name="loanAmount"
                     type="number"
                     value={formData.loanAmount}
-                    onChange={handleChange}
                     placeholder="Enter loan amount"
                     error={errors.loanAmount}
+                    readOnly
                   />
                 </motion.div>
                 <motion.div custom={2} variants={itemVariants} initial="hidden" animate="visible" className="full-width">
@@ -588,7 +599,7 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
                   icon={<CreditCard size={20} />}
                   items={[
                     { label: 'Down Payment', value: `₹${Number(formData.downPayment).toLocaleString()}` },
-                    { label: 'Loan Amount', value: `₹${Number(formData.loanAmount).toLocaleString()}` },
+                    { label: 'Loan Amount', value: `₹${Number(effectiveLoanAmount).toLocaleString()}` },
                     { label: 'Tenure', value: `${formData.tenureMonths} Months (${formData.tenureMonths / 12} Years)` },
                     { label: 'Interest Rate', value: `${loanConfig.interestRate}% p.a.` }
                   ]}
@@ -602,7 +613,7 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
                     { label: 'Monthly EMI', value: `₹${emi.toLocaleString()}`, highlight: true },
                     { label: 'Total Amount Payable', value: `₹${totalPayable.toLocaleString()}` },
                     { label: 'Total Interest', value: `₹${totalInterest.toLocaleString()}` },
-                    { label: 'Principal Amount', value: `₹${Number(formData.loanAmount).toLocaleString()}` }
+                    { label: 'Principal Amount', value: `₹${Number(effectiveLoanAmount).toLocaleString()}` }
                   ]}
                 />
 
@@ -1153,8 +1164,18 @@ const formStyles = `
   }
 
   .review-section.highlighted {
-    background: linear-gradient(135deg, #E9F8EF 0%, #D1F4DD 100%);
+    background: #1a3563;
     border-color: #2DBE60;
+  }
+
+  .review-section.highlighted .review-section-header h4,
+  .review-section.highlighted .review-label,
+  .review-section.highlighted .review-value {
+    color: #FFFFFF;
+  }
+
+  .review-section.highlighted .review-value.highlight {
+    color: #FFFFFF;
   }
 
   .review-section-header {

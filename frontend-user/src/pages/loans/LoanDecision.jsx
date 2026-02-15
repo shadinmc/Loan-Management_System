@@ -116,7 +116,8 @@ export default function LoanDecision() {
     return items.map((loan) => {
       const loanTypeKey = loan.loanType || '';
       const config = LOAN_CONFIG[loanTypeKey] || {};
-      const uiStatus = mapBackendStatus(loan.status);
+      const backendStatus = loan.status || loan.loanStatus || 'APPLIED';
+      const uiStatus = mapBackendStatus(backendStatus);
       return {
         id: loan.loanId || loan.id,
         loanType: config.name || loanTypeKey,
@@ -126,10 +127,10 @@ export default function LoanDecision() {
         emi: Number(loan.emiAmount || 0),
         emiEligible: Boolean(loan.emiEligible),
         status: uiStatus,
-        backendStatus: loan.status,
+        backendStatus,
         decisionMessage: loan.decisionMessage || "",
         appliedDate: loan.appliedDate || loan.createdAt || null,
-        timeline: buildTimeline(loan.status, loan.appliedDate || loan.createdAt, loan.updatedAt)
+        timeline: buildTimeline(backendStatus, loan.appliedDate || loan.createdAt, loan.updatedAt)
       };
     });
   }, [loansQuery.data]);
@@ -441,27 +442,7 @@ export default function LoanDecision() {
           )}
         </AnimatePresence>
 
-        <motion.div
-          className="help-section"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-        >
-          <div className="help-content">
-            <h3>Need Help?</h3>
-            <p>Our support team is available 24/7 to assist you</p>
-          </div>
-          <div className="help-actions">
-            <a href="tel:1800-123-4567" className="help-link">
-              <Phone size={18} />
-              1800-123-4567
-            </a>
-            <a href="mailto:support@loanwiser.com" className="help-link">
-              <Mail size={18} />
-              support@loanwiser.com
-            </a>
-          </div>
-        </motion.div>
+
       </div>
 
       <style>{styles}</style>

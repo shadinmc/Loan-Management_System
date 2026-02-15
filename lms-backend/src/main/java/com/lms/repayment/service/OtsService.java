@@ -19,6 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +33,10 @@ public class OtsService {
     private final SecurityUtils securityUtils;
     private final CibilScoreService cibilScoreService;
 
-    private static final BigDecimal OTS_RATE_FACTOR = new BigDecimal("0.6");
+    /** Customer pays only 60% of remaining EMIs */
+    private static final BigDecimal OTS_DISCOUNT_FACTOR = new BigDecimal("0.60");
+    /** 0.5% per month */
+    private static final BigDecimal OTS_HOLDING_FEE_RATE = new BigDecimal("0.005");
 
     public OtsQuoteResponse getQuote(String loanId) {
 
@@ -47,51 +53,73 @@ public class OtsService {
             throw new RuntimeException("OTS allowed only for ACTIVE loans");
         }
 
-        RepaymentSchedule schedule =
-                repaymentRepo.findByLoanId(loanId)
-                        .orElseThrow(() ->
-                                new RuntimeException("Repayment schedule not found"));
+        RepaymentSchedule schedule = repaymentRepo.findByLoanId(loanId)
+                .orElseThrow(() -> new RuntimeException("Repayment schedule not found"));
 
-        BigDecimal outstanding = schedule.getOutstandingAmount();
+        List<Emi> remainingEmis = (schedule.getEmis() == null ? List.<Emi>of() : schedule.getEmis())
+                .stream()
+                .filter(e -> e.getStatus() == RepaymentStatus.PENDING || e.getStatus() == RepaymentStatus.OVERDUE)
+                .toList();
 
-        long remainingMonths = schedule.getEmis().stream()
-                .filter(e ->
-                        e.getStatus() == RepaymentStatus.PENDING ||
-                                e.getStatus() == RepaymentStatus.OVERDUE)
-                .count();
+        int remainingMonths = remainingEmis.size();
 
-        BigDecimal otsRate =
-                loan.getInterestRate().multiply(OTS_RATE_FACTOR);
-
-        BigDecimal reducedInterest =
-                outstanding
-                        .multiply(otsRate)
-                        .multiply(BigDecimal.valueOf(remainingMonths))
-                        .divide(BigDecimal.valueOf(12 * 100), 2, RoundingMode.HALF_UP);
-
-        BigDecimal totalPenalty = schedule.getEmis().stream()
-                .map(Emi::getPenaltyAmount)
+        BigDecimal remainingEmiTotal = remainingEmis.stream()
+                .map(emi -> emi.getEmiAmount() == null ? BigDecimal.ZERO : emi.getEmiAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Penalty waiver logic
-        BigDecimal penaltyWaiver =
-                totalPenalty.compareTo(BigDecimal.ZERO) > 0
-                        ? totalPenalty.multiply(new BigDecimal("0.5"))
-                        : totalPenalty;
+        BigDecimal discountedOutstanding = remainingEmiTotal
+                .multiply(OTS_DISCOUNT_FACTOR)
+                .setScale(2, RoundingMode.HALF_UP);
 
-        BigDecimal settlementAmount =
-                outstanding
-                        .add(reducedInterest)
-                        .add(totalPenalty)
-                        .subtract(penaltyWaiver);
+        BigDecimal totalPenalty = remainingEmis.stream()
+                .map(emi -> emi.getPenaltyAmount() == null ? BigDecimal.ZERO : emi.getPenaltyAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal penaltyWaiver = totalPenalty
+                .multiply(new BigDecimal("0.50"))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal settlementAmount = discountedOutstanding
+                .add(totalPenalty.subtract(penaltyWaiver))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal principalFloor = loan.getOutstandingPrincipal() == null
+                ? BigDecimal.ZERO
+                : loan.getOutstandingPrincipal();
+
+        if (settlementAmount.compareTo(principalFloor) < 0) {
+            settlementAmount = principalFloor;
+        }
+
+        Instant startInstant = loan.getActivatedAt();
+        if (startInstant == null) {
+            startInstant = loan.getDisbursedDate();
+        }
+        if (startInstant == null) {
+            startInstant = Instant.now();
+        }
+
+        long monthsUsed = ChronoUnit.MONTHS.between(
+                startInstant.atZone(ZoneOffset.UTC).toLocalDate(),
+                Instant.now().atZone(ZoneOffset.UTC).toLocalDate()
+        );
+
+        BigDecimal holdingFee = principalFloor
+                .multiply(OTS_HOLDING_FEE_RATE)
+                .multiply(BigDecimal.valueOf(Math.max(monthsUsed, 1)))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        settlementAmount = settlementAmount
+                .add(holdingFee)
+                .setScale(2, RoundingMode.HALF_UP);
 
         return new OtsQuoteResponse(
-                outstanding,
-                reducedInterest,
+                remainingEmiTotal,
+                remainingEmiTotal.subtract(discountedOutstanding),
                 totalPenalty,
                 penaltyWaiver,
                 settlementAmount,
-                (int) remainingMonths
+                remainingMonths
         );
     }
 
@@ -106,12 +134,10 @@ public class OtsService {
             throw new RuntimeException("Settlement amount mismatch");
         }
 
-        // 1️⃣ Debit wallet
         walletService.withdraw(loanId, amount);
 
-        // 2️⃣ Close repayment schedule
-        RepaymentSchedule schedule =
-                repaymentRepo.findByLoanId(loanId).get();
+        RepaymentSchedule schedule = repaymentRepo.findByLoanId(loanId)
+                .orElseThrow(() -> new RuntimeException("Repayment schedule not found"));
 
         schedule.setClosed(true);
         schedule.setOutstandingAmount(BigDecimal.ZERO);
@@ -121,6 +147,7 @@ public class OtsService {
         schedule.getEmis().forEach(emi -> {
             if (emi.getStatus() != RepaymentStatus.PAID) {
                 emi.setStatus(RepaymentStatus.PAID);
+                emi.setPaidAmount(emi.getEmiAmount());
                 emi.setPaidAt(Instant.now());
             }
         });
@@ -128,19 +155,15 @@ public class OtsService {
         schedule.setUpdatedAt(Instant.now());
         repaymentRepo.save(schedule);
 
-        // 3️⃣ Close loan
-        Loan loan = loanRepository.findByLoanId(loanId).get();
+        Loan loan = loanRepository.findByLoanId(loanId)
+                .orElseThrow(() -> new RuntimeException("Loan not found"));
+
         loan.setStatus(LoanStatus.CLOSED);
         loan.setClosedAt(Instant.now());
         loan.setUpdatedAt(Instant.now());
 
-        cibilScoreService.applyEvent(
-                userId,
-                CibilEventType.LOAN_CLOSED_OTS
-        );
-
+        cibilScoreService.applyEvent(userId, CibilEventType.LOAN_CLOSED_OTS);
 
         loanRepository.save(loan);
     }
 }
-

@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.List;
 
 @Document(collection = "loans")
 @Data
@@ -51,6 +52,12 @@ public class Loan {
     private Instant eligibilityCheckedAt;
     private BigDecimal approvedAmount;
     private Boolean emiEligible;
+    private Integer eligibilityScore;
+    private Integer cibilScore;
+    private String eligibilityRemarks;
+    private List<String> passedRules;
+    private List<String> failedRules;
+    private LoanStatus recommendedStatus;
 
     private String decisionMessage;   // reason / clarification note
 

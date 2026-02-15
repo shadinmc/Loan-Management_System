@@ -1,3 +1,4 @@
+/*
 package com.lms.repayment.controller;
 
 import com.lms.repayment.dto.PrepaymentRequest;
@@ -23,3 +24,4 @@ public class PrepaymentController {
     }
 }
 
+*/

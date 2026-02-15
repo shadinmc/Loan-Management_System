@@ -83,9 +83,10 @@ export default function Dashboard() {
     return items.map((loan) => {
       const loanTypeKey = loan.loanType || '';
       const config = LOAN_CONFIG[loanTypeKey] || {};
+      const backendStatus = loan.status || loan.loanStatus || 'APPLIED';
       return {
         applicationId: loan.loanId || loan.id,
-        status: mapBackendStatus(loan.status),
+        status: mapBackendStatus(backendStatus),
         loanType: config.name || loanTypeKey,
         loanAmount: Number(loan.loanAmount || 0),
         appliedDate: loan.appliedDate || loan.createdAt || new Date().toISOString()

@@ -227,3 +227,13 @@ tbody tr:hover {
   color: #64748b;
   background: #f8fafc;
 }
+
+.pagination-bar {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #475569;
+}
