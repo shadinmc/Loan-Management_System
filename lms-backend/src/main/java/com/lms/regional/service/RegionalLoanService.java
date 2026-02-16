@@ -1,5 +1,7 @@
 package com.lms.regional.service;
 
+import com.lms.audit.service.AuditService;
+import com.lms.auth.security.SecurityUtils;
 import com.lms.common.enums.LoanStatus;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
@@ -9,6 +11,7 @@ import com.lms.regional.dto.RegionalLoanSummaryResponse;
 import com.lms.user.entity.User;
 import com.lms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -16,14 +19,19 @@ import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RegionalLoanService {
 
     private final LoanRepository loanRepository;
     private final UserRepository userRepository;
+    private final AuditService auditService;
+    private final SecurityUtils securityUtils;
 
     public Loan getLoanForReview(String loanId) {
 
@@ -44,6 +52,8 @@ public class RegionalLoanService {
             String remarks
     ) {
 
+        String actorUserId = securityUtils.getCurrentUserId();
+
         Loan loan = loanRepository.findByLoanId(loanId)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
@@ -56,6 +66,7 @@ public class RegionalLoanService {
             throw new IllegalArgumentException("Rejection reason is required");
         }
 
+        LoanStatus previousStatus = loan.getStatus();
         loan.setRegionalReviewedAt(Instant.now());
         loan.setRegionalRemarks(remarks);
         loan.setRegionalApproved(approved);
@@ -71,6 +82,31 @@ public class RegionalLoanService {
         loan.setUpdatedAt(Instant.now());
 
         Loan savedLoan = loanRepository.save(loan);
+
+        try {
+            Map<String, Object> requestPayload = Map.of(
+                    "previousStatus", previousStatus,
+                    "approved", approved,
+                    "remarks", remarks == null ? "" : remarks
+            );
+
+            Map<String, Object> responsePayload = new HashMap<>();
+            responsePayload.put("currentStatus", savedLoan.getStatus());
+            responsePayload.put("disbursementScheduledAt", savedLoan.getDisbursementScheduledAt());
+
+            auditService.log(
+                    actorUserId,
+                    "REGIONAL_DECISION",
+                    "LOAN",
+                    savedLoan.getLoanId(),
+                    requestPayload,
+                    responsePayload,
+                    200,
+                    true
+            );
+        } catch (Exception e) {
+            log.error("AUDIT FAILED — request still successful", e);
+        }
 
         return RegionalDecisionResponse.builder()
                 .userId(savedLoan.getUserId())
