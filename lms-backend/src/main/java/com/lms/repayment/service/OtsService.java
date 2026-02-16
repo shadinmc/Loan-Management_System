@@ -37,6 +37,7 @@ public class OtsService {
     private final SecurityUtils securityUtils;
     private final CibilScoreService cibilScoreService;
     private final OtsPolicyResolver otsPolicyResolver;
+    private final AuditService auditService;
 
 
     private static final BigDecimal OTS_PRINCIPAL_FACTOR = new BigDecimal("0.60");

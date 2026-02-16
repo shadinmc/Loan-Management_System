@@ -71,7 +71,8 @@ public class WalletService {
         wallet.setUpdatedAt(LocalDateTime.now());
         Wallet saved = walletRepository.save(wallet);
 
-        WalletTransaction tx = createTransaction(saved, userId, loanId, amount, PaymentAction.CREDIT);
+        WalletTransaction tx =
+                createTransaction(saved, userId, loanId, amount, PaymentAction.CREDIT, null);
         try {
             Map<String, Object> requestPayload = Map.of(
                     "loanId", loanId,
@@ -120,7 +121,8 @@ public class WalletService {
         wallet.setUpdatedAt(LocalDateTime.now());
         Wallet saved = walletRepository.save(wallet);
 
-        WalletTransaction tx = createTransaction(saved, userId, loanId, amount, PaymentAction.CREDIT);
+        WalletTransaction tx =
+                createTransaction(saved, userId, loanId, amount, PaymentAction.CREDIT, null);
         try {
             Map<String, Object> requestPayload = Map.of(
                     "loanId", loanId,
