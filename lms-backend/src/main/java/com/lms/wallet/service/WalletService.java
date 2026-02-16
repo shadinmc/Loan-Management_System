@@ -1,6 +1,7 @@
 package com.lms.wallet.service;
 
 import com.lms.auth.security.SecurityUtils;
+import com.lms.audit.service.AuditService;
 import com.lms.wallet.dto.WalletResponse;
 import com.lms.wallet.dto.WalletTransactionResponse;
 import com.lms.wallet.entity.Wallet;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,6 +32,7 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
     private final SecurityUtils securityUtils;
+    private final AuditService auditService;
 
     public WalletResponse getMyWallet() {
         String userId = securityUtils.getCurrentUserId();
@@ -59,6 +62,7 @@ public class WalletService {
             String loanId,
             BigDecimal amount
     ) {
+        String actorUserId = "DISBURSEMENT_SCHEDULER";
         Wallet wallet = getOrCreateWallet(userId);
         ensureActive(wallet);
         ensureAmount(amount);
@@ -67,7 +71,34 @@ public class WalletService {
         wallet.setUpdatedAt(LocalDateTime.now());
         Wallet saved = walletRepository.save(wallet);
 
-        createTransaction(saved, userId, loanId, amount, PaymentAction.CREDIT);
+        WalletTransaction tx =
+                createTransaction(saved, userId, loanId, amount, PaymentAction.CREDIT, null);
+        try {
+            Map<String, Object> requestPayload = Map.of(
+                    "loanId", loanId,
+                    "amount", amount,
+                    "action", PaymentAction.CREDIT
+            );
+
+            Map<String, Object> responsePayload = Map.of(
+                    "transactionId", tx.getId(),
+                    "walletId", saved.getId(),
+                    "balance", saved.getBalance()
+            );
+
+            auditService.log(
+                    actorUserId,
+                    "WALLET_CREDIT",
+                    "WALLET",
+                    saved.getId(),
+                    requestPayload,
+                    responsePayload,
+                    200,
+                    true
+            );
+        } catch (Exception e) {
+            log.error("AUDIT FAILED — request still successful", e);
+        }
         log.info("CREDIT WALLET | userId={} loanId={} amount={}",
                 userId, loanId, amount);
         log.info("WALLET BALANCE AFTER CREDIT = {}", saved.getBalance());
@@ -77,25 +108,111 @@ public class WalletService {
 
     public WalletResponse creditForLoan(String loanId, BigDecimal amount) {
         String userId = securityUtils.getCurrentUserId();
-        return creditForLoanSystem(userId, loanId, amount);
+        return creditForLoanUser(userId, loanId, amount);
     }
 
+    private WalletResponse creditForLoanUser(String userId, String loanId, BigDecimal amount) {
+        String actorUserId = userId;
+        Wallet wallet = getOrCreateWallet(userId);
+        ensureActive(wallet);
+        ensureAmount(amount);
 
+        wallet.setBalance(wallet.getBalance().add(amount));
+        wallet.setUpdatedAt(LocalDateTime.now());
+        Wallet saved = walletRepository.save(wallet);
+
+        WalletTransaction tx =
+                createTransaction(saved, userId, loanId, amount, PaymentAction.CREDIT, null);
+        try {
+            Map<String, Object> requestPayload = Map.of(
+                    "loanId", loanId,
+                    "amount", amount,
+                    "action", PaymentAction.CREDIT
+            );
+
+            Map<String, Object> responsePayload = Map.of(
+                    "transactionId", tx.getId(),
+                    "walletId", saved.getId(),
+                    "balance", saved.getBalance()
+            );
+
+            auditService.log(
+                    actorUserId,
+                    "WALLET_CREDIT",
+                    "WALLET",
+                    saved.getId(),
+                    requestPayload,
+                    responsePayload,
+                    200,
+                    true
+            );
+        } catch (Exception e) {
+            log.error("AUDIT FAILED — request still successful", e);
+        }
+        return mapWallet(saved);
+    }
+
+    @Transactional
     public WalletResponse withdraw(String loanId, BigDecimal amount) {
+        return withdraw(loanId, amount, null);
+    }
+
+    @Transactional
+    public WalletResponse withdraw(String loanId, BigDecimal amount, String referenceId) {
         String userId = securityUtils.getCurrentUserId();
         Wallet wallet = getOrCreateWallet(userId);
         ensureActive(wallet);
         ensureAmount(amount);
         ensureSufficientBalance(wallet, amount);
 
+        if (referenceId != null && !referenceId.isBlank()) {
+            boolean alreadyProcessed =
+                    walletTransactionRepository.existsByUserIdAndLoanIdAndActionAndReferenceId(
+                            userId,
+                            loanId,
+                            PaymentAction.WITHDRAWN,
+                            referenceId
+                    );
+            if (alreadyProcessed) {
+                throw new RuntimeException("Duplicate repayment request already processed");
+            }
+        }
+
         wallet.setBalance(wallet.getBalance().subtract(amount));
         wallet.setUpdatedAt(LocalDateTime.now());
         Wallet saved = walletRepository.save(wallet);
 
-        createTransaction(saved, userId, loanId, amount, PaymentAction.WITHDRAWN);
+        WalletTransaction tx = createTransaction(saved, userId, loanId, amount, PaymentAction.WITHDRAWN, referenceId);
+        try {
+            Map<String, Object> requestPayload = Map.of(
+                    "loanId", loanId,
+                    "amount", amount,
+                    "action", PaymentAction.WITHDRAWN
+            );
+
+            Map<String, Object> responsePayload = Map.of(
+                    "transactionId", tx.getId(),
+                    "walletId", saved.getId(),
+                    "balance", saved.getBalance()
+            );
+
+            auditService.log(
+                    userId,
+                    "WALLET_WITHDRAW",
+                    "WALLET",
+                    saved.getId(),
+                    requestPayload,
+                    responsePayload,
+                    200,
+                    true
+            );
+        } catch (Exception e) {
+            log.error("AUDIT FAILED — request still successful", e);
+        }
         return mapWallet(saved);
     }
 
+    @Transactional
     public WalletResponse reimburse(String loanId, BigDecimal amount) {
         String userId = securityUtils.getCurrentUserId();
         Wallet wallet = getOrCreateWallet(userId);
@@ -106,7 +223,33 @@ public class WalletService {
         wallet.setUpdatedAt(LocalDateTime.now());
         Wallet saved = walletRepository.save(wallet);
 
-        createTransaction(saved, userId, loanId, amount, PaymentAction.REIMBURSEMENT);
+        WalletTransaction tx = createTransaction(saved, userId, loanId, amount, PaymentAction.REIMBURSEMENT, null);
+        try {
+            Map<String, Object> requestPayload = Map.of(
+                    "loanId", loanId,
+                    "amount", amount,
+                    "action", PaymentAction.REIMBURSEMENT
+            );
+
+            Map<String, Object> responsePayload = Map.of(
+                    "transactionId", tx.getId(),
+                    "walletId", saved.getId(),
+                    "balance", saved.getBalance()
+            );
+
+            auditService.log(
+                    userId,
+                    "WALLET_REIMBURSE",
+                    "WALLET",
+                    saved.getId(),
+                    requestPayload,
+                    responsePayload,
+                    200,
+                    true
+            );
+        } catch (Exception e) {
+            log.error("AUDIT FAILED — request still successful", e);
+        }
         return mapWallet(saved);
     }
 
@@ -151,12 +294,13 @@ public class WalletService {
         }
     }
 
-    private void createTransaction(
+    private WalletTransaction createTransaction(
             Wallet wallet,
             String userId,
             String loanId,
             BigDecimal amount,
-            PaymentAction action
+            PaymentAction action,
+            String referenceId
     ) {
         WalletTransaction tx = WalletTransaction.builder()
                 .walletId(wallet.getId())
@@ -164,9 +308,10 @@ public class WalletService {
                 .loanId(loanId)
                 .amount(amount)
                 .action(action)
+                .referenceId(referenceId)
                 .doneAt(LocalDateTime.now())
                 .build();
-        walletTransactionRepository.save(tx);
+        return walletTransactionRepository.save(tx);
     }
 
     private WalletResponse mapWallet(Wallet wallet) {

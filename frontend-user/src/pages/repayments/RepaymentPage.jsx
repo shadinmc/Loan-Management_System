@@ -4,13 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Banknote, FileText, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getMyLoans } from '../../api/loanApi';
-import { getOtsQuote, getRepaymentDashboard } from '../../api/repaymentApi';
+import * as repaymentApi from '../../api/repaymentApi';
+import './RepaymentPage.css';
 
 export default function RepaymentPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState('one_time');
   const [installmentTab, setInstallmentTab] = useState('current');
   const [selectedLoanId, setSelectedLoanId] = useState('');
+  const getOtsQuoteFn =
+    repaymentApi.getOtsQuote || repaymentApi.default?.getOtsQuote;
+  const getRepaymentDashboardFn =
+    repaymentApi.getRepaymentDashboard || repaymentApi.default?.getRepaymentDashboard;
 
   const loansQuery = useQuery({
     queryKey: ['repayment', 'loans'],
@@ -25,7 +30,7 @@ export default function RepaymentPage() {
     const allowedStatuses = new Set(['ACTIVE', 'CLOSED']);
     return items
       .map((loan) => {
-        const status = loan.status || loan.loanStatus || '';
+        const status = String(loan.status || loan.loanStatus || '').toUpperCase();
         return {
           id: loan.loanId || loan.id,
           label: `${loan.loanId || loan.id} · ${loan.loanType || 'Loan'}`,
@@ -45,40 +50,69 @@ export default function RepaymentPage() {
 
   const otsQuoteQuery = useQuery({
     queryKey: ['repayment', 'ots-quote', selectedLoanId],
-    queryFn: () => getOtsQuote(selectedLoanId),
+    queryFn: () => {
+      if (typeof getOtsQuoteFn !== 'function') {
+        throw new Error('repaymentApi.getOtsQuote is unavailable');
+      }
+      return getOtsQuoteFn(selectedLoanId);
+    },
     enabled: mode === 'one_time' && !!selectedLoanId && !isLoanClosed,
     retry: false,
   });
+  const otsErrorMessage =
+    otsQuoteQuery.error?.response?.data?.message ||
+    otsQuoteQuery.error?.response?.data?.error ||
+    otsQuoteQuery.error?.message ||
+    'Failed to fetch OTS quote.';
 
   const repaymentQuery = useQuery({
     queryKey: ['repayment', 'dashboard', selectedLoanId],
-    queryFn: () => getRepaymentDashboard(selectedLoanId),
+    queryFn: () => {
+      if (typeof getRepaymentDashboardFn !== 'function') {
+        throw new Error('repaymentApi.getRepaymentDashboard is unavailable');
+      }
+      return getRepaymentDashboardFn(selectedLoanId);
+    },
     enabled: mode === 'installments' && !!selectedLoanId,
     retry: false,
   });
 
   const emis = repaymentQuery.data?.emis || [];
-  const now = new Date();
+  const dueNowOrEarlierEmis = useMemo(() => {
+    if (!emis.length) return [];
+    const now = new Date();
+    const currentMonthKey = now.getFullYear() * 12 + now.getMonth();
+
+    return emis
+      .filter((emi) => ['PENDING', 'OVERDUE'].includes(emi.status))
+      .filter((emi) => {
+        if (!emi?.dueDate) return false;
+        const due = new Date(emi.dueDate);
+        const dueMonthKey = due.getFullYear() * 12 + due.getMonth();
+        return dueMonthKey <= currentMonthKey;
+      })
+      .sort((a, b) => {
+        const aTime = a?.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+        const bTime = b?.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+        return aTime - bTime;
+      });
+  }, [emis]);
+
   const currentEmi = useMemo(() => {
-    if (!emis.length) return null;
-    const pendingEmis = emis.filter((emi) =>
-      ['PENDING', 'OVERDUE'].includes(emi.status)
-    );
-    const sameMonth = pendingEmis.find((emi) => {
-      if (!emi.dueDate) return false;
-      const due = new Date(emi.dueDate);
-      return due.getMonth() === now.getMonth() && due.getFullYear() === now.getFullYear();
-    });
-    return sameMonth || null;
-  }, [emis, now]);
+    return dueNowOrEarlierEmis[0] || null;
+  }, [dueNowOrEarlierEmis]);
 
   const currentEmiPayable = currentEmi
     ? Number(currentEmi.emiAmount || 0) + Number(currentEmi.penaltyAmount || 0)
     : 0;
+  const formatInr = (value) =>
+    value === null || value === undefined
+      ? 'N/A'
+      : `₹${Number(value).toLocaleString('en-IN')}`;
 
   const handlePaySettlement = () => {
     if (!otsQuoteQuery.data?.settlementAmount) return;
-    const amount = Number(otsQuoteQuery.data.settlementAmount);
+    const amount = Number(otsQuoteQuery.data.settlementAmount).toFixed(2);
     navigate(`/wallet?withdraw=1&amount=${encodeURIComponent(amount)}&loanId=${encodeURIComponent(selectedLoanId)}&purpose=ots`);
   };
 
@@ -157,37 +191,29 @@ export default function RepaymentPage() {
                   </div>
                 )}
                 {otsQuoteQuery.isError && (
-                  <div className="panel-body error">Failed to fetch OTS quote.</div>
+                  <div className="panel-body error">{otsErrorMessage}</div>
                 )}
                 {otsQuoteQuery.data && (
                   <div className="panel-body">
                     <div className="quote-grid">
                       <div>
                         <span>Outstanding Principal</span>
-                        <strong>₹{Number(otsQuoteQuery.data.outstandingPrincipal).toLocaleString('en-IN')}</strong>
+                        <strong>{formatInr(otsQuoteQuery.data.outstandingPrincipal)}</strong>
                       </div>
                       <div>
                         <span>Reduced Interest</span>
-                        <strong>₹{Number(otsQuoteQuery.data.reducedInterest).toLocaleString('en-IN')}</strong>
-                      </div>
-                      <div>
-                        <span>Penalty Amount</span>
-                        <strong>₹{Number(otsQuoteQuery.data.penaltyAmount).toLocaleString('en-IN')}</strong>
-                      </div>
-                      <div>
-                        <span>Penalty Waiver</span>
-                        <strong>₹{Number(otsQuoteQuery.data.penaltyWaiver).toLocaleString('en-IN')}</strong>
+                        <strong>{formatInr(otsQuoteQuery.data.reducedInterest)}</strong>
                       </div>
                       <div>
                         <span>Remaining Months</span>
-                        <strong>{otsQuoteQuery.data.remainingMonths}</strong>
+                        <strong>{otsQuoteQuery.data.remainingMonths ?? 'N/A'}</strong>
                       </div>
                     </div>
 
                     <div className="settlement-box">
                       <div>
                         <p>Settlement Amount</p>
-                        <h2>₹{Number(otsQuoteQuery.data.settlementAmount).toLocaleString('en-IN')}</h2>
+                        <h2>{formatInr(otsQuoteQuery.data.settlementAmount)}</h2>
                       </div>
                       <button className="pay-btn" onClick={handlePaySettlement}>
                         Pay Settlement
@@ -272,7 +298,7 @@ export default function RepaymentPage() {
                           </div>
                         </>
                       ) : (
-                        <div className="info-text">No EMI due for the current month.</div>
+                        <div className="info-text">No EMI due for current or previous months.</div>
                       )}
                     </div>
                   )}
@@ -309,346 +335,6 @@ export default function RepaymentPage() {
         </section>
       </div>
 
-      <style>{`
-        .repayment-page {
-          min-height: 100vh;
-          padding: 110px 20px 60px;
-          background: linear-gradient(135deg, #0B1E3C 0%, #1A3563 100%);
-          color: #F1F5FF;
-        }
-
-        .repayment-container {
-          max-width: 720px;
-          margin: 0 auto;
-        }
-
-        .page-header .eyebrow {
-          text-transform: uppercase;
-          font-size: 0.75rem;
-          letter-spacing: 0.2em;
-          color: #7CE6A5;
-          margin-bottom: 8px;
-        }
-
-        .page-header h1 {
-          font-size: 2rem;
-          margin-bottom: 8px;
-        }
-
-        .subtitle {
-          color: #B8C7E3;
-        }
-
-        .mode-switch {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
-          margin: 28px 0;
-        }
-
-        .mode-btn {
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          background: rgba(255, 255, 255, 0.05);
-          color: #B8C7E3;
-          padding: 12px 16px;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        .mode-btn.active {
-          background: rgba(45, 190, 96, 0.2);
-          border-color: rgba(45, 190, 96, 0.5);
-          color: #F1F5FF;
-        }
-
-        .repayment-card {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 18px;
-          padding: 20px;
-        }
-
-        .input-group {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          margin-bottom: 18px;
-        }
-
-        .input-group label {
-          font-weight: 600;
-          color: #F1F5FF;
-        }
-
-        select {
-          padding: 12px 14px;
-          border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          background: rgba(15, 40, 71, 0.8);
-          color: #F1F5FF;
-        }
-
-        .mode-panel {
-          background: rgba(11, 30, 60, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 14px;
-        }
-
-        .panel-header {
-          padding: 14px 16px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          font-weight: 600;
-          display: flex;
-          gap: 8px;
-          align-items: center;
-        }
-
-        .panel-body {
-          padding: 16px;
-          color: #B8C7E3;
-        }
-
-        .panel-body.error {
-          color: #FCA5A5;
-        }
-
-        .panel-body.info {
-          color: #93C5FD;
-        }
-
-        .installment-tabs {
-          display: flex;
-          gap: 10px;
-          margin-bottom: 16px;
-        }
-
-        .tab-btn {
-          background: rgba(255, 255, 255, 0.08);
-          color: #B8C7E3;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          padding: 8px 14px;
-          border-radius: 10px;
-          cursor: pointer;
-          font-weight: 600;
-        }
-
-        .tab-btn.active {
-          background: rgba(45, 190, 96, 0.2);
-          border-color: rgba(45, 190, 96, 0.5);
-          color: #F1F5FF;
-        }
-
-        .info-text {
-          margin-top: 10px;
-          color: #B8C7E3;
-        }
-
-        .info-text.error-text {
-          color: #FCA5A5;
-        }
-
-        .current-emi-card {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .current-emi-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-        }
-
-        .current-emi-grid div {
-          background: rgba(255, 255, 255, 0.06);
-          border-radius: 12px;
-          padding: 12px;
-        }
-
-        .current-emi-grid span {
-          display: block;
-          font-size: 0.75rem;
-          color: #B8C7E3;
-        }
-
-        .current-emi-grid strong {
-          color: #F1F5FF;
-        }
-
-        .emi-table {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .emi-row {
-          display: grid;
-          grid-template-columns: 0.5fr 1fr 1fr 1fr 1fr 1fr;
-          gap: 8px;
-          padding: 10px;
-          background: rgba(255, 255, 255, 0.04);
-          border-radius: 10px;
-          color: #B8C7E3;
-          font-size: 0.85rem;
-        }
-
-        .emi-row.header {
-          background: transparent;
-          font-weight: 700;
-          color: #F1F5FF;
-        }
-
-        .installment-tabs {
-          display: flex;
-          gap: 10px;
-          margin-bottom: 16px;
-        }
-
-        .tab-btn {
-          background: rgba(255, 255, 255, 0.08);
-          color: #B8C7E3;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          padding: 8px 14px;
-          border-radius: 10px;
-          cursor: pointer;
-          font-weight: 600;
-        }
-
-        .tab-btn.active {
-          background: rgba(45, 190, 96, 0.2);
-          border-color: rgba(45, 190, 96, 0.5);
-          color: #F1F5FF;
-        }
-
-        .info-text {
-          margin-top: 10px;
-          color: #B8C7E3;
-        }
-
-        .info-text.error-text {
-          color: #FCA5A5;
-        }
-
-        .current-emi-card {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .current-emi-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-        }
-
-        .current-emi-grid div {
-          background: rgba(255, 255, 255, 0.06);
-          border-radius: 12px;
-          padding: 12px;
-        }
-
-        .current-emi-grid span {
-          display: block;
-          font-size: 0.75rem;
-          color: #B8C7E3;
-        }
-
-        .current-emi-grid strong {
-          color: #F1F5FF;
-        }
-
-        .emi-table {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .emi-row {
-          display: grid;
-          grid-template-columns: 0.5fr 1fr 1fr 1fr 1fr 1fr;
-          gap: 8px;
-          padding: 10px;
-          background: rgba(255, 255, 255, 0.04);
-          border-radius: 10px;
-          color: #B8C7E3;
-          font-size: 0.85rem;
-        }
-
-        .emi-row.header {
-          background: transparent;
-          font-weight: 700;
-          color: #F1F5FF;
-        }
-
-        .quote-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-          margin-bottom: 18px;
-        }
-
-        .quote-grid div {
-          background: rgba(255, 255, 255, 0.06);
-          border-radius: 12px;
-          padding: 12px;
-        }
-
-        .quote-grid span {
-          display: block;
-          font-size: 0.75rem;
-          color: #B8C7E3;
-        }
-
-        .quote-grid strong {
-          font-size: 1rem;
-          color: #F1F5FF;
-        }
-
-        .settlement-box {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 16px;
-          border-radius: 14px;
-          background: linear-gradient(135deg, rgba(45, 190, 96, 0.2), rgba(45, 190, 96, 0.05));
-          border: 1px solid rgba(45, 190, 96, 0.3);
-          gap: 16px;
-        }
-
-        .settlement-box h2 {
-          margin: 4px 0 0;
-        }
-
-        .pay-btn {
-          background: #2DBE60;
-          color: #0B1E3C;
-          border: none;
-          border-radius: 12px;
-          padding: 12px 16px;
-          font-weight: 700;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          cursor: pointer;
-        }
-
-        @media (max-width: 640px) {
-          .mode-switch {
-            grid-template-columns: 1fr;
-          }
-          .quote-grid {
-            grid-template-columns: 1fr;
-          }
-          .settlement-box {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-        }
-      `}</style>
     </div>
   );
 }

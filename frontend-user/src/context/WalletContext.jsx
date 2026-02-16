@@ -1,6 +1,11 @@
 // src/context/WalletContext.jsx
 import { createContext, useContext, useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient
+} from '@tanstack/react-query';
 import {
   getMyWallet,
   getMyTransactionsPaged,
@@ -26,7 +31,7 @@ export function WalletProvider({ children }) {
   const transactionsQuery = useQuery({
     queryKey: ['wallet', 'transactions', page, size],
     queryFn: () => getMyTransactionsPaged(page, size),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     enabled: hasToken,
     retry: false,
   });
@@ -84,6 +89,10 @@ export function WalletProvider({ children }) {
 
   const balance = Number(walletQuery.data?.balance || 0);
   const isLoading = walletQuery.isLoading || transactionsQuery.isLoading;
+  const refreshWalletData = () => {
+    queryClient.invalidateQueries({ queryKey: ['wallet', 'me'] });
+    queryClient.invalidateQueries({ queryKey: ['wallet', 'transactions'] });
+  };
 
   const totalPages = transactionsQuery.data?.totalPages || 0;
   const totalElements = transactionsQuery.data?.totalElements || 0;
@@ -100,7 +109,8 @@ export function WalletProvider({ children }) {
         setPage,
         size,
         totalPages,
-        totalElements
+        totalElements,
+        refreshWalletData
       }}
     >
       {children}

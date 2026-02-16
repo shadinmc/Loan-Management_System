@@ -52,7 +52,7 @@ public class EducationLoanEligibilityStrategy implements LoanEligibilityStrategy
 
         /* 3️ Course duration check */
         if (ctx.getCourseDurationMonths() != null &&
-                ctx.getCourseDurationMonths() >= 6) {
+                ctx.getCourseDurationMonths() >= 18) {
             passedRules.add("Course duration meets minimum requirement");
             score += 30;
         } else {
@@ -61,12 +61,15 @@ public class EducationLoanEligibilityStrategy implements LoanEligibilityStrategy
 
         /* 4️ Co-applicant income check */
         if (ctx.getCoApplicantIncome() != null &&
-                ctx.getCoApplicantIncome().compareTo(BigDecimal.ZERO) > 0) {
-            passedRules.add("Co-applicant income provided");
+                ctx.getCoApplicantIncome().compareTo(new BigDecimal("20000")) > 0) {
+
+            passedRules.add("Co-applicant income ≥ 20,000");
             score += 20;
+
         } else {
-            failedRules.add("Valid co-applicant income is required");
+            failedRules.add("Co-applicant income must be greater than 20,000");
         }
+
 
         boolean eligible = failedRules.isEmpty();
 

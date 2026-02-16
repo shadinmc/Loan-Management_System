@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Sparkles, Shield, Clock, CheckCircle,
-  TrendingUp, Landmark, Calculator, Home, Car, GraduationCap, Briefcase
+  TrendingUp, Calculator, GraduationCap
 } from 'lucide-react';
 import Button from './Button';
 import Carousel from './Carousel';
@@ -16,15 +16,6 @@ import LottieAnimation from './LottieAnimation';
 export default function HeroSection() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [currentStat, setCurrentStat] = useState(0);
-  const [hoveredLoan, setHoveredLoan] = useState(null);
-
-  const stats = [
-    { value: '₹500Cr+', label: 'Loans Disbursed', icon: 'growth' },
-    { value: '50,000+', label: 'Happy Customers', icon: 'check' },
-    { value: '4.8★', label: 'Customer Rating', icon: 'shield' },
-    { value: '24hrs', label: 'Quick Approval', icon: 'clock' }
-  ];
 
   const highlights = [
     { icon: Sparkles, text: 'Instant Eligibility Check', animation: 'sparkle' },
@@ -33,60 +24,6 @@ export default function HeroSection() {
     { icon: CheckCircle, text: 'Minimal Documentation', animation: 'check' }
   ];
 
-  const loanTypes = [
-    {
-      id: 'home',
-      icon: Home,
-      title: 'Home Loan',
-      description: 'Make your dream home a reality',
-      rate: '8.5%',
-      amount: 'Up to ₹5 Cr',
-      color: '#2DBE60',
-      path: '/loan/apply/home',
-      lottieUrl: 'https://assets3.lottiefiles.com/packages/lf20_ynqzqlpo.json'
-    },
-    {
-      id: 'vehicle',
-      icon: Car,
-      title: 'Vehicle Loan',
-      description: 'Drive your dream vehicle today',
-      rate: '9.5%',
-      amount: 'Up to ₹50 L',
-      color: '#3B82F6',
-      path: '/loan/apply/vehicle',
-      lottieUrl: 'https://assets6.lottiefiles.com/packages/lf20_2omr5gpu.json'
-    },
-    {
-      id: 'education',
-      icon: GraduationCap,
-      title: 'Education Loan',
-      description: 'Invest in your future success',
-      rate: '10.5%',
-      amount: 'Up to ₹75 L',
-      color: '#8B5CF6',
-      path: '/loan/apply/education',
-      lottieUrl: 'https://assets1.lottiefiles.com/packages/lf20_swnrn2oy.json'
-    },
-    {
-      id: 'business',
-      icon: Briefcase,
-      title: 'Business Loan',
-      description: 'Fuel your business growth',
-      rate: '12%',
-      amount: 'Up to ₹1 Cr',
-      color: '#F59E0B',
-      path: '/loan/apply/business',
-      lottieUrl: 'https://assets5.lottiefiles.com/packages/lf20_xvrofzfk.json'
-    }
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentStat((prev) => (prev + 1) % stats.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [stats.length]);
-
   useEffect(() => {
     if (location.state?.scrollToLoans) {
       setTimeout(() => {
@@ -94,7 +31,8 @@ export default function HeroSection() {
         if (loansSection) {
           loansSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 100);window.history.replaceState({}, document.title);
+      }, 100);
+      window.history.replaceState({}, document.title);
     }
 
     if (location.state?.scrollToCalculator) {
@@ -149,8 +87,7 @@ export default function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          Get instant loans with competitive rates. From personal needs to business growth,
-          we've got you covered with AI-powered approvals.
+          Experience streamlined loan applications with competitive pricing and intelligent approval workflows. Supporting personal goals and business ambitions with efficiency and control.
         </motion.p>
         <motion.div
           className="slide-actions"
@@ -160,12 +97,6 @@ export default function HeroSection() {
         >
           <Button onClick={() => navigate('/loan/apply/personal')} size="lg">
             Apply Now <ArrowRight size={18} />
-          </Button><Button variant="outline" onClick={() => {
-            const calculator = document.getElementById('emi-calculator');
-            calculator?.scrollIntoView({ behavior: 'smooth' });
-          }}>
-            <Calculator size={18} />
-            Calculate EMI
           </Button>
         </motion.div>
       </div>
@@ -295,6 +226,20 @@ export default function HeroSection() {
           interval={7000}
         />
 
+        <motion.button
+          type="button"
+          className="hero-emi-fab"
+          onClick={() => {
+            const calculator = document.getElementById('emi-calculator');
+            calculator?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+          whileTap={{ scale: 0.96 }}
+          aria-label="Open EMI calculator"
+        >
+          <Calculator size={18} />
+          <span>EMI Calculator</span>
+        </motion.button>
+
         {/* Animated Highlights Bar */}
         <motion.div
           className="highlights-bar"
@@ -320,11 +265,7 @@ export default function HeroSection() {
           })}
         </motion.div>
 
-        {/* Animated Stats Ticker */}
-
       </div>
-
-      {/* Loan Types Section */}
 
 
       {/* EMI Calculator Section */}
@@ -412,13 +353,59 @@ export default function HeroSection() {
         .hero-container {
           max-width: 1200px;
           margin: 0 auto;
-          padding: 120px 24px 80px;
+          padding: 86px 24px 40px;
           position: relative;
           z-index: 1;
-          min-height: 90vh;
+          min-height: 66vh;
           display: flex;
           flex-direction: column;
           justify-content: center;
+        }
+
+        .hero-emi-fab {
+          position: fixed;
+          right: 24px;
+          bottom: 24px;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          height: 48px;
+          width: 48px;
+          border: 1px solid rgba(139, 92, 246, 0.55);
+          border-radius: 999px;
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.95) 0%, rgba(124, 58, 237, 0.95) 100%);
+          color: #ffffff;
+          padding: 0 14px;
+          overflow: hidden;
+          white-space: nowrap;
+          cursor: pointer;
+          transition: width 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+          box-shadow: 0 8px 20px rgba(124, 58, 237, 0.35);
+          z-index: 4;
+        }
+
+        .hero-emi-fab svg {
+          color: #ffffff;
+          flex-shrink: 0;
+        }
+
+        .hero-emi-fab span {
+          opacity: 0;
+          transform: translateX(6px);
+          transition: opacity 0.2s ease, transform 0.2s ease;
+          font-size: 0.9rem;
+          font-weight: 600;
+        }
+
+        .hero-emi-fab:hover {
+          width: 170px;
+          box-shadow: 0 10px 26px rgba(124, 58, 237, 0.45);
+          transform: translateY(-1px);
+        }
+
+        .hero-emi-fab:hover span {
+          opacity: 1;
+          transform: translateX(0);
         }
 
         .hero-slide {
@@ -426,7 +413,7 @@ export default function HeroSection() {
           grid-template-columns: 1fr 1fr;
           gap: 60px;
           align-items: center;
-          min-height: 500px;
+          min-height: 320px;
         }
 
         .slide-content {
@@ -457,7 +444,7 @@ export default function HeroSection() {
         }
 
         .slide-title {
-          font-size: 3.75rem;
+          font-size: 3.2rem;
           font-weight: 800;
           color: white;
           line-height: 1.1;
@@ -479,7 +466,7 @@ export default function HeroSection() {
         }
 
         .slide-description {
-          font-size: 1.2rem;
+          font-size: 1.1rem;
           color: rgba(165, 180, 207, 0.9);
           line-height: 1.7;
           max-width: 500px;
@@ -513,7 +500,7 @@ export default function HeroSection() {
 
         .floating-cards-container {
           position: relative;
-          min-height: 400px;
+          min-height: 320px;
         }
 
         .floating-card {
@@ -567,8 +554,8 @@ export default function HeroSection() {
           gap: 40px;
           justify-content: center;
           flex-wrap: wrap;
-          padding: 40px 0;
-          margin-top: 50px;
+          padding: 28px 0;
+          margin-top: 28px;
           border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
@@ -595,55 +582,6 @@ export default function HeroSection() {
         .highlight-icon {
           color: #2DBE60;
         }
-
-        /* Stats Ticker */
-        .stats-ticker {
-          display: flex;
-          justify-content: center;
-          gap: 60px;
-          flex-wrap: wrap;
-          margin-top: 24px;
-        }
-
-        .stat-item {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 6px;
-          padding: 16px 24px;
-          opacity: 0.5;
-          transition: opacity 0.4s ease;
-          cursor: default;
-        }
-
-        .stat-item.active {
-          opacity: 1;
-        }
-
-        .stat-indicator {
-          position: absolute;
-          inset: 0;
-          background: rgba(45, 190, 96, 0.1);
-          border: 1px solid rgba(45, 190, 96, 0.2);
-          border-radius: 16px;
-        }
-
-        .stat-value {
-          font-size: 2rem;
-          font-weight: 800;
-          color: #2DBE60;
-          position: relative;
-          z-index: 1;
-        }
-
-        .stat-label {
-          font-size: 0.9rem;
-          color: rgba(165, 180, 207, 0.8);
-          position: relative;
-          z-index: 1;
-        }
-
         /* Loans Section */
         .loans-section {
           background: var(--bg-primary);
@@ -860,6 +798,62 @@ export default function HeroSection() {
           background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%) !important;
         }
 
+        .hero-section .carousel-dot {
+          background: #94a3b8;
+        }
+
+        .hero-section .carousel-dot.active {
+          background: #64748b;
+        }
+
+        .hero-section .carousel-dot:hover:not(.active) {
+          background: #7b8798;
+        }
+
+        /* Light mode optimization */
+        [data-theme="light"] .hero-section {
+          background: linear-gradient(180deg, #f8fafc 0%, #eef4fb 100%);
+        }
+
+        [data-theme="light"] .hero-bg {
+          background: linear-gradient(135deg, #f8fafc 0%, #edf4fb 50%, #f8fafc 100%);
+        }
+
+        [data-theme="light"] .bg-pattern {
+          background-image: radial-gradient(rgba(11, 30, 60, 0.06) 1px, transparent 1px);
+        }
+
+        [data-theme="light"] .slide-title {
+          color: var(--text-primary);
+        }
+
+        [data-theme="light"] .slide-description {
+          color: var(--text-secondary);
+        }
+
+        [data-theme="light"] .floating-card {
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid var(--border-color);
+          color: var(--text-primary);
+          box-shadow: var(--shadow-card);
+        }
+
+        [data-theme="light"] .floating-card small {
+          opacity: 1;
+          color: var(--text-muted);
+        }
+
+        [data-theme="light"] .highlights-bar {
+          border-top: 1px solid var(--border-color);
+        }
+
+        [data-theme="light"] .highlight-item {
+          color: var(--text-secondary);
+        }
+        [data-theme="light"] .loans-section::before {
+          background: linear-gradient(180deg, rgba(11, 30, 60, 0.08) 0%, transparent 100%);
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
           .loan-cards-grid {
@@ -869,8 +863,13 @@ export default function HeroSection() {
 
         @media (max-width: 768px) {
           .hero-container {
-            padding: 100px 20px 60px;
+            padding: 78px 20px 36px;
             min-height: auto;
+          }
+
+          .hero-emi-fab {
+            right: 20px;
+            bottom: 16px;
           }
 
           .hero-slide {
@@ -906,15 +905,6 @@ export default function HeroSection() {
           .highlight-item span {
             display: none;
           }
-
-          .stats-ticker {
-            gap: 20px;
-          }
-
-          .stat-value {
-            font-size: 1.5rem;
-          }
-
           .loans-section {
             padding: 80px 0;
           }
@@ -936,3 +926,4 @@ export default function HeroSection() {
     </section>
   );
 }
+

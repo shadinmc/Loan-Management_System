@@ -22,7 +22,7 @@
 
   /* White & Off-White */
   --white-soft: #F6FAF8;
-  --white-card: #8dc7a1;
+  --white-card: #FFFFFF;
   --divider-light: #E6EFEA;
 
   /* Accent Blue */
@@ -30,14 +30,14 @@
   --blue-soft: #E6ECFF;
 
   /* Light Theme */
-  --bg-primary: #8dc7a1;
-  --bg-secondary: #F6FAF8;
-  --bg-tertiary: #E9F8EF;
-  --bg-elevated: #8dc7a1;
-  --card-bg: #8dc7a1;
+  --bg-primary: #F8FAFC;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #F1F5F9;
+  --bg-elevated: #FFFFFF;
+  --card-bg: #FFFFFF;
   --navbar-bg: rgba(255, 255, 255, 0.95);
   --overlay-bg: rgba(11, 30, 60, 0.6);
-  --input-bg: #8dc7a1;
+  --input-bg: #FFFFFF;
 
   /* Accent Colors */
   --accent-primary: #2DBE60;
@@ -51,14 +51,14 @@
   --accent-danger-light: #FEE2E2;
 
   /* Text Colors */
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
-  --text-muted: #64748B;
-  --text-inverted: #8dc7a1;
+  --text-primary: #0B1E3C;
+  --text-secondary: #1E293B;
+  --text-muted: #475569;
+  --text-inverted: #FFFFFF;
 
   /* Border Colors */
-  --border-color: #E6EFEA;
-  --border-light: #F6FAF8;
+  --border-color: #DCE5EE;
+  --border-light: #EEF2F7;
   --border-focus: #2DBE60;
 
   /* Shadows - Solid, no gradients */

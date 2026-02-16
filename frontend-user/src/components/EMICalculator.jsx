@@ -390,7 +390,7 @@ export default function EMICalculator({ isModal = false, onClose }) {
                     style={{
                       '--fill-percent': `${tenurePercent}%`,
                       '--slider-color': config.color
-                    }}
+                    }}  
                   />
                   <input
                     type="range"
@@ -1038,6 +1038,39 @@ export default function EMICalculator({ isModal = false, onClose }) {
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s ease;
+        }
+
+        /* Light mode optimization */
+        [data-theme="light"] .emi-calculator {
+          background: #ffffff;
+          border-color: var(--border-color);
+          box-shadow: 0 6px 24px rgba(11, 30, 60, 0.08);
+        }
+
+        [data-theme="light"] .calculator-tabs,
+        [data-theme="light"] .calculator-results,
+        [data-theme="light"] .loan-description,
+        [data-theme="light"] .emi-display,
+        [data-theme="light"] .breakdown-chart,
+        [data-theme="light"] .stat-item {
+          background: #ffffff;
+        }
+
+        [data-theme="light"] .tab-btn:hover {
+          background: var(--bg-tertiary);
+        }
+
+        [data-theme="light"] .stat-item.highlight {
+          background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-primary-hover) 100%);
+          border: none;
+        }
+
+        [data-theme="light"] .stat-item.highlight .stat-label {
+          color: rgba(255, 255, 255, 0.85);
+        }
+
+        [data-theme="light"] .stat-item.highlight .stat-value {
+          color: #ffffff;
         }
 
         @media (max-width: 768px) {

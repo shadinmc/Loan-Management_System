@@ -4,7 +4,7 @@ import { Wallet, GraduationCap, Briefcase, Car, ArrowRight, Check } from 'lucide
 
 /**
  * Loan Card Component
- * Premium fintech design with solid colors
+ * Summary visible by default, details revealed on hover.
  */
 export default function LoanCard({ loan, index }) {
   const navigate = useNavigate();
@@ -30,8 +30,7 @@ export default function LoanCard({ loan, index }) {
     <div
       className="loan-card"
       style={{
-        '--card-color': loan.color,
-        '--card-bg-light': loan.bgColor || '#E9F8EF',
+        '--card-color': loan.color || 'var(--accent-primary)',
         animationDelay: `${index * 0.1}s`
       }}
     >
@@ -39,20 +38,15 @@ export default function LoanCard({ loan, index }) {
         <div className="icon-wrapper">
           <IconComponent size={24} />
         </div>
-        <div className="rate-badge">
-          {loan.interestRate}
-        </div>
+        <div className="rate-badge">{loan.interestRate}</div>
       </div>
 
       <h3 className="card-title">{loan.name}</h3>
-      <p className="card-description">{loan.description}</p>
 
       <div className="card-details">
         <div className="detail">
-          <span className="label">Amount</span>
-          <span className="value">
-            ₹{(loan.minAmount / 100000).toFixed(0)}L - ₹{(loan.maxAmount / 100000).toFixed(0)}L
-          </span>
+          <span className="label">Up To</span>
+          <span className="value">{'\u20B9'}{(loan.maxAmount / 100000).toFixed(0)}L</span>
         </div>
         <div className="detail">
           <span className="label">Tenure</span>
@@ -60,19 +54,23 @@ export default function LoanCard({ loan, index }) {
         </div>
       </div>
 
-      <ul className="feature-list">
-        {loan.features.slice(0, 3).map((feature, idx) => (
-          <li key={idx}>
-            <Check size={14} />
-            {feature}
-          </li>
-        ))}
-      </ul>
+      <div className="card-extra">
+        <p className="card-description">{loan.description}</p>
 
-      <button className="apply-button" onClick={handleApply}>
-        <span>Apply Now</span>
-        <ArrowRight size={16} />
-      </button>
+        <ul className="feature-list">
+          {loan.features.slice(0, 3).map((feature, idx) => (
+            <li key={idx}>
+              <Check size={14} />
+              {feature}
+            </li>
+          ))}
+        </ul>
+
+        <button className="apply-button" onClick={handleApply}>
+          <span>Apply Now</span>
+          <ArrowRight size={16} />
+        </button>
+      </div>
 
       <style>{`
         .loan-card {
@@ -102,7 +100,7 @@ export default function LoanCard({ loan, index }) {
         .loan-card:hover {
           transform: translateY(-4px);
           box-shadow: 0 12px 32px rgba(16, 42, 77, 0.12);
-          border-color: var(--card-color);
+          border-color: var(--accent-primary);
         }
 
         .card-header {
@@ -118,17 +116,19 @@ export default function LoanCard({ loan, index }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--card-color);
-          color: white;
+          background: var(--bg-secondary);
+          color: var(--card-color);
+          border: 1px solid var(--border-color);
         }
 
         .rate-badge {
           padding: 6px 12px;
-          background: var(--card-bg-light);
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
           border-radius: 8px;
           font-size: 0.75rem;
           font-weight: 600;
-          color: var(--card-color);
+          color: var(--text-primary);
         }
 
         .card-title {
@@ -136,12 +136,6 @@ export default function LoanCard({ loan, index }) {
           font-weight: 700;
           color: var(--text-primary);
           letter-spacing: -0.01em;
-        }
-
-        .card-description {
-          font-size: 0.875rem;
-          color: var(--text-secondary);
-          line-height: 1.5;
         }
 
         .card-details {
@@ -171,6 +165,32 @@ export default function LoanCard({ loan, index }) {
           color: var(--text-primary);
         }
 
+        .card-extra {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          opacity: 0;
+          max-height: 0;
+          overflow: hidden;
+          transform: translateY(4px);
+          pointer-events: none;
+          transition: max-height 0.25s ease, opacity 0.22s ease, transform 0.22s ease;
+        }
+
+        .loan-card:hover .card-extra,
+        .loan-card:focus-within .card-extra {
+          opacity: 1;
+          max-height: 280px;
+          transform: translateY(0);
+          pointer-events: auto;
+        }
+
+        .card-description {
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+          line-height: 1.5;
+        }
+
         .feature-list {
           list-style: none;
           display: flex;
@@ -188,7 +208,7 @@ export default function LoanCard({ loan, index }) {
         }
 
         .feature-list li svg {
-          color: var(--card-color);
+          color: var(--accent-primary);
           flex-shrink: 0;
         }
 
@@ -198,26 +218,34 @@ export default function LoanCard({ loan, index }) {
           justify-content: center;
           gap: 8px;
           padding: 12px 20px;
-          background: var(--card-bg-light);
+          background: var(--accent-primary);
           border: none;
           border-radius: 10px;
           font-size: 0.9375rem;
           font-weight: 600;
-          color: var(--card-color);
+          color: #ffffff;
           cursor: pointer;
           transition: all 0.2s ease;
           margin-top: auto;
         }
 
         .apply-button:hover {
-          background: var(--card-color);
-          color: white;
+          background: var(--accent-primary-hover);
           transform: scale(1.02);
         }
 
         .apply-button:focus-visible {
-          outline: 2px solid var(--card-color);
+          outline: 2px solid var(--accent-primary);
           outline-offset: 2px;
+        }
+
+        @media (hover: none) {
+          .card-extra {
+            opacity: 1;
+            max-height: 280px;
+            transform: translateY(0);
+            pointer-events: auto;
+          }
         }
       `}</style>
     </div>

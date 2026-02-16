@@ -21,4 +21,3 @@ export const submitRegionalLoanDecision = async (loanId, payload) => {
   const response = await api.post(`/regional/loans/${loanId}/decision`, payload);
   return response.data;
 };
-
