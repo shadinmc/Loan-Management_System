@@ -19,8 +19,8 @@ const AdminDashboard = () => {
 
   const fetchLoans = async () => {
     try {
-      const data = await fetchBranchLoans();
-      setLoans(Array.isArray(data) ? data : data.data || []);
+      const data = await fetchBranchLoans({ page: 0, size: 500 });
+      setLoans(Array.isArray(data) ? data : data.content || []);
     } catch (err) {
       console.error("Error loading dashboard loans", err);
     } finally {

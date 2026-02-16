@@ -11,12 +11,14 @@ const getAuthHeader = () => {
   return { Authorization: `Bearer ${token}` };
 };
 
-export const fetchBranchLoans = async ({ status, emiEligible } = {}) => {
+export const fetchBranchLoans = async ({ status, emiEligible, page = 0, size = 10 } = {}) => {
   const params = {};
   if (status && status !== "ALL") params.status = status;
   if (emiEligible !== undefined && emiEligible !== null) {
     params.emiEligible = emiEligible;
   }
+  params.page = page;
+  params.size = size;
 
   const response = await api.get("/branch/loans", {
     params,

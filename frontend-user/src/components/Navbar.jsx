@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, MoreVertical, Wallet, Calculator } from 'lucide-react';
+import { Menu, MoreVertical, Wallet, Calculator, Banknote } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import LottieAnimation from './LottieAnimation';
@@ -163,6 +163,22 @@ export default function Navbar({ onMenuClick }) {
                   role="menuitem"
                 >
                   Loan Status
+                </Link>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.45 }}
+              >
+                <Link
+                  to="/repayments"
+                  className={`nav-link ${isActive('/repayments') ? 'active' : ''}`}
+                  role="menuitem"
+                >
+                  <Banknote size={16} />
+                  EMI Repayment
                 </Link>
               </motion.div>
             </>

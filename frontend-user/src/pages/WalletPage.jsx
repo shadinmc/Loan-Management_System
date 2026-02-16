@@ -22,6 +22,8 @@ import {
   X
 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
+import { useSearchParams } from 'react-router-dom';
+import { settleOts, payEmi } from '../api/repaymentApi';
 
 export default function WalletPage() {
   const {
@@ -38,6 +40,41 @@ export default function WalletPage() {
   const [showAddMoney, setShowAddMoney] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
+  const [prefillAmount, setPrefillAmount] = useState('');
+  const [prefillWithdrawAmount, setPrefillWithdrawAmount] = useState('');
+  const [withdrawMeta, setWithdrawMeta] = useState({ loanId: null, purpose: null });
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const shouldOpen = searchParams.get('add') === '1';
+    const shouldWithdraw = searchParams.get('withdraw') === '1';
+    const amountParam = searchParams.get('amount');
+    const loanIdParam = searchParams.get('loanId');
+    const purposeParam = searchParams.get('purpose');
+    if (shouldOpen) {
+      if (amountParam) {
+        setPrefillAmount(amountParam);
+      }
+      setShowAddMoney(true);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('add');
+      nextParams.delete('amount');
+      setSearchParams(nextParams, { replace: true });
+    }
+    if (shouldWithdraw) {
+      if (amountParam) {
+        setPrefillWithdrawAmount(amountParam);
+      }
+      setWithdrawMeta({ loanId: loanIdParam || null, purpose: purposeParam || null });
+      setShowWithdraw(true);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('withdraw');
+      nextParams.delete('amount');
+      nextParams.delete('loanId');
+      nextParams.delete('purpose');
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const shouldLock = showAddMoney || showWithdraw;
@@ -304,6 +341,7 @@ export default function WalletPage() {
                 <AddMoneyModal
                   onClose={() => setShowAddMoney(false)}
                   onSubmit={addMoney}
+                  initialAmount={prefillAmount}
                 />,
                 document.body
               )
@@ -311,6 +349,7 @@ export default function WalletPage() {
               <AddMoneyModal
                 onClose={() => setShowAddMoney(false)}
                 onSubmit={addMoney}
+                initialAmount={prefillAmount}
               />
             )
         )}
@@ -321,7 +360,16 @@ export default function WalletPage() {
                 <WithdrawModal
                   balance={balance}
                   onClose={() => setShowWithdraw(false)}
-                  onSubmit={withdrawMoney}
+                  onSubmit={async (amount) => {
+                    await withdrawMoney(amount);
+                    if (withdrawMeta?.purpose === 'ots' && withdrawMeta.loanId) {
+                      await settleOts(withdrawMeta.loanId, Number(amount));
+                    }
+                    if (withdrawMeta?.purpose === 'emi' && withdrawMeta.loanId) {
+                      await payEmi(withdrawMeta.loanId, Number(amount));
+                    }
+                  }}
+                  initialAmount={prefillWithdrawAmount}
                 />,
                 document.body
               )
@@ -329,7 +377,16 @@ export default function WalletPage() {
               <WithdrawModal
                 balance={balance}
                 onClose={() => setShowWithdraw(false)}
-                onSubmit={withdrawMoney}
+                onSubmit={async (amount) => {
+                  await withdrawMoney(amount);
+                  if (withdrawMeta?.purpose === 'ots' && withdrawMeta.loanId) {
+                    await settleOts(withdrawMeta.loanId, Number(amount));
+                  }
+                  if (withdrawMeta?.purpose === 'emi' && withdrawMeta.loanId) {
+                    await payEmi(withdrawMeta.loanId, Number(amount));
+                  }
+                }}
+                initialAmount={prefillWithdrawAmount}
               />
             )
         )}
@@ -342,10 +399,16 @@ export default function WalletPage() {
 
 // Professional Add Money Modal
 // Complete AddMoneyModal component
-function AddMoneyModal({ onClose, onSubmit }) {
-  const [amount, setAmount] = useState('');
+function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
+  const [amount, setAmount] = useState(initialAmount || '');
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (initialAmount) {
+      setAmount(initialAmount.toString());
+    }
+  }, [initialAmount]);
 
   const quickAmounts = [500, 1000, 2000, 5000];
   const paymentMethods = [
@@ -475,8 +538,8 @@ function AddMoneyModal({ onClose, onSubmit }) {
 }
 
 // Complete WithdrawModal component
-function WithdrawModal({ balance, onClose, onSubmit }) {
-  const [amount, setAmount] = useState('');
+function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '' }) {
+  const [amount, setAmount] = useState(initialAmount || '');
   const [selectedBank, setSelectedBank] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -501,6 +564,12 @@ function WithdrawModal({ balance, onClose, onSubmit }) {
       setIsProcessing(false);
     }
   };
+
+  useEffect(() => {
+    if (initialAmount) {
+      setAmount(initialAmount.toString());
+    }
+  }, [initialAmount]);
 
   return createPortal(
     <motion.div

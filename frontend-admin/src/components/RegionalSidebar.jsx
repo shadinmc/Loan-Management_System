@@ -5,7 +5,7 @@ import {
   DollarSign,
   Repeat,
   CheckCircle,
-  ClipboardList
+  FileCheck
 } from "lucide-react";
 
 const RegionalSidebar = () => {
@@ -37,14 +37,14 @@ const RegionalSidebar = () => {
           Repayments
         </NavLink>
 
+        <NavLink to="/regional/kyc" className="nav-link">
+          <FileCheck size={18} />
+          KYC Verification
+        </NavLink>
+
         <NavLink to="/regional/loan-closure" className="nav-link">
           <CheckCircle size={18} />
           Loan Closure
-        </NavLink>
-
-        <NavLink to="/regional/audit-logs" className="nav-link">
-          <ClipboardList size={18} />
-          Audit Logs
         </NavLink>
       </nav>
     </aside>

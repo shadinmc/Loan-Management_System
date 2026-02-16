@@ -42,46 +42,54 @@ public class EmiPaymentService {
             throw new RuntimeException("Loan already closed");
         }
 
-        // 1️⃣ Find next pending EMI
+        /* 1️⃣ Find next due EMI (PENDING or OVERDUE) */
         Emi nextEmi = schedule.getEmis().stream()
-                .filter(e -> e.getStatus() == RepaymentStatus.PENDING)
+                .filter(e ->
+                        e.getStatus() == RepaymentStatus.OVERDUE ||
+                                e.getStatus() == RepaymentStatus.PENDING
+                )
                 .findFirst()
-                .orElseThrow(() ->
-                        new RuntimeException("No pending EMI"));
+                .orElseThrow(() -> new RuntimeException("No due EMI"));
 
-        if (amount.compareTo(nextEmi.getEmiAmount()) < 0) {
+        /* 2️⃣ Calculate payable amount */
+        BigDecimal penalty =
+                nextEmi.getPenaltyAmount() == null
+                        ? BigDecimal.ZERO
+                        : nextEmi.getPenaltyAmount();
+
+        BigDecimal payableAmount =
+                nextEmi.getEmiAmount().add(penalty);
+
+        /* 3️⃣ STRICT amount validation */
+        if (amount.compareTo(payableAmount) != 0) {
             throw new RuntimeException(
-                    "Amount must be at least EMI amount");
+                    "You must pay exact amount: " + payableAmount);
         }
 
-        // 2️⃣ Debit wallet
-        walletService.withdraw(loanId, nextEmi.getEmiAmount());
+        /* 4️⃣ Debit wallet (exact amount only) */
+        walletService.withdraw(loanId, payableAmount);
 
-        // 3️⃣ Mark EMI as PAID
-        nextEmi.setPaidAmount(nextEmi.getEmiAmount());
+        /* 5️⃣ Mark EMI as PAID */
+        nextEmi.setPaidAmount(payableAmount);
+        nextEmi.setPenaltyAmount(BigDecimal.ZERO);
         nextEmi.setStatus(RepaymentStatus.PAID);
         nextEmi.setPaidAt(Instant.now());
 
-        cibilScoreService.applyEvent(
-                userId,
-                CibilEventType.EMI_PAID_ON_TIME
-        );
-
-
-        // 4️⃣ Update schedule summary
+        /* 6️⃣ Update schedule totals */
         schedule.setTotalPaidAmount(
-                schedule.getTotalPaidAmount()
-                        .add(nextEmi.getEmiAmount())
+                schedule.getTotalPaidAmount().add(payableAmount)
         );
 
         schedule.setOutstandingAmount(
-                schedule.getOutstandingAmount()
-                        .subtract(nextEmi.getEmiAmount())
+                schedule.getOutstandingAmount().subtract(nextEmi.getEmiAmount())
         );
 
-        // 5️⃣ Update next EMI info
+        /* 7️⃣ Move next EMI pointer */
         schedule.getEmis().stream()
-                .filter(e -> e.getStatus() == RepaymentStatus.PENDING)
+                .filter(e ->
+                        e.getStatus() == RepaymentStatus.PENDING ||
+                                e.getStatus() == RepaymentStatus.OVERDUE
+                )
                 .findFirst()
                 .ifPresentOrElse(
                         emi -> {
@@ -89,22 +97,15 @@ public class EmiPaymentService {
                             schedule.setNextEmiAmount(emi.getEmiAmount());
                         },
                         () -> {
-
-                            // No pending EMIs → loan fully repaid
                             schedule.setClosed(true);
                             schedule.setNextEmiDate(null);
                             schedule.setNextEmiAmount(BigDecimal.ZERO);
-
-                            //  ADD THIS LINE HERE
-                            cibilScoreService.applyEvent(
-                                    userId,
-                                    CibilEventType.LOAN_CLOSED
-                            );
                         }
                 );
 
         schedule.setUpdatedAt(Instant.now());
         repaymentRepo.save(schedule);
     }
+
 }
 

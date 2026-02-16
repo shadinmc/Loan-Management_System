@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.lms.audit.service.AuditService;
 import com.lms.auth.security.SecurityUtils;
 import com.lms.branch_manager.dto.PendingKycResponse;
+import com.lms.branch_manager.dto.ManagerKycRecordResponse;
 import com.lms.kyc.entity.Kyc;
 import com.lms.kyc.enums.KycStatus;
 import com.lms.kyc.repository.KycRepository;
@@ -96,6 +97,19 @@ public class BranchManagerKycQueryService {
                 .toList();
     }
 
+    public List<ManagerKycRecordResponse> getAllKycRecords() {
+        return kycRepository.findAll()
+                .stream()
+                .sorted((a, b) -> {
+                    if (a.getCreatedAt() == null && b.getCreatedAt() == null) return 0;
+                    if (a.getCreatedAt() == null) return 1;
+                    if (b.getCreatedAt() == null) return -1;
+                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                })
+                .map(this::mapToManagerResponse)
+                .toList();
+    }
+
     private PendingKycResponse mapToResponse(Kyc kyc) {
 
         UserBasicProjection user = userRepository
@@ -111,6 +125,25 @@ public class BranchManagerKycQueryService {
                 kyc.getDocuments(),
                 kyc.getStatus(),
                 kyc.getCreatedAt()
+        );
+    }
+
+    private ManagerKycRecordResponse mapToManagerResponse(Kyc kyc) {
+        UserBasicProjection user = userRepository
+                .findProjectedById(kyc.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new ManagerKycRecordResponse(
+                kyc.getUserId(),
+                user.getFullName(),
+                user.getEmail(),
+                kyc.getAadhaarNumber(),
+                kyc.getPanNumber(),
+                kyc.getDocuments(),
+                kyc.getStatus(),
+                kyc.getCreatedAt(),
+                kyc.getReviewedAt(),
+                kyc.getRejectionReason()
         );
     }
 }
