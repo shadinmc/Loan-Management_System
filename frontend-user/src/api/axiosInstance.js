@@ -1,17 +1,28 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },
   withCredentials: true,
 });
 
+const isMockToken = (token) => {
+  if (!token) return false;
+  const raw = token.startsWith('Bearer ') ? token.slice(7) : token;
+  return /^mock-token-/i.test(raw);
+};
+
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    let token = localStorage.getItem('token');
+    if (isMockToken(token)) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      token = null;
+    }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     } else {

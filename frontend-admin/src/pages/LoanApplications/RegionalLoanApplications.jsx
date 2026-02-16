@@ -1,106 +1,64 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import StatusBadge from "../../components/StatusBadge";
 import RegionalLoanReview from "../loans/RegionalLoanReview";
+import { fetchRegionalLoans } from "../../api/regionalLoansApi";
 import "./RegionalLoanApplications.css";
 
-/* ===========================
-   DUMMY DATA
-   =========================== */
-const REGIONAL_LOANS = [
-  {
-    id: "LN-2026-002",
-    applicant: "Sneha Reddy",
-    email: "sneha.r@email.com",
-    type: "Vehicle Loan",
-    amount: 750000,
-    status: "PENDING_REGIONAL_REVIEW"
-  },
-  {
-    id: "LN-2026-003",
-    applicant: "Arjun Rao",
-    email: "arjun.rao@email.com",
-    type: "Personal Loan",
-    amount: 500000,
-    status: "APPROVED"
-  },
-  {
-    id: "LN-2026-004",
-    applicant: "Meena Patel",
-    email: "meena.p@email.com",
-    type: "Business Loan",
-    amount: 1200000,
-    status: "REJECTED"
-  }
-];
-
-const LOAN_TYPES = [
-  "Personal Loan",
-  "Vehicle Loan",
-  "Business Loan",
-  "Education Loan"
-];
-
 const RegionalLoanApplications = () => {
-  const [selectedLoan, setSelectedLoan] = useState(null);
-  const [selectedType, setSelectedType] = useState(null);
+  const [selectedLoanId, setSelectedLoanId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
 
-  /* ===========================
-     FILTER LOGIC
-     =========================== */
-  const filteredLoans = REGIONAL_LOANS.filter((loan) => {
-    // Card filter
-    if (selectedType && loan.type !== selectedType) return false;
-
-    // Status filter
-    if (statusFilter !== "ALL" && loan.status !== statusFilter) return false;
-
-    // Search filter
-    if (search) {
-      const q = search.toLowerCase();
-      const applicant = loan.applicant?.toLowerCase() || "";
-      const id = loan.id?.toLowerCase() || "";
-
-      if (!applicant.includes(q) && !id.includes(q)) return false;
-    }
-
-    return true;
+  const loansQuery = useQuery({
+    queryKey: ["regional-loans"],
+    queryFn: fetchRegionalLoans,
+    enabled: !!localStorage.getItem("token"),
+    retry: false,
+    refetchOnWindowFocus: false,
   });
+
+  const loans = useMemo(() => {
+    const items = loansQuery.data || [];
+    return items.map((loan) => ({
+      id: loan.loanId,
+      applicant: loan.userId || "N/A",
+      loanType: loan.loanType || "N/A",
+      amount: Number(loan.approvedAmount || 0),
+      status: loan.status,
+      updatedAt: loan.updatedAt,
+    }));
+  }, [loansQuery.data]);
+
+  const filteredLoans = useMemo(() => {
+    return loans.filter((loan) => {
+      if (statusFilter !== "ALL" && loan.status !== statusFilter) return false;
+
+      if (search) {
+        const q = search.toLowerCase();
+        const applicant = String(loan.applicant || "").toLowerCase();
+        const id = String(loan.id || "").toLowerCase();
+        if (!applicant.includes(q) && !id.includes(q)) return false;
+      }
+
+      return true;
+    });
+  }, [loans, search, statusFilter]);
 
   return (
     <>
-      {/* PAGE TITLE */}
       <div className="page-title">
         <h2>Loan Applications</h2>
         <p>Final approval by Regional Manager</p>
       </div>
 
-      {/* LOAN TYPE CARDS */}
-      <div className="loan-card-grid">
-        {LOAN_TYPES.map((type) => (
-          <div
-            key={type}
-            className={`loan-type-card ${
-              selectedType === type ? "active" : ""
-            }`}
-            onClick={() =>
-              setSelectedType(selectedType === type ? null : type)
-            }
-          >
-            {type}
-          </div>
-        ))}
-      </div>
-
-      {/* SEARCH + STATUS FILTER */}
       <div className="filter-bar">
         <div className="search-box">
           <Search size={18} />
           <input
             type="text"
-            placeholder="Search by application # or applicant"
+            placeholder="Search by application # or user"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -112,13 +70,13 @@ const RegionalLoanApplications = () => {
           onChange={(e) => setStatusFilter(e.target.value)}
         >
           <option value="ALL">All Status</option>
-          <option value="PENDING_REGIONAL_REVIEW">Pending My Review</option>
-          <option value="APPROVED">Approved</option>
+          <option value="BRANCH_APPROVED">Pending My Review</option>
+          <option value="UNDER_REGIONAL_REVIEW">Under Regional Review</option>
+          <option value="DISBURSEMENT_PENDING">Approved</option>
           <option value="REJECTED">Rejected</option>
         </select>
       </div>
 
-      {/* TABLE */}
       <div className="table-card">
         <table>
           <thead>
@@ -133,47 +91,61 @@ const RegionalLoanApplications = () => {
           </thead>
 
           <tbody>
-            {filteredLoans.length === 0 ? (
+            {loansQuery.isLoading && (
+              <tr>
+                <td colSpan="6" className="empty-state">
+                  Loading applications...
+                </td>
+              </tr>
+            )}
+
+            {loansQuery.isError && (
+              <tr>
+                <td colSpan="6" className="empty-state">
+                  Failed to load applications
+                </td>
+              </tr>
+            )}
+
+            {!loansQuery.isLoading && !loansQuery.isError && filteredLoans.length === 0 && (
               <tr>
                 <td colSpan="6" className="empty-state">
                   No applications found
                 </td>
               </tr>
-            ) : (
+            )}
+
+            {!loansQuery.isLoading &&
+              !loansQuery.isError &&
               filteredLoans.map((loan) => (
                 <tr key={loan.id}>
                   <td>{loan.id}</td>
-                  <td>{loan.type}</td>
+                  <td>{loan.loanType}</td>
                   <td>
                     <strong>{loan.applicant}</strong>
-                    <div className="email">{loan.email}</div>
                   </td>
-                  <td className="amount">
-                    ₹{loan.amount.toLocaleString()}
-                  </td>
+                  <td className="amount">INR {loan.amount.toLocaleString()}</td>
                   <td>
                     <StatusBadge status={loan.status} />
                   </td>
                   <td>
                     <button
                       className="review-btn"
-                      onClick={() => setSelectedLoan(loan)}
+                      onClick={() => setSelectedLoanId(loan.id)}
                     >
-                      👁 Review
+                      Review
                     </button>
                   </td>
                 </tr>
-              ))
-            )}
+              ))}
           </tbody>
         </table>
       </div>
 
-      {/* REVIEW MODAL */}
-      {selectedLoan && (
+      {selectedLoanId && (
         <RegionalLoanReview
-          loan={selectedLoan}
-          onClose={() => setSelectedLoan(null)}No
+          loanId={selectedLoanId}
+          onClose={() => setSelectedLoanId(null)}
         />
       )}
     </>

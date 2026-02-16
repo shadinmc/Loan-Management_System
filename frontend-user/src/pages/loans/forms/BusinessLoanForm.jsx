@@ -10,7 +10,7 @@ import { useCreateLoan } from '../../../hooks/useCreateLoan';
 
 export default function BusinessLoanForm({ onSubmit, loading: externalLoading, config }) {
   const { createLoan, loading, error: apiError } = useCreateLoan(
-    'http://localhost:8080/api/loans/apply',
+    '/loans/apply',
     { loanType: 'BUSINESS', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false }
   );
 

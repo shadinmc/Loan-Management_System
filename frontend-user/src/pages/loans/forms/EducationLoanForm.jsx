@@ -11,7 +11,7 @@ import { useCreateLoan } from '../../../hooks/useCreateLoan';
 
 export default function EducationLoanForm({ onSubmit, loading: externalLoading, config }) {
   const { createLoan, loading, error } = useCreateLoan(
-    'http://localhost:8080/api/loans/apply',
+    '/loans/apply',
     { loanType: 'EDUCATION', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false }
   );
 
