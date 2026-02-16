@@ -19,4 +19,11 @@ public interface WalletTransactionRepository extends MongoRepository<WalletTrans
     );
 
     Page<WalletTransaction> findByUserIdOrderByDoneAtDesc(String userId, Pageable pageable);
+
+    boolean existsByUserIdAndLoanIdAndActionAndReferenceId(
+            String userId,
+            String loanId,
+            PaymentAction action,
+            String referenceId
+    );
 }

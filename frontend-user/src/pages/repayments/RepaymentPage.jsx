@@ -4,13 +4,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Banknote, FileText, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getMyLoans } from '../../api/loanApi';
-import { getOtsQuote, getRepaymentDashboard } from '../../api/repaymentApi';
+import * as repaymentApi from '../../api/repaymentApi';
 
 export default function RepaymentPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState('one_time');
   const [installmentTab, setInstallmentTab] = useState('current');
   const [selectedLoanId, setSelectedLoanId] = useState('');
+  const getOtsQuoteFn =
+    repaymentApi.getOtsQuote || repaymentApi.default?.getOtsQuote;
+  const getRepaymentDashboardFn =
+    repaymentApi.getRepaymentDashboard || repaymentApi.default?.getRepaymentDashboard;
 
   const loansQuery = useQuery({
     queryKey: ['repayment', 'loans'],
@@ -25,7 +29,7 @@ export default function RepaymentPage() {
     const allowedStatuses = new Set(['ACTIVE', 'CLOSED']);
     return items
       .map((loan) => {
-        const status = loan.status || loan.loanStatus || '';
+        const status = String(loan.status || loan.loanStatus || '').toUpperCase();
         return {
           id: loan.loanId || loan.id,
           label: `${loan.loanId || loan.id} · ${loan.loanType || 'Loan'}`,
@@ -45,40 +49,57 @@ export default function RepaymentPage() {
 
   const otsQuoteQuery = useQuery({
     queryKey: ['repayment', 'ots-quote', selectedLoanId],
-    queryFn: () => getOtsQuote(selectedLoanId),
+    queryFn: () => {
+      if (typeof getOtsQuoteFn !== 'function') {
+        throw new Error('repaymentApi.getOtsQuote is unavailable');
+      }
+      return getOtsQuoteFn(selectedLoanId);
+    },
     enabled: mode === 'one_time' && !!selectedLoanId && !isLoanClosed,
     retry: false,
   });
+  const otsErrorMessage =
+    otsQuoteQuery.error?.response?.data?.message ||
+    otsQuoteQuery.error?.response?.data?.error ||
+    otsQuoteQuery.error?.message ||
+    'Failed to fetch OTS quote.';
 
   const repaymentQuery = useQuery({
     queryKey: ['repayment', 'dashboard', selectedLoanId],
-    queryFn: () => getRepaymentDashboard(selectedLoanId),
+    queryFn: () => {
+      if (typeof getRepaymentDashboardFn !== 'function') {
+        throw new Error('repaymentApi.getRepaymentDashboard is unavailable');
+      }
+      return getRepaymentDashboardFn(selectedLoanId);
+    },
     enabled: mode === 'installments' && !!selectedLoanId,
     retry: false,
   });
 
   const emis = repaymentQuery.data?.emis || [];
-  const now = new Date();
   const currentEmi = useMemo(() => {
     if (!emis.length) return null;
-    const pendingEmis = emis.filter((emi) =>
-      ['PENDING', 'OVERDUE'].includes(emi.status)
-    );
-    const sameMonth = pendingEmis.find((emi) => {
-      if (!emi.dueDate) return false;
-      const due = new Date(emi.dueDate);
-      return due.getMonth() === now.getMonth() && due.getFullYear() === now.getFullYear();
-    });
-    return sameMonth || null;
-  }, [emis, now]);
+    const dueEmis = emis
+      .filter((emi) => ['PENDING', 'OVERDUE'].includes(emi.status))
+      .sort((a, b) => {
+        const aTime = a?.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+        const bTime = b?.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+        return aTime - bTime;
+      });
+    return dueEmis[0] || null;
+  }, [emis]);
 
   const currentEmiPayable = currentEmi
     ? Number(currentEmi.emiAmount || 0) + Number(currentEmi.penaltyAmount || 0)
     : 0;
+  const formatInr = (value) =>
+    value === null || value === undefined
+      ? 'N/A'
+      : `₹${Number(value).toLocaleString('en-IN')}`;
 
   const handlePaySettlement = () => {
     if (!otsQuoteQuery.data?.settlementAmount) return;
-    const amount = Number(otsQuoteQuery.data.settlementAmount);
+    const amount = Number(otsQuoteQuery.data.settlementAmount).toFixed(2);
     navigate(`/wallet?withdraw=1&amount=${encodeURIComponent(amount)}&loanId=${encodeURIComponent(selectedLoanId)}&purpose=ots`);
   };
 
@@ -157,37 +178,29 @@ export default function RepaymentPage() {
                   </div>
                 )}
                 {otsQuoteQuery.isError && (
-                  <div className="panel-body error">Failed to fetch OTS quote.</div>
+                  <div className="panel-body error">{otsErrorMessage}</div>
                 )}
                 {otsQuoteQuery.data && (
                   <div className="panel-body">
                     <div className="quote-grid">
                       <div>
                         <span>Outstanding Principal</span>
-                        <strong>₹{Number(otsQuoteQuery.data.outstandingPrincipal).toLocaleString('en-IN')}</strong>
+                        <strong>{formatInr(otsQuoteQuery.data.outstandingPrincipal)}</strong>
                       </div>
                       <div>
                         <span>Reduced Interest</span>
-                        <strong>₹{Number(otsQuoteQuery.data.reducedInterest).toLocaleString('en-IN')}</strong>
-                      </div>
-                      <div>
-                        <span>Penalty Amount</span>
-                        <strong>₹{Number(otsQuoteQuery.data.penaltyAmount).toLocaleString('en-IN')}</strong>
-                      </div>
-                      <div>
-                        <span>Penalty Waiver</span>
-                        <strong>₹{Number(otsQuoteQuery.data.penaltyWaiver).toLocaleString('en-IN')}</strong>
+                        <strong>{formatInr(otsQuoteQuery.data.reducedInterest)}</strong>
                       </div>
                       <div>
                         <span>Remaining Months</span>
-                        <strong>{otsQuoteQuery.data.remainingMonths}</strong>
+                        <strong>{otsQuoteQuery.data.remainingMonths ?? 'N/A'}</strong>
                       </div>
                     </div>
 
                     <div className="settlement-box">
                       <div>
                         <p>Settlement Amount</p>
-                        <h2>₹{Number(otsQuoteQuery.data.settlementAmount).toLocaleString('en-IN')}</h2>
+                        <h2>{formatInr(otsQuoteQuery.data.settlementAmount)}</h2>
                       </div>
                       <button className="pay-btn" onClick={handlePaySettlement}>
                         Pay Settlement
