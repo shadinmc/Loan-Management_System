@@ -160,12 +160,6 @@ export default function HeroSection() {
         >
           <Button onClick={() => navigate('/loan/apply/personal')} size="lg">
             Apply Now <ArrowRight size={18} />
-          </Button><Button variant="outline" onClick={() => {
-            const calculator = document.getElementById('emi-calculator');
-            calculator?.scrollIntoView({ behavior: 'smooth' });
-          }}>
-            <Calculator size={18} />
-            Calculate EMI
           </Button>
         </motion.div>
       </div>
@@ -295,6 +289,20 @@ export default function HeroSection() {
           interval={7000}
         />
 
+        <motion.button
+          type="button"
+          className="hero-emi-fab"
+          onClick={() => {
+            const calculator = document.getElementById('emi-calculator');
+            calculator?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+          whileTap={{ scale: 0.96 }}
+          aria-label="Open EMI calculator"
+        >
+          <Calculator size={18} />
+          <span>EMI Calculator</span>
+        </motion.button>
+
         {/* Animated Highlights Bar */}
         <motion.div
           className="highlights-bar"
@@ -412,13 +420,59 @@ export default function HeroSection() {
         .hero-container {
           max-width: 1200px;
           margin: 0 auto;
-          padding: 120px 24px 80px;
+          padding: 86px 24px 40px;
           position: relative;
           z-index: 1;
-          min-height: 90vh;
+          min-height: 66vh;
           display: flex;
           flex-direction: column;
           justify-content: center;
+        }
+
+        .hero-emi-fab {
+          position: fixed;
+          right: 24px;
+          bottom: 24px;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          height: 48px;
+          width: 48px;
+          border: 1px solid rgba(139, 92, 246, 0.55);
+          border-radius: 999px;
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.95) 0%, rgba(124, 58, 237, 0.95) 100%);
+          color: #ffffff;
+          padding: 0 14px;
+          overflow: hidden;
+          white-space: nowrap;
+          cursor: pointer;
+          transition: width 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+          box-shadow: 0 8px 20px rgba(124, 58, 237, 0.35);
+          z-index: 4;
+        }
+
+        .hero-emi-fab svg {
+          color: #ffffff;
+          flex-shrink: 0;
+        }
+
+        .hero-emi-fab span {
+          opacity: 0;
+          transform: translateX(6px);
+          transition: opacity 0.2s ease, transform 0.2s ease;
+          font-size: 0.9rem;
+          font-weight: 600;
+        }
+
+        .hero-emi-fab:hover {
+          width: 170px;
+          box-shadow: 0 10px 26px rgba(124, 58, 237, 0.45);
+          transform: translateY(-1px);
+        }
+
+        .hero-emi-fab:hover span {
+          opacity: 1;
+          transform: translateX(0);
         }
 
         .hero-slide {
@@ -426,7 +480,7 @@ export default function HeroSection() {
           grid-template-columns: 1fr 1fr;
           gap: 60px;
           align-items: center;
-          min-height: 500px;
+          min-height: 320px;
         }
 
         .slide-content {
@@ -457,7 +511,7 @@ export default function HeroSection() {
         }
 
         .slide-title {
-          font-size: 3.75rem;
+          font-size: 3.2rem;
           font-weight: 800;
           color: white;
           line-height: 1.1;
@@ -479,7 +533,7 @@ export default function HeroSection() {
         }
 
         .slide-description {
-          font-size: 1.2rem;
+          font-size: 1.1rem;
           color: rgba(165, 180, 207, 0.9);
           line-height: 1.7;
           max-width: 500px;
@@ -513,7 +567,7 @@ export default function HeroSection() {
 
         .floating-cards-container {
           position: relative;
-          min-height: 400px;
+          min-height: 320px;
         }
 
         .floating-card {
@@ -567,8 +621,8 @@ export default function HeroSection() {
           gap: 40px;
           justify-content: center;
           flex-wrap: wrap;
-          padding: 40px 0;
-          margin-top: 50px;
+          padding: 28px 0;
+          margin-top: 28px;
           border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
@@ -860,6 +914,67 @@ export default function HeroSection() {
           background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%) !important;
         }
 
+        .hero-section .carousel-dot {
+          background: #94a3b8;
+        }
+
+        .hero-section .carousel-dot.active {
+          background: #64748b;
+        }
+
+        .hero-section .carousel-dot:hover:not(.active) {
+          background: #7b8798;
+        }
+
+        /* Light mode optimization */
+        [data-theme="light"] .hero-section {
+          background: linear-gradient(180deg, #f8fafc 0%, #eef4fb 100%);
+        }
+
+        [data-theme="light"] .hero-bg {
+          background: linear-gradient(135deg, #f8fafc 0%, #edf4fb 50%, #f8fafc 100%);
+        }
+
+        [data-theme="light"] .bg-pattern {
+          background-image: radial-gradient(rgba(11, 30, 60, 0.06) 1px, transparent 1px);
+        }
+
+        [data-theme="light"] .slide-title {
+          color: var(--text-primary);
+        }
+
+        [data-theme="light"] .slide-description {
+          color: var(--text-secondary);
+        }
+
+        [data-theme="light"] .floating-card {
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid var(--border-color);
+          color: var(--text-primary);
+          box-shadow: var(--shadow-card);
+        }
+
+        [data-theme="light"] .floating-card small {
+          opacity: 1;
+          color: var(--text-muted);
+        }
+
+        [data-theme="light"] .highlights-bar {
+          border-top: 1px solid var(--border-color);
+        }
+
+        [data-theme="light"] .highlight-item {
+          color: var(--text-secondary);
+        }
+
+        [data-theme="light"] .stat-label {
+          color: var(--text-muted);
+        }
+
+        [data-theme="light"] .loans-section::before {
+          background: linear-gradient(180deg, rgba(11, 30, 60, 0.08) 0%, transparent 100%);
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
           .loan-cards-grid {
@@ -869,8 +984,13 @@ export default function HeroSection() {
 
         @media (max-width: 768px) {
           .hero-container {
-            padding: 100px 20px 60px;
+            padding: 78px 20px 36px;
             min-height: auto;
+          }
+
+          .hero-emi-fab {
+            right: 20px;
+            bottom: 16px;
           }
 
           .hero-slide {

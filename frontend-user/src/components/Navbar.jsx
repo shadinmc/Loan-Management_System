@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, MoreVertical, Wallet, Calculator, Banknote } from 'lucide-react';
+import { Menu, MoreVertical, Wallet, Banknote } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import LottieAnimation from './LottieAnimation';
@@ -21,18 +21,6 @@ export default function Navbar({ onMenuClick }) {
       const loansSection = document.getElementById('loans-section');
       if (loansSection) {
         loansSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-  };
-
-  const scrollToCalculator = (e) => {
-    e.preventDefault();
-    if (location.pathname !== '/') {
-      navigate('/', { state: { scrollToCalculator: true } });
-    } else {
-      const calculator = document.getElementById('emi-calculator');
-      if (calculator) {
-        calculator.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
   };
@@ -119,18 +107,6 @@ export default function Navbar({ onMenuClick }) {
               initial={{ scaleX: 0 }}
               whileHover={{ scaleX: 1 }}
             />
-          </motion.a>
-
-          <motion.a
-            href="#emi-calculator"
-            onClick={scrollToCalculator}
-            className="nav-link calculator-link"
-            role="menuitem"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Calculator size={16} />
-            <span className="nav-link-text">EMI Calculator</span>
           </motion.a>
 
           {isLoggedIn && (
@@ -286,7 +262,7 @@ export default function Navbar({ onMenuClick }) {
           top: 0;
           left: 0;
           right: 0;
-          height: 72px;
+          height: 64px;
           background: var(--navbar-bg);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
@@ -313,8 +289,8 @@ export default function Navbar({ onMenuClick }) {
         }
 
         .logo-icon {
-          width: 44px;
-          height: 44px;
+          width: 40px;
+          height: 40px;
           background: linear-gradient(135deg, #2DBE60 0%, #22a652 100%);
           border-radius: 14px;
           display: flex;
@@ -372,15 +348,6 @@ export default function Navbar({ onMenuClick }) {
           background: #2DBE60;
           transform-origin: left;
           border-radius: 1px;
-        }
-
-        .nav-link.calculator-link {
-          color: #8B5CF6;
-        }
-
-        .nav-link.calculator-link:hover {
-          background: rgba(139, 92, 246, 0.1);
-          color: #8B5CF6;
         }
 
         .navbar-actions {
@@ -445,8 +412,8 @@ export default function Navbar({ onMenuClick }) {
         }
 
         .user-avatar {
-          width: 38px;
-          height: 38px;
+          width: 36px;
+          height: 36px;
           background: linear-gradient(135deg, #2DBE60 0%, #22a652 100%);
           color: white;
           border-radius: 50%;
@@ -469,8 +436,8 @@ export default function Navbar({ onMenuClick }) {
         }
 
         .menu-button {
-          width: 42px;
-          height: 42px;
+          width: 38px;
+          height: 38px;
           border: 1px solid var(--border-color);
           background: var(--card-bg);
           border-radius: 12px;
@@ -484,8 +451,8 @@ export default function Navbar({ onMenuClick }) {
 
         .mobile-menu-button {
           display: none;
-          width: 42px;
-          height: 42px;
+          width: 38px;
+          height: 38px;
           border: none;
           background: var(--bg-secondary);
           border-radius: 12px;
