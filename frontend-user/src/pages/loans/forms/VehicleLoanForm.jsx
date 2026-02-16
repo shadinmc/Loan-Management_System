@@ -1459,6 +1459,28 @@ const formStyles = `
     color: var(--text-secondary);
   }
 
+  [data-theme="light"] .emi-calculator-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 20px rgba(11, 30, 60, 0.12);
+    color: var(--text-primary);
+  }
+
+  [data-theme="light"] .emi-breakdown {
+    border-top-color: var(--border-color);
+    border-bottom-color: var(--border-color);
+  }
+
+  [data-theme="light"] .emi-label,
+  [data-theme="light"] .emi-note,
+  [data-theme="light"] .breakdown-item span:first-child {
+    color: var(--text-secondary);
+  }
+
+  [data-theme="light"] .breakdown-item span:last-child {
+    color: var(--text-primary);
+  }
+
   @media (max-width: 768px) {
     .progress-steps {
       flex-wrap: wrap;

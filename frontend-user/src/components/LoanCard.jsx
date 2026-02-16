@@ -4,7 +4,7 @@ import { Wallet, GraduationCap, Briefcase, Car, ArrowRight, Check } from 'lucide
 
 /**
  * Loan Card Component
- * Premium fintech design with solid colors
+ * Summary visible by default, details revealed on hover.
  */
 export default function LoanCard({ loan, index }) {
   const navigate = useNavigate();
@@ -38,20 +38,15 @@ export default function LoanCard({ loan, index }) {
         <div className="icon-wrapper">
           <IconComponent size={24} />
         </div>
-        <div className="rate-badge">
-          {loan.interestRate}
-        </div>
+        <div className="rate-badge">{loan.interestRate}</div>
       </div>
 
       <h3 className="card-title">{loan.name}</h3>
-      <p className="card-description">{loan.description}</p>
 
       <div className="card-details">
         <div className="detail">
-          <span className="label">Amount</span>
-          <span className="value">
-            ₹{(loan.minAmount / 100000).toFixed(0)}L - ₹{(loan.maxAmount / 100000).toFixed(0)}L
-          </span>
+          <span className="label">Up To</span>
+          <span className="value">{'\u20B9'}{(loan.maxAmount / 100000).toFixed(0)}L</span>
         </div>
         <div className="detail">
           <span className="label">Tenure</span>
@@ -59,19 +54,23 @@ export default function LoanCard({ loan, index }) {
         </div>
       </div>
 
-      <ul className="feature-list">
-        {loan.features.slice(0, 3).map((feature, idx) => (
-          <li key={idx}>
-            <Check size={14} />
-            {feature}
-          </li>
-        ))}
-      </ul>
+      <div className="card-extra">
+        <p className="card-description">{loan.description}</p>
 
-      <button className="apply-button" onClick={handleApply}>
-        <span>Apply Now</span>
-        <ArrowRight size={16} />
-      </button>
+        <ul className="feature-list">
+          {loan.features.slice(0, 3).map((feature, idx) => (
+            <li key={idx}>
+              <Check size={14} />
+              {feature}
+            </li>
+          ))}
+        </ul>
+
+        <button className="apply-button" onClick={handleApply}>
+          <span>Apply Now</span>
+          <ArrowRight size={16} />
+        </button>
+      </div>
 
       <style>{`
         .loan-card {
@@ -139,12 +138,6 @@ export default function LoanCard({ loan, index }) {
           letter-spacing: -0.01em;
         }
 
-        .card-description {
-          font-size: 0.875rem;
-          color: var(--text-secondary);
-          line-height: 1.5;
-        }
-
         .card-details {
           display: flex;
           gap: 24px;
@@ -170,6 +163,32 @@ export default function LoanCard({ loan, index }) {
           font-size: 0.9375rem;
           font-weight: 600;
           color: var(--text-primary);
+        }
+
+        .card-extra {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          opacity: 0;
+          max-height: 0;
+          overflow: hidden;
+          transform: translateY(4px);
+          pointer-events: none;
+          transition: max-height 0.25s ease, opacity 0.22s ease, transform 0.22s ease;
+        }
+
+        .loan-card:hover .card-extra,
+        .loan-card:focus-within .card-extra {
+          opacity: 1;
+          max-height: 280px;
+          transform: translateY(0);
+          pointer-events: auto;
+        }
+
+        .card-description {
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+          line-height: 1.5;
         }
 
         .feature-list {
@@ -218,6 +237,15 @@ export default function LoanCard({ loan, index }) {
         .apply-button:focus-visible {
           outline: 2px solid var(--accent-primary);
           outline-offset: 2px;
+        }
+
+        @media (hover: none) {
+          .card-extra {
+            opacity: 1;
+            max-height: 280px;
+            transform: translateY(0);
+            pointer-events: auto;
+          }
         }
       `}</style>
     </div>

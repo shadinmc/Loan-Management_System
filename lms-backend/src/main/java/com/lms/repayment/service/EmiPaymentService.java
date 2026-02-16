@@ -19,8 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Comparator;
 
 @Slf4j
 @Service
@@ -50,13 +53,16 @@ public class EmiPaymentService {
             throw new RuntimeException("Loan already closed");
         }
 
+        final YearMonth currentMonth = YearMonth.now(ZoneOffset.UTC);
+
         Emi nextEmi = schedule.getEmis().stream()
-                .filter(e ->
-                        e.getStatus() == RepaymentStatus.PENDING ||
-                                e.getStatus() == RepaymentStatus.OVERDUE
-                )
+                .filter(this::isPendingOrOverdue)
+                .filter(emi -> isCurrentOrPreviousMonth(emi, currentMonth))
+                .sorted(Comparator
+                        .comparing(Emi::getDueDate, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparingInt(Emi::getEmiNumber))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("No due EMI"));
+                .orElseThrow(() -> new RuntimeException("No EMI due for current or previous months"));
 
         BigDecimal penalty = nextEmi.getPenaltyAmount() == null
                 ? BigDecimal.ZERO
@@ -133,6 +139,18 @@ public class EmiPaymentService {
         loan.setOutstandingPrincipal(schedule.getOutstandingPrincipal());
         loan.setUpdatedAt(Instant.now());
         loanRepository.save(loan);
+    }
+
+    private boolean isPendingOrOverdue(Emi emi) {
+        return emi.getStatus() == RepaymentStatus.PENDING || emi.getStatus() == RepaymentStatus.OVERDUE;
+    }
+
+    private boolean isCurrentOrPreviousMonth(Emi emi, YearMonth currentMonth) {
+        if (emi.getDueDate() == null) {
+            return false;
+        }
+        YearMonth dueMonth = YearMonth.from(emi.getDueDate().atZone(ZoneOffset.UTC));
+        return !dueMonth.isAfter(currentMonth);
     }
 
     private BigDecimal resolvePrincipalComponent(Emi emi, RepaymentSchedule schedule, Loan loan) {
