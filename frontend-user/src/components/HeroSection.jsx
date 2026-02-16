@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Sparkles, Shield, Clock, CheckCircle,
-  TrendingUp, Landmark, Calculator, Home, Car, GraduationCap, Briefcase
+  TrendingUp, Calculator, GraduationCap
 } from 'lucide-react';
 import Button from './Button';
 import Carousel from './Carousel';
@@ -16,15 +16,6 @@ import LottieAnimation from './LottieAnimation';
 export default function HeroSection() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [currentStat, setCurrentStat] = useState(0);
-  const [hoveredLoan, setHoveredLoan] = useState(null);
-
-  const stats = [
-    { value: '₹500Cr+', label: 'Loans Disbursed', icon: 'growth' },
-    { value: '50,000+', label: 'Happy Customers', icon: 'check' },
-    { value: '4.8★', label: 'Customer Rating', icon: 'shield' },
-    { value: '24hrs', label: 'Quick Approval', icon: 'clock' }
-  ];
 
   const highlights = [
     { icon: Sparkles, text: 'Instant Eligibility Check', animation: 'sparkle' },
@@ -33,60 +24,6 @@ export default function HeroSection() {
     { icon: CheckCircle, text: 'Minimal Documentation', animation: 'check' }
   ];
 
-  const loanTypes = [
-    {
-      id: 'home',
-      icon: Home,
-      title: 'Home Loan',
-      description: 'Make your dream home a reality',
-      rate: '8.5%',
-      amount: 'Up to ₹5 Cr',
-      color: '#2DBE60',
-      path: '/loan/apply/home',
-      lottieUrl: 'https://assets3.lottiefiles.com/packages/lf20_ynqzqlpo.json'
-    },
-    {
-      id: 'vehicle',
-      icon: Car,
-      title: 'Vehicle Loan',
-      description: 'Drive your dream vehicle today',
-      rate: '9.5%',
-      amount: 'Up to ₹50 L',
-      color: '#3B82F6',
-      path: '/loan/apply/vehicle',
-      lottieUrl: 'https://assets6.lottiefiles.com/packages/lf20_2omr5gpu.json'
-    },
-    {
-      id: 'education',
-      icon: GraduationCap,
-      title: 'Education Loan',
-      description: 'Invest in your future success',
-      rate: '10.5%',
-      amount: 'Up to ₹75 L',
-      color: '#8B5CF6',
-      path: '/loan/apply/education',
-      lottieUrl: 'https://assets1.lottiefiles.com/packages/lf20_swnrn2oy.json'
-    },
-    {
-      id: 'business',
-      icon: Briefcase,
-      title: 'Business Loan',
-      description: 'Fuel your business growth',
-      rate: '12%',
-      amount: 'Up to ₹1 Cr',
-      color: '#F59E0B',
-      path: '/loan/apply/business',
-      lottieUrl: 'https://assets5.lottiefiles.com/packages/lf20_xvrofzfk.json'
-    }
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentStat((prev) => (prev + 1) % stats.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [stats.length]);
-
   useEffect(() => {
     if (location.state?.scrollToLoans) {
       setTimeout(() => {
@@ -94,7 +31,8 @@ export default function HeroSection() {
         if (loansSection) {
           loansSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 100);window.history.replaceState({}, document.title);
+      }, 100);
+      window.history.replaceState({}, document.title);
     }
 
     if (location.state?.scrollToCalculator) {
@@ -149,8 +87,7 @@ export default function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          Get instant loans with competitive rates. From personal needs to business growth,
-          we've got you covered with AI-powered approvals.
+          Experience streamlined loan applications with competitive pricing and intelligent approval workflows. Supporting personal goals and business ambitions with efficiency and control.
         </motion.p>
         <motion.div
           className="slide-actions"
@@ -328,11 +265,7 @@ export default function HeroSection() {
           })}
         </motion.div>
 
-        {/* Animated Stats Ticker */}
-
       </div>
-
-      {/* Loan Types Section */}
 
 
       {/* EMI Calculator Section */}
@@ -649,55 +582,6 @@ export default function HeroSection() {
         .highlight-icon {
           color: #2DBE60;
         }
-
-        /* Stats Ticker */
-        .stats-ticker {
-          display: flex;
-          justify-content: center;
-          gap: 60px;
-          flex-wrap: wrap;
-          margin-top: 24px;
-        }
-
-        .stat-item {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 6px;
-          padding: 16px 24px;
-          opacity: 0.5;
-          transition: opacity 0.4s ease;
-          cursor: default;
-        }
-
-        .stat-item.active {
-          opacity: 1;
-        }
-
-        .stat-indicator {
-          position: absolute;
-          inset: 0;
-          background: rgba(45, 190, 96, 0.1);
-          border: 1px solid rgba(45, 190, 96, 0.2);
-          border-radius: 16px;
-        }
-
-        .stat-value {
-          font-size: 2rem;
-          font-weight: 800;
-          color: #2DBE60;
-          position: relative;
-          z-index: 1;
-        }
-
-        .stat-label {
-          font-size: 0.9rem;
-          color: rgba(165, 180, 207, 0.8);
-          position: relative;
-          z-index: 1;
-        }
-
         /* Loans Section */
         .loans-section {
           background: var(--bg-primary);
@@ -966,11 +850,6 @@ export default function HeroSection() {
         [data-theme="light"] .highlight-item {
           color: var(--text-secondary);
         }
-
-        [data-theme="light"] .stat-label {
-          color: var(--text-muted);
-        }
-
         [data-theme="light"] .loans-section::before {
           background: linear-gradient(180deg, rgba(11, 30, 60, 0.08) 0%, transparent 100%);
         }
@@ -1026,15 +905,6 @@ export default function HeroSection() {
           .highlight-item span {
             display: none;
           }
-
-          .stats-ticker {
-            gap: 20px;
-          }
-
-          .stat-value {
-            font-size: 1.5rem;
-          }
-
           .loans-section {
             padding: 80px 0;
           }
@@ -1056,3 +926,4 @@ export default function HeroSection() {
     </section>
   );
 }
+
