@@ -118,14 +118,15 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
   return (
     <div className="modal-overlay">
       <div className="modal">
-        <div className="modal-header">
-          <div>
-            <h3>Application Review</h3>
-            <p>{loan.loanId} - {toLabel(loan.loanType)}</p>
-          </div>
-          <button onClick={onClose}><X /></button>
-        </div>
+          <div className="modal-header">
+                  <div>
+                    <h3>Application Review</h3>
+                    <p>{loan.loanId} - {toLabel(loan.loanType)}</p>
+                  </div>
+                  <button onClick={onClose}><X /></button>
+                </div>
 
+           <div className="modal-body">
         {loanQuery.isLoading ? (
           <section className="card soft-blue">
             <p>Loading loan details...</p>
@@ -153,14 +154,14 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
             <section className="card soft-purple">
               <h4>Eligibility Snapshot (Branch Check)</h4>
               <div className="decision-actions">
-                <button
-                  className="approve"
-                  type="button"
-                  onClick={() => eligibilityMutation.mutate()}
-                  disabled={eligibilityMutation.isPending}
-                >
-                  {eligibilityMutation.isPending ? "Fetching..." : "Fetch Eligibility"}
-                </button>
+{/*                 <button */}
+{/*                   className="approve" */}
+{/*                   type="button" */}
+{/*                   onClick={() => eligibilityMutation.mutate()} */}
+{/*                   disabled={eligibilityMutation.isPending} */}
+{/*                 > */}
+{/*                   {eligibilityMutation.isPending ? "Fetching..." : "Fetch Eligibility"} */}
+{/*                 </button> */}
               </div>
               <div className="eligibility-list">
                 <div className="eligibility-list-item">
@@ -296,6 +297,8 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
         )}
       </div>
     </div>
+    </div>
+
   );
 };
 

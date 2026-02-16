@@ -6,6 +6,7 @@ import {
 import { FiCheckCircle } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import StatusBadge from "../../components/StatusBadge";
 import { fetchBranchLoans } from "../../api/branchLoansApi";
 
 const AdminDashboard = () => {
@@ -175,9 +176,7 @@ const AdminDashboard = () => {
                     ₹{loan.loanAmount?.toLocaleString?.() || "-"}
                   </td>
                   <td>
-                    <span className={getBadgeClass(loan.status)}>
-                      {getStatusText(loan.status)}
-                    </span>
+                   <StatusBadge status={loan.status} />
                   </td>
                 </tr>
               ))
