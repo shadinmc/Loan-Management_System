@@ -1,6 +1,8 @@
 package com.lms.repayment.service;
 
 import com.lms.auth.security.SecurityUtils;
+import com.lms.audit.service.AuditService;
+import com.lms.cibil.enums.CibilEventType;
 import com.lms.cibil.service.CibilScoreService;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
@@ -10,13 +12,17 @@ import com.lms.repayment.enums.RepaymentStatus;
 import com.lms.repayment.repository.RepaymentScheduleRepository;
 import com.lms.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmiPaymentService {
@@ -26,6 +32,7 @@ public class EmiPaymentService {
     private final SecurityUtils securityUtils;
     private final CibilScoreService cibilScoreService;
     private final LoanRepository loanRepository;
+    private final AuditService auditService;
 
     @Transactional
     public void payEmi(String loanId, BigDecimal amount) {

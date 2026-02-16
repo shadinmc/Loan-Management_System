@@ -65,6 +65,28 @@
   cursor: pointer;
 }
 
+.modal-header button.close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-header button.close-btn:hover {
+  background: #f1f5f9;
+}
+
+.modal-body {
+  padding: 16px 18px 20px;
+}
+
+.loading-state {
+  color: #64748b;
+  font-size: 13px;
+}
+
 /* ===========================
    CARD SECTIONS
 =========================== */
@@ -230,6 +252,42 @@ strong {
 }
 
 /* ===========================
+   DOCUMENTS
+=========================== */
+.doc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.doc-btn {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.doc-btn:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.doc-btn .doc-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1e293b;
+}
+
+.doc-btn .doc-right {
+  color: #4f46e5;
+}
+
+/* ===========================
    DECISION ACTIONS
 =========================== */
 .decision-actions {
@@ -250,6 +308,11 @@ strong {
   gap: 6px;
   cursor: pointer;
   border: none;
+}
+
+.decision-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .approve {
@@ -305,6 +368,11 @@ strong {
   border-radius: 10px;
   cursor: pointer;
   border: none;
+}
+
+.actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .actions .cancel {
