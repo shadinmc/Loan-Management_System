@@ -71,7 +71,8 @@ public class WalletService {
         wallet.setUpdatedAt(LocalDateTime.now());
         Wallet saved = walletRepository.save(wallet);
 
-        WalletTransaction tx = createTransaction(saved, userId, loanId, amount, PaymentAction.CREDIT);
+        WalletTransaction tx =
+                createTransaction(saved, userId, loanId, amount, PaymentAction.CREDIT, null);
         try {
             Map<String, Object> requestPayload = Map.of(
                     "loanId", loanId,
@@ -120,7 +121,8 @@ public class WalletService {
         wallet.setUpdatedAt(LocalDateTime.now());
         Wallet saved = walletRepository.save(wallet);
 
-        WalletTransaction tx = createTransaction(saved, userId, loanId, amount, PaymentAction.CREDIT);
+        WalletTransaction tx =
+                createTransaction(saved, userId, loanId, amount, PaymentAction.CREDIT, null);
         try {
             Map<String, Object> requestPayload = Map.of(
                     "loanId", loanId,
@@ -150,18 +152,37 @@ public class WalletService {
         return mapWallet(saved);
     }
 
+    @Transactional
     public WalletResponse withdraw(String loanId, BigDecimal amount) {
+        return withdraw(loanId, amount, null);
+    }
+
+    @Transactional
+    public WalletResponse withdraw(String loanId, BigDecimal amount, String referenceId) {
         String userId = securityUtils.getCurrentUserId();
         Wallet wallet = getOrCreateWallet(userId);
         ensureActive(wallet);
         ensureAmount(amount);
         ensureSufficientBalance(wallet, amount);
 
+        if (referenceId != null && !referenceId.isBlank()) {
+            boolean alreadyProcessed =
+                    walletTransactionRepository.existsByUserIdAndLoanIdAndActionAndReferenceId(
+                            userId,
+                            loanId,
+                            PaymentAction.WITHDRAWN,
+                            referenceId
+                    );
+            if (alreadyProcessed) {
+                throw new RuntimeException("Duplicate repayment request already processed");
+            }
+        }
+
         wallet.setBalance(wallet.getBalance().subtract(amount));
         wallet.setUpdatedAt(LocalDateTime.now());
         Wallet saved = walletRepository.save(wallet);
 
-        WalletTransaction tx = createTransaction(saved, userId, loanId, amount, PaymentAction.WITHDRAWN);
+        WalletTransaction tx = createTransaction(saved, userId, loanId, amount, PaymentAction.WITHDRAWN, referenceId);
         try {
             Map<String, Object> requestPayload = Map.of(
                     "loanId", loanId,
@@ -191,6 +212,7 @@ public class WalletService {
         return mapWallet(saved);
     }
 
+    @Transactional
     public WalletResponse reimburse(String loanId, BigDecimal amount) {
         String userId = securityUtils.getCurrentUserId();
         Wallet wallet = getOrCreateWallet(userId);
@@ -201,7 +223,7 @@ public class WalletService {
         wallet.setUpdatedAt(LocalDateTime.now());
         Wallet saved = walletRepository.save(wallet);
 
-        WalletTransaction tx = createTransaction(saved, userId, loanId, amount, PaymentAction.REIMBURSEMENT);
+        WalletTransaction tx = createTransaction(saved, userId, loanId, amount, PaymentAction.REIMBURSEMENT, null);
         try {
             Map<String, Object> requestPayload = Map.of(
                     "loanId", loanId,
@@ -277,7 +299,8 @@ public class WalletService {
             String userId,
             String loanId,
             BigDecimal amount,
-            PaymentAction action
+            PaymentAction action,
+            String referenceId
     ) {
         WalletTransaction tx = WalletTransaction.builder()
                 .walletId(wallet.getId())
@@ -285,6 +308,7 @@ public class WalletService {
                 .loanId(loanId)
                 .amount(amount)
                 .action(action)
+                .referenceId(referenceId)
                 .doneAt(LocalDateTime.now())
                 .build();
         return walletTransactionRepository.save(tx);

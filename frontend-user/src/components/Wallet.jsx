@@ -630,6 +630,55 @@ export default function Wallet() {
           color: var(--text-secondary);
         }
 
+        /* Light mode optimization */
+        [data-theme="light"] .balance-card {
+          background: #ffffff;
+          border: 1px solid var(--border-color);
+          box-shadow: 0 10px 24px rgba(11, 30, 60, 0.08);
+          color: var(--text-primary);
+        }
+
+        [data-theme="light"] .balance-label {
+          color: var(--text-secondary);
+        }
+
+        [data-theme="light"] .action-btn.withdraw {
+          background: var(--bg-secondary);
+          color: var(--text-primary);
+          border-color: var(--border-color);
+        }
+
+        [data-theme="light"] .action-btn.withdraw:hover {
+          background: var(--bg-tertiary);
+        }
+
+        [data-theme="light"] .transactions-section,
+        [data-theme="light"] .stat-card {
+          background: #ffffff;
+          border-color: var(--border-color);
+          box-shadow: 0 8px 20px rgba(11, 30, 60, 0.06);
+        }
+
+        [data-theme="light"] .search-box,
+        [data-theme="light"] .filter-tabs,
+        [data-theme="light"] .transaction-item,
+        [data-theme="light"] .page-btn {
+          background: #f8fbff;
+          border-color: #d8e2f0;
+        }
+
+        [data-theme="light"] .transaction-item:hover {
+          background: #f1f6fd;
+        }
+
+        [data-theme="light"] .filter-tab {
+          color: var(--text-primary);
+        }
+
+        [data-theme="light"] .search-box input::placeholder {
+          color: var(--text-muted);
+        }
+
         @media (max-width: 768px) {
           .stats-grid {
             grid-template-columns: 1fr;
@@ -1008,6 +1057,27 @@ function MoneyModal({ type, balance = 0, onClose, onSubmit }) {
           border-top-color: white;
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
+        }
+
+        [data-theme="light"] .modal-overlay {
+          background: rgba(16, 33, 63, 0.25);
+        }
+
+        [data-theme="light"] .modal-container {
+          background: #ffffff;
+          border: 1px solid var(--border-color);
+          box-shadow: 0 24px 60px rgba(16, 33, 63, 0.16);
+        }
+
+        [data-theme="light"] .close-btn,
+        [data-theme="light"] .amount-input,
+        [data-theme="light"] .quick-btn,
+        [data-theme="light"] .method-btn {
+          background: #f8fbff;
+        }
+
+        [data-theme="light"] .method-btn.active {
+          background: #eaf8ef;
         }
 
         @keyframes spin {

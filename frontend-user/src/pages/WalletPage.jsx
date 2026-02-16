@@ -23,7 +23,13 @@ import {
 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { useSearchParams } from 'react-router-dom';
-import { settleOts, payEmi } from '../api/repaymentApi';
+import * as repaymentApi from '../api/repaymentApi';
+
+const toAmountString = (value) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return '0';
+  return parsed.toFixed(2);
+};
 
 export default function WalletPage() {
   const {
@@ -35,7 +41,8 @@ export default function WalletPage() {
     page,
     setPage,
     totalPages,
-    totalElements
+    totalElements,
+    refreshWalletData
   } = useWallet();
   const [showAddMoney, setShowAddMoney] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
@@ -104,6 +111,26 @@ export default function WalletPage() {
   const recentTransactions = transactions.slice(0, 5);
   const totalCredit = transactions.filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0);
   const totalDebit = transactions.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
+  const handleWalletWithdraw = async (amount) => {
+    const normalizedAmount = Number(amount);
+    if (withdrawMeta?.purpose === 'ots' && withdrawMeta.loanId) {
+      if (typeof settleOtsFn !== 'function') {
+        throw new Error('repaymentApi.settleOts is unavailable');
+      }
+      await settleOtsFn(withdrawMeta.loanId, toAmountString(amount));
+      refreshWalletData();
+      return;
+    }
+    if (withdrawMeta?.purpose === 'emi' && withdrawMeta.loanId) {
+      if (typeof payEmiFn !== 'function') {
+        throw new Error('payEmi API is not available');
+      }
+      await payEmiFn(withdrawMeta.loanId, toAmountString(amount));
+      refreshWalletData();
+      return;
+    }
+    await withdrawMoney(normalizedAmount);
+  };
 
   return (
     <div className="wallet-page">
@@ -272,7 +299,11 @@ export default function WalletPage() {
               </div>
             ) : (
               recentTransactions.map((txn) => (
-                <div key={txn.id} className="transaction-item">
+                <div
+                  key={txn.id}
+                  className="transaction-item"
+                  data-details={`ID: ${txn.id || '-'} | Method: ${txn.method || 'Wallet'} | Status: ${txn.status || 'completed'}`}
+                >
                   <div className={`txn-icon ${txn.type}`}>
                     {txn.type === 'credit' ? (
                       <ArrowDownLeft size={16} />
@@ -360,16 +391,9 @@ export default function WalletPage() {
                 <WithdrawModal
                   balance={balance}
                   onClose={() => setShowWithdraw(false)}
-                  onSubmit={async (amount) => {
-                    await withdrawMoney(amount);
-                    if (withdrawMeta?.purpose === 'ots' && withdrawMeta.loanId) {
-                      await settleOts(withdrawMeta.loanId, Number(amount));
-                    }
-                    if (withdrawMeta?.purpose === 'emi' && withdrawMeta.loanId) {
-                      await payEmi(withdrawMeta.loanId, Number(amount));
-                    }
-                  }}
+                  onSubmit={handleWalletWithdraw}
                   initialAmount={prefillWithdrawAmount}
+                  requireBank={!withdrawMeta?.purpose}
                 />,
                 document.body
               )
@@ -377,16 +401,9 @@ export default function WalletPage() {
               <WithdrawModal
                 balance={balance}
                 onClose={() => setShowWithdraw(false)}
-                onSubmit={async (amount) => {
-                  await withdrawMoney(amount);
-                  if (withdrawMeta?.purpose === 'ots' && withdrawMeta.loanId) {
-                    await settleOts(withdrawMeta.loanId, Number(amount));
-                  }
-                  if (withdrawMeta?.purpose === 'emi' && withdrawMeta.loanId) {
-                    await payEmi(withdrawMeta.loanId, Number(amount));
-                  }
-                }}
+                onSubmit={handleWalletWithdraw}
                 initialAmount={prefillWithdrawAmount}
+                requireBank={!withdrawMeta?.purpose}
               />
             )
         )}
@@ -538,7 +555,7 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
 }
 
 // Complete WithdrawModal component
-function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '' }) {
+function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '', requireBank = true }) {
   const [amount, setAmount] = useState(initialAmount || '');
   const [selectedBank, setSelectedBank] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -550,7 +567,7 @@ function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '' }) {
   ];
 
   const handleSubmit = async () => {
-    if (!amount || amount <= 0 || amount > balance || !selectedBank) return;
+    if (!amount || amount <= 0 || amount > balance || (requireBank && !selectedBank)) return;
 
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -559,6 +576,12 @@ function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '' }) {
       await onSubmit(parseFloat(amount), selectedBank);
       onClose();
     } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Withdrawal failed';
+      alert(message);
       console.error('Withdrawal failed:', error);
     } finally {
       setIsProcessing(false);
@@ -616,7 +639,8 @@ function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '' }) {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"
-                min="1"max={balance}
+                min="1"
+                max={balance}
               />
             </div>
             {amount > balance && (
@@ -652,7 +676,7 @@ function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '' }) {
           <button
             className="btn-primary withdraw"
             onClick={handleSubmit}
-            disabled={!amount || amount <= 0 || amount > balance || !selectedBank || isProcessing}
+            disabled={!amount || amount <= 0 || amount > balance || (requireBank && !selectedBank) || isProcessing}
           >
             {isProcessing ? (
               <>
@@ -683,8 +707,12 @@ const styles = `
   }
 
   .wallet-container {
-    max-width: 640px;
+    max-width: 1200px;
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: 380px minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
   }
 
   .wallet-loading {
@@ -707,6 +735,7 @@ const styles = `
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 28px;
+    grid-column: 1 / -1;
   }
 
   .header-badge {
@@ -754,7 +783,7 @@ const styles = `
     padding: 32px 28px;
     border-radius: 20px;
     color: white;
-    margin-bottom: 24px;
+    margin-bottom: 0;
     border: 1px solid rgba(255, 255, 255, 0.1);
     overflow: hidden;
   }
@@ -850,10 +879,7 @@ const styles = `
 
   /* Stats Grid */
   .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-bottom: 28px;
+    display: none;
   }
 
   .stat-card {
@@ -939,6 +965,8 @@ const styles = `
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 18px;
     overflow: hidden;
+    grid-column: 2;
+    grid-row: 2 / span 2;
   }
 
   .section-header {
@@ -993,7 +1021,10 @@ const styles = `
   }
 
   .transactions-list {
-    padding: 12px 24px 24px;
+    padding: 14px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .no-transactions {
@@ -1042,14 +1073,50 @@ const styles = `
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 14px 12px;
-    border-radius: 10px;
-    margin-bottom: 8px;
-    transition: background 0.2s ease;
+    padding: 14px 14px;
+    border-radius: 12px;
+    margin-bottom: 0;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    overflow: hidden;
   }
 
   .transaction-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(45, 190, 96, 0.35);
+    transform: translateY(-1px);
+  }
+
+  .transaction-item::after {
+    content: attr(data-details);
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(11, 30, 60, 0.95);
+    border: 1px solid rgba(45, 190, 96, 0.35);
+    color: #B8C7E3;
+    font-size: 0.74rem;
+    white-space: normal;
+    line-height: 1.35;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+  }
+
+  .transaction-item:hover::after {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .transaction-item:hover .txn-details,
+  .transaction-item:hover .txn-amount,
+  .transaction-item:hover .txn-icon {
+    opacity: 0.25;
   }
 
   .txn-icon {
@@ -1147,9 +1214,120 @@ const styles = `
     cursor: not-allowed;
   }
 
+  [data-theme="light"] .wallet-page {
+    background: linear-gradient(180deg, #f6f9ff 0%, #eef3fb 100%);
+  }
+
+  [data-theme="light"] .wallet-loading {
+    color: #10213f;
+  }
+
+  [data-theme="light"] .wallet-header h1,
+  [data-theme="light"] .section-title h3,
+  [data-theme="light"] .txn-description {
+    color: #10213f;
+  }
+
+  [data-theme="light"] .wallet-header p,
+  [data-theme="light"] .section-title p,
+  [data-theme="light"] .txn-meta,
+  [data-theme="light"] .page-info {
+    color: #4d5f7d;
+  }
+
+  [data-theme="light"] .balance-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f7fbff 100%);
+    border: 1px solid #d8e2f0;
+    box-shadow: 0 14px 30px rgba(16, 33, 63, 0.08);
+    color: #10213f;
+  }
+
+  [data-theme="light"] .balance-label {
+    color: #4d5f7d;
+  }
+
+  [data-theme="light"] .toggle-balance {
+    background: #f4f8ff;
+    border-color: #c9d7ea;
+    color: #10213f;
+  }
+
+  [data-theme="light"] .action-btn.add {
+    background: #eaf8ef;
+    color: #0f5132;
+    border: 1px solid #bde8cb;
+  }
+
+  [data-theme="light"] .action-btn.add:hover {
+    background: #dcf4e6;
+  }
+
+  [data-theme="light"] .action-btn.withdraw {
+    background: #ffffff;
+    color: #10213f;
+    border: 1px solid #c9d7ea;
+  }
+
+  [data-theme="light"] .action-btn.withdraw:hover {
+    background: #f3f7fe;
+  }
+
+  [data-theme="light"] .transactions-section {
+    background: #ffffff;
+    border-color: #d8e2f0;
+    box-shadow: 0 12px 24px rgba(16, 33, 63, 0.06);
+  }
+
+  [data-theme="light"] .section-header,
+  [data-theme="light"] .pagination {
+    border-color: #e2e9f3;
+  }
+
+  [data-theme="light"] .view-all {
+    background: #eaf8ef;
+    color: #0f5132;
+  }
+
+  [data-theme="light"] .transaction-item {
+    background: #f8fbff;
+    border-color: #e2e9f3;
+  }
+
+  [data-theme="light"] .transaction-item:hover {
+    background: #f1f6fd;
+    border-color: #bde8cb;
+  }
+
+  [data-theme="light"] .transaction-item::after {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: #c9d7ea;
+    color: #4d5f7d;
+  }
+
+  [data-theme="light"] .page-btn {
+    background: #f4f8ff;
+    border-color: #c9d7ea;
+    color: #10213f;
+  }
+
   @media (max-width: 768px) {
     .wallet-page {
       padding: 90px 16px 40px;
+    }
+
+    .wallet-container {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .wallet-header {
+      grid-column: 1;
+      margin-bottom: 12px;
+    }
+
+    .transactions-section {
+      grid-column: 1;
+      grid-row: auto;
     }
 
     .stats-grid {
@@ -1498,5 +1676,60 @@ const modalStyles = `
       grid-template-columns: repeat(2, 1fr);
     }
   }
+
+  [data-theme="light"] .modal-overlay {
+    background: rgba(16, 33, 63, 0.28);
+  }
+
+  [data-theme="light"] .modal-content {
+    background: #ffffff;
+    border: 1px solid #d8e2f0;
+    box-shadow: 0 24px 60px rgba(16, 33, 63, 0.16);
+  }
+
+  [data-theme="light"] .modal-header {
+    border-bottom-color: #e2e9f3;
+  }
+
+  [data-theme="light"] .modal-title-wrapper h3,
+  [data-theme="light"] .payment-option span,
+  [data-theme="light"] .bank-name {
+    color: #10213f;
+  }
+
+  [data-theme="light"] .modal-title-wrapper p,
+  [data-theme="light"] .currency,
+  [data-theme="light"] .bank-details,
+  [data-theme="light"] .quick-btn {
+    color: #4d5f7d;
+  }
+
+  [data-theme="light"] .modal-close,
+  [data-theme="light"] .payment-icon,
+  [data-theme="light"] .bank-icon {
+    background: #f4f8ff;
+    border-color: #c9d7ea;
+    color: #10213f;
+  }
+
+  [data-theme="light"] .amount-input input,
+  [data-theme="light"] .payment-option,
+  [data-theme="light"] .bank-option {
+    background: #f8fbff;
+    border-color: #d8e2f0;
+    color: #10213f;
+  }
+
+  [data-theme="light"] .btn-secondary {
+    background: #f4f8ff;
+    border: 1px solid #c9d7ea;
+    color: #10213f;
+  }
+
+  [data-theme="light"] .modal-footer {
+    border-top-color: #e2e9f3;
+  }
 `;
 
+  const settleOtsFn = repaymentApi.settleOts || repaymentApi.default?.settleOts;
+  const payEmiFn = repaymentApi.payEmi || repaymentApi.default?.payEmi;

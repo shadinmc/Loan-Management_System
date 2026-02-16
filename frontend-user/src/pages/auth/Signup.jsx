@@ -190,6 +190,9 @@ export default function Signup() {
           userId: response.userId,
           username: response.username,
           email: response.email,
+          fullName: response.fullName || form.fullName,
+          phone: response.phone || form.phone,
+          dateOfBirth: response.dateOfBirth || form.dob,
           roles: response.roles
         },
         response.token

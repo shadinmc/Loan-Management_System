@@ -22,6 +22,9 @@ public class Emi {
 
     private RepaymentStatus status;
 
+    private BigDecimal principalAmount;   // REQUIRED
+    private BigDecimal interestAmount;
+
     private Instant paidAt; // 🔑 important
     private Instant lastPenaltyAppliedAt;
 

@@ -18,9 +18,15 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = useCallback((userData, token) => {
+    const existingUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const sanitizedUser = Object.fromEntries(
+      Object.entries(userData || {}).filter(([, value]) => value !== undefined && value !== null)
+    );
+    const mergedUser = { ...existingUser, ...sanitizedUser };
+
     localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(mergedUser));
+    setUser(mergedUser);
     setIsLoggedIn(true);
   }, []);
 

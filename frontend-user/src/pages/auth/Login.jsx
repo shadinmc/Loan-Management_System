@@ -58,6 +58,9 @@ export default function Login() {
           userId: response.userId,
           username: response.username,
           email: response.email,
+          fullName: response.fullName,
+          phone: response.phone,
+          dateOfBirth: response.dateOfBirth,
           roles: response.roles
         },
         response.token

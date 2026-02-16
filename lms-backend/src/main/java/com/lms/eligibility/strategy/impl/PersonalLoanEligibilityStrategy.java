@@ -35,7 +35,7 @@ public class PersonalLoanEligibilityStrategy implements LoanEligibilityStrategy 
         // Rule 1: CIBIL Score check (most important)
         if (context.getCibilScore() != null && context.getCibilScore() >= MIN_CIBIL_SCORE) {
             passedRules.add("CIBIL score " + context.getCibilScore() + " meets minimum requirement of " + MIN_CIBIL_SCORE);
-            score += 30;
+            score += 20;
         } else {
             failedRules.add("CIBIL score " + context.getCibilScore() + " is below minimum required " + MIN_CIBIL_SCORE);
         }
@@ -45,7 +45,7 @@ public class PersonalLoanEligibilityStrategy implements LoanEligibilityStrategy 
         if (context.getMonthlyIncome() != null &&
                 context.getMonthlyIncome().compareTo(MIN_MONTHLY_INCOME) >= 0) {
             passedRules.add("Minimum income requirement met");
-            score += 25;
+            score += 20;
         } else {
             failedRules.add("Monthly income must be at least ₹25,000");
         }
@@ -54,7 +54,7 @@ public class PersonalLoanEligibilityStrategy implements LoanEligibilityStrategy 
         if ("SALARIED".equalsIgnoreCase(context.getEmploymentType()) ||
                 "SELF_EMPLOYED".equalsIgnoreCase(context.getEmploymentType())) {
             passedRules.add("Valid employment type");
-            score += 25;
+            score += 20;
         } else {
             failedRules.add("Employment type must be SALARIED or SELF_EMPLOYED");
         }
@@ -62,7 +62,7 @@ public class PersonalLoanEligibilityStrategy implements LoanEligibilityStrategy 
         // Rule 3: Tenure check
         if (context.getTenureMonths() >= MIN_TENURE && context.getTenureMonths() <= MAX_TENURE) {
             passedRules.add("Tenure within acceptable range");
-            score += 25;
+            score += 20;
         } else {
             failedRules.add("Tenure must be between 6 and 60 months");
         }
@@ -73,7 +73,7 @@ public class PersonalLoanEligibilityStrategy implements LoanEligibilityStrategy 
 
         if (context.getRequestedAmount().compareTo(maxEligibleAmount) <= 0) {
             passedRules.add("Loan amount within eligibility");
-            score += 25;
+            score += 20;
         } else {
             failedRules.add("Requested amount exceeds maximum eligible amount");
         }
