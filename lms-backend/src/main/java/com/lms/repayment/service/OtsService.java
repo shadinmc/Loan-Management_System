@@ -1,6 +1,7 @@
 package com.lms.repayment.service;
 
 import com.lms.auth.security.SecurityUtils;
+import com.lms.audit.service.AuditService;
 import com.lms.cibil.enums.CibilEventType;
 import com.lms.cibil.service.CibilScoreService;
 import com.lms.common.enums.LoanStatus;
@@ -13,6 +14,7 @@ import com.lms.repayment.enums.RepaymentStatus;
 import com.lms.repayment.repository.RepaymentScheduleRepository;
 import com.lms.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +24,9 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OtsService {
@@ -32,6 +36,7 @@ public class OtsService {
     private final WalletService walletService;
     private final SecurityUtils securityUtils;
     private final CibilScoreService cibilScoreService;
+    private final AuditService auditService;
 
     /** Customer pays only 60% of remaining EMIs */
     private static final BigDecimal OTS_DISCOUNT_FACTOR = new BigDecimal("0.60");
@@ -165,5 +170,31 @@ public class OtsService {
         cibilScoreService.applyEvent(userId, CibilEventType.LOAN_CLOSED_OTS);
 
         loanRepository.save(loan);
+
+        try {
+            Map<String, Object> requestPayload = Map.of(
+                    "loanId", loanId,
+                    "amount", amount,
+                    "settlementAmount", quote.getSettlementAmount()
+            );
+
+            Map<String, Object> responsePayload = Map.of(
+                    "currentStatus", loan.getStatus(),
+                    "closedAt", loan.getClosedAt()
+            );
+
+            auditService.log(
+                    userId,
+                    "OTS_SETTLEMENT",
+                    "LOAN",
+                    loanId,
+                    requestPayload,
+                    responsePayload,
+                    200,
+                    true
+            );
+        } catch (Exception e) {
+            log.error("AUDIT FAILED — request still successful", e);
+        }
     }
 }

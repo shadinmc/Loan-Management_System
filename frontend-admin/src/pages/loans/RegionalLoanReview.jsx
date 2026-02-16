@@ -123,7 +123,9 @@ const RegionalLoanReview = ({ loan, onClose, onDecisionDone }) => {
             <h3>Application Review</h3>
             <p>{loan.loanId} - {toLabel(loan.loanType)}</p>
           </div>
-          <button onClick={onClose}><X /></button>
+          <button className="close-btn" onClick={onClose}>
+            <X />
+          </button>
         </div>
 
         {loanQuery.isLoading ? (
