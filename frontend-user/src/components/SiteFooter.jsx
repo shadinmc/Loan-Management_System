@@ -19,8 +19,8 @@ export default function SiteFooter() {
 
         <div className="site-footer__support">
           Contact support:{" "}
-          <a href="mailto:support@theloudwise.com">
-            support@theloudwise.com
+          <a href="mailto:support@theloanwise.com">
+            support@theloanwise.com
           </a>
         </div>
       </div>

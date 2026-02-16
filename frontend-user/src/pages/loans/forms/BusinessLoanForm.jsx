@@ -1945,6 +1945,32 @@ const formStyles = `
     color: var(--text-secondary);
   }
 
+  [data-theme="light"] .emi-calculator {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 20px rgba(11, 30, 60, 0.12);
+  }
+
+  [data-theme="light"] .emi-header {
+    background: var(--bg-secondary);
+    border-bottom-color: var(--border-color);
+  }
+
+  [data-theme="light"] .emi-title,
+  [data-theme="light"] .breakdown-value {
+    color: var(--text-primary);
+  }
+
+  [data-theme="light"] .emi-label,
+  [data-theme="light"] .emi-note,
+  [data-theme="light"] .breakdown-label {
+    color: var(--text-secondary);
+  }
+
+  [data-theme="light"] .emi-divider {
+    background: var(--border-color);
+  }
+
   /* Responsive */
   @media (max-width: 640px) {
     .form-progress-container {
