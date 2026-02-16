@@ -27,5 +27,6 @@ public class WalletTransaction {
 
     private BigDecimal amount;
     private PaymentAction action;
+    private String referenceId;
     private LocalDateTime doneAt;
 }

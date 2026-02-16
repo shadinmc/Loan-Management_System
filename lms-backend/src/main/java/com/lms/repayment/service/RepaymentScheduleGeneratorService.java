@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -34,6 +35,17 @@ public class RepaymentScheduleGeneratorService {
 
         ZoneId zoneId = ZoneId.systemDefault();
         List<Emi> emis = new ArrayList<>();
+        BigDecimal principalBase = loan.getApprovedAmount() != null
+                ? loan.getApprovedAmount()
+                : loan.getLoanAmount();
+        if (principalBase == null) {
+            throw new RuntimeException("Loan principal is missing for repayment schedule generation");
+        }
+        BigDecimal monthlyRate = loan.getInterestRate() == null
+                ? BigDecimal.ZERO
+                : loan.getInterestRate()
+                .divide(new BigDecimal("1200"), 12, RoundingMode.HALF_UP);
+        BigDecimal remainingPrincipal = principalBase;
 
         LocalDate firstDueDate =
                 loan.getActivatedAt()
@@ -44,14 +56,31 @@ public class RepaymentScheduleGeneratorService {
         for (int i = 1; i <= loan.getTenureMonths(); i++) {
 
             LocalDate dueDate = firstDueDate.plusMonths(i - 1);
+            BigDecimal emiAmount = loan.getEmiAmount();
+            BigDecimal interestAmount = monthlyRate.compareTo(BigDecimal.ZERO) > 0
+                    ? remainingPrincipal.multiply(monthlyRate).setScale(2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+            BigDecimal principalAmount = emiAmount
+                    .subtract(interestAmount)
+                    .setScale(2, RoundingMode.HALF_UP);
+            if (principalAmount.compareTo(BigDecimal.ZERO) < 0) {
+                principalAmount = BigDecimal.ZERO;
+            }
+            if (i == loan.getTenureMonths() || principalAmount.compareTo(remainingPrincipal) > 0) {
+                principalAmount = remainingPrincipal.max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+                interestAmount = emiAmount.subtract(principalAmount).setScale(2, RoundingMode.HALF_UP);
+            }
+            remainingPrincipal = remainingPrincipal.subtract(principalAmount).max(BigDecimal.ZERO);
 
             emis.add(
                     Emi.builder()
                             .emiNumber(i)
                             .dueDate(dueDate.atStartOfDay(zoneId).toInstant())
-                            .emiAmount(loan.getEmiAmount())
+                            .emiAmount(emiAmount)
                             .paidAmount(BigDecimal.ZERO)
                             .penaltyAmount(BigDecimal.ZERO)
+                            .principalAmount(principalAmount)
+                            .interestAmount(interestAmount)
                             .status(RepaymentStatus.PENDING)
                             .build()
             );
@@ -68,6 +97,7 @@ public class RepaymentScheduleGeneratorService {
                 .totalPayableAmount(totalPayable)
                 .totalPaidAmount(BigDecimal.ZERO)
                 .outstandingAmount(totalPayable)
+                .outstandingPrincipal(principalBase)
                 .nextEmiDate(emis.get(0).getDueDate())
                 .nextEmiAmount(loan.getEmiAmount())
                 .closed(false)
