@@ -49,12 +49,16 @@ public class GlobalExceptionHandler {
 
         Map<String, Object> body = new HashMap<>();
         body.put("correlationId", MDC.get("correlationId"));
-        body.put("error", ex.getMessage());
+        body.put("error", "Internal server error");
+        body.put("details", ex.getMessage()); // log-only info
         body.put("path", request.getRequestURI());
         body.put("timestamp", Instant.now());
 
-        return ResponseEntity.badRequest().body(body);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(body);
     }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(
