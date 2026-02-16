@@ -215,11 +215,14 @@ export default function Navbar({ onMenuClick }) {
               </motion.button>
             </motion.div>
           ) : (
-            <motion.div
-              className="user-section"
+            <motion.button
+              type="button"
+              className="user-section user-trigger"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2, type: 'spring' }}
+              onClick={() => navigate('/profile')}
+              aria-label="Open user profile details"
             >
               <motion.div
                 className="user-avatar"
@@ -231,7 +234,7 @@ export default function Navbar({ onMenuClick }) {
               <span className="welcome-text">
                 Hi, <strong>{user?.username || 'User'}</strong>
               </span>
-            </motion.div>
+            </motion.button>
           )}
 
           {/* Menu Button with Lottie */}
@@ -409,6 +412,13 @@ export default function Navbar({ onMenuClick }) {
           display: flex;
           align-items: center;
           gap: 12px;
+        }
+
+        .user-trigger {
+          background: transparent;
+          border: none;
+          padding: 0;
+          cursor: pointer;
         }
 
         .user-avatar {

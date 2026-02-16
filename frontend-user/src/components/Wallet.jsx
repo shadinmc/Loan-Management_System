@@ -630,6 +630,28 @@ export default function Wallet() {
           color: var(--text-secondary);
         }
 
+        /* Light mode optimization */
+        [data-theme="light"] .balance-card {
+          background: #ffffff;
+          border: 1px solid var(--border-color);
+          box-shadow: 0 10px 24px rgba(11, 30, 60, 0.08);
+          color: var(--text-primary);
+        }
+
+        [data-theme="light"] .balance-label {
+          color: var(--text-secondary);
+        }
+
+        [data-theme="light"] .action-btn.withdraw {
+          background: var(--bg-secondary);
+          color: var(--text-primary);
+          border-color: var(--border-color);
+        }
+
+        [data-theme="light"] .action-btn.withdraw:hover {
+          background: var(--bg-tertiary);
+        }
+
         @media (max-width: 768px) {
           .stats-grid {
             grid-template-columns: 1fr;

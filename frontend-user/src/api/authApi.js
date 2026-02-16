@@ -1,4 +1,5 @@
 import axios from "axios";
+import axiosInstance from "./axiosInstance";
 
 const baseApi = import.meta.env.VITE_API_BASE_URL || "/api";
 
@@ -29,6 +30,9 @@ export const signup = async (userData) => {
       userId: data.userId,
       username: data.username,
       email: data.email,
+      fullName: userData.fullName,
+      phone: userData.phone,
+      dateOfBirth: userData.dob,
       roles: data.roles,
     })
   );
@@ -51,6 +55,9 @@ export const login = async (credentials) => {
       userId: data.userId,
       username: data.username,
       email: data.email,
+      fullName: data.fullName,
+      phone: data.phone,
+      dateOfBirth: data.dateOfBirth,
       roles: data.roles,
     })
   );
@@ -74,4 +81,9 @@ export const getUser = () => {
 
 export const isAuthenticated = () => {
   return !!getToken();
+};
+
+export const getMyUserProfile = async () => {
+  const { data } = await axiosInstance.get("/user/profile");
+  return data;
 };

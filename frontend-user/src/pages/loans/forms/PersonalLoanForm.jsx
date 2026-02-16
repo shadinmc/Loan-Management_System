@@ -1128,6 +1128,49 @@ const formStyles = `
     gap: 8px;
   }
 
+  /* Light mode optimization */
+  [data-theme="light"] .loan-form {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    box-shadow: 0 10px 26px rgba(11, 30, 60, 0.1);
+  }
+
+  [data-theme="light"] .form-progress,
+  [data-theme="light"] .form-actions,
+  [data-theme="light"] .review-sections,
+  [data-theme="light"] .review-section,
+  [data-theme="light"] .document-item {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+  }
+
+  [data-theme="light"] .submission-overlay {
+    background: rgba(11, 30, 60, 0.2);
+  }
+
+  [data-theme="light"] .submission-card {
+    background: #ffffff;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    box-shadow: 0 8px 20px rgba(11, 30, 60, 0.12);
+  }
+
+  [data-theme="light"] .submission-title,
+  [data-theme="light"] .step-title-main,
+  [data-theme="light"] .review-section-header h4,
+  [data-theme="light"] .review-value {
+    color: var(--text-primary);
+  }
+
+  [data-theme="light"] .submission-subtitle,
+  [data-theme="light"] .step-title,
+  [data-theme="light"] .step-desc,
+  [data-theme="light"] .step-subtitle,
+  [data-theme="light"] .review-label,
+  [data-theme="light"] .terms-checkbox span {
+    color: var(--text-secondary);
+  }
+
   @media (max-width: 768px) {
     .progress-steps {
       flex-wrap: wrap;

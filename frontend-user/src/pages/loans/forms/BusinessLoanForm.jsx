@@ -1897,6 +1897,51 @@ const formStyles = `
     box-shadow: 0 6px 18px rgba(11, 30, 60, 0.32);
   }
 
+  /* Light mode optimization */
+  [data-theme="light"] .business-loan-form {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    box-shadow: 0 10px 26px rgba(11, 30, 60, 0.1);
+  }
+
+  [data-theme="light"] .form-progress-container,
+  [data-theme="light"] .form-content-wrapper,
+  [data-theme="light"] .form-actions,
+  [data-theme="light"] .review-sections,
+  [data-theme="light"] .review-section,
+  [data-theme="light"] .document-item {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+  }
+
+  [data-theme="light"] .submission-overlay {
+    background: rgba(11, 30, 60, 0.2);
+  }
+
+  [data-theme="light"] .submission-card {
+    background: #ffffff;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    box-shadow: 0 8px 20px rgba(11, 30, 60, 0.12);
+  }
+
+  [data-theme="light"] .submission-title,
+  [data-theme="light"] .step-title-main,
+  [data-theme="light"] .review-section-header h4,
+  [data-theme="light"] .review-value {
+    color: var(--text-primary);
+  }
+
+  [data-theme="light"] .submission-subtitle,
+  [data-theme="light"] .step-title,
+  [data-theme="light"] .step-desc,
+  [data-theme="light"] .step-subtitle,
+  [data-theme="light"] .review-label,
+  [data-theme="light"] .terms-checkbox span,
+  [data-theme="light"] .progress-text {
+    color: var(--text-secondary);
+  }
+
   /* Responsive */
   @media (max-width: 640px) {
     .form-progress-container {
