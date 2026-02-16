@@ -102,7 +102,7 @@ export default function Dashboard() {
         {/* Welcome Section */}
         <section className="welcome-section animate-fade-in-up">
           <div className="welcome-content">
-            <h1>Welcome back, {user?.username || 'User'}</h1>
+            <h1>Welcome, {user?.username || 'User'}</h1>
             <p>Manage your loans and applications from your personal dashboard</p>
           </div>
 
