@@ -23,7 +23,13 @@ import {
 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { useSearchParams } from 'react-router-dom';
-import { settleOts, payEmi } from '../api/repaymentApi';
+import * as repaymentApi from '../api/repaymentApi';
+
+const toAmountString = (value) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return '0';
+  return parsed.toFixed(2);
+};
 
 export default function WalletPage() {
   const {
@@ -35,7 +41,8 @@ export default function WalletPage() {
     page,
     setPage,
     totalPages,
-    totalElements
+    totalElements,
+    refreshWalletData
   } = useWallet();
   const [showAddMoney, setShowAddMoney] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
@@ -104,6 +111,26 @@ export default function WalletPage() {
   const recentTransactions = transactions.slice(0, 5);
   const totalCredit = transactions.filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0);
   const totalDebit = transactions.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
+  const handleWalletWithdraw = async (amount) => {
+    const normalizedAmount = Number(amount);
+    if (withdrawMeta?.purpose === 'ots' && withdrawMeta.loanId) {
+      if (typeof settleOtsFn !== 'function') {
+        throw new Error('repaymentApi.settleOts is unavailable');
+      }
+      await settleOtsFn(withdrawMeta.loanId, toAmountString(amount));
+      refreshWalletData();
+      return;
+    }
+    if (withdrawMeta?.purpose === 'emi' && withdrawMeta.loanId) {
+      if (typeof payEmiFn !== 'function') {
+        throw new Error('payEmi API is not available');
+      }
+      await payEmiFn(withdrawMeta.loanId, toAmountString(amount));
+      refreshWalletData();
+      return;
+    }
+    await withdrawMoney(normalizedAmount);
+  };
 
   return (
     <div className="wallet-page">
@@ -360,16 +387,9 @@ export default function WalletPage() {
                 <WithdrawModal
                   balance={balance}
                   onClose={() => setShowWithdraw(false)}
-                  onSubmit={async (amount) => {
-                    await withdrawMoney(amount);
-                    if (withdrawMeta?.purpose === 'ots' && withdrawMeta.loanId) {
-                      await settleOts(withdrawMeta.loanId, Number(amount));
-                    }
-                    if (withdrawMeta?.purpose === 'emi' && withdrawMeta.loanId) {
-                      await payEmi(withdrawMeta.loanId, Number(amount));
-                    }
-                  }}
+                  onSubmit={handleWalletWithdraw}
                   initialAmount={prefillWithdrawAmount}
+                  requireBank={!withdrawMeta?.purpose}
                 />,
                 document.body
               )
@@ -377,16 +397,9 @@ export default function WalletPage() {
               <WithdrawModal
                 balance={balance}
                 onClose={() => setShowWithdraw(false)}
-                onSubmit={async (amount) => {
-                  await withdrawMoney(amount);
-                  if (withdrawMeta?.purpose === 'ots' && withdrawMeta.loanId) {
-                    await settleOts(withdrawMeta.loanId, Number(amount));
-                  }
-                  if (withdrawMeta?.purpose === 'emi' && withdrawMeta.loanId) {
-                    await payEmi(withdrawMeta.loanId, Number(amount));
-                  }
-                }}
+                onSubmit={handleWalletWithdraw}
                 initialAmount={prefillWithdrawAmount}
+                requireBank={!withdrawMeta?.purpose}
               />
             )
         )}
@@ -538,7 +551,7 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
 }
 
 // Complete WithdrawModal component
-function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '' }) {
+function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '', requireBank = true }) {
   const [amount, setAmount] = useState(initialAmount || '');
   const [selectedBank, setSelectedBank] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -550,7 +563,7 @@ function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '' }) {
   ];
 
   const handleSubmit = async () => {
-    if (!amount || amount <= 0 || amount > balance || !selectedBank) return;
+    if (!amount || amount <= 0 || amount > balance || (requireBank && !selectedBank)) return;
 
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -559,6 +572,12 @@ function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '' }) {
       await onSubmit(parseFloat(amount), selectedBank);
       onClose();
     } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Withdrawal failed';
+      alert(message);
       console.error('Withdrawal failed:', error);
     } finally {
       setIsProcessing(false);
@@ -616,7 +635,8 @@ function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '' }) {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"
-                min="1"max={balance}
+                min="1"
+                max={balance}
               />
             </div>
             {amount > balance && (
@@ -652,7 +672,7 @@ function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '' }) {
           <button
             className="btn-primary withdraw"
             onClick={handleSubmit}
-            disabled={!amount || amount <= 0 || amount > balance || !selectedBank || isProcessing}
+            disabled={!amount || amount <= 0 || amount > balance || (requireBank && !selectedBank) || isProcessing}
           >
             {isProcessing ? (
               <>
@@ -1500,3 +1520,5 @@ const modalStyles = `
   }
 `;
 
+  const settleOtsFn = repaymentApi.settleOts || repaymentApi.default?.settleOts;
+  const payEmiFn = repaymentApi.payEmi || repaymentApi.default?.payEmi;

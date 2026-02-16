@@ -25,9 +25,13 @@ public class RepaymentSchedule {
 
     private List<Emi> emis;
 
+    /** EMI-based totals */
     private BigDecimal totalPayableAmount;
     private BigDecimal totalPaidAmount;
-    private BigDecimal outstandingAmount;
+    private BigDecimal outstandingAmount;      // EMI remaining
+
+    /** 🔑 PRINCIPAL tracking (NEW) */
+    private BigDecimal outstandingPrincipal;   // Pure remaining principal
 
     private Instant nextEmiDate;
     private BigDecimal nextEmiAmount;
