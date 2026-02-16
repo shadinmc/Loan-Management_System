@@ -6,6 +6,10 @@ const StatusBadge = ({ status }) => {
       label: "Under Branch Review",
       className: "warning",
     },
+    APPLIED: {
+      label: "Applied",
+      className: "info",
+    },
     ELIGIBILITY_CHECK_PASSED: {
       label: "Eligibility Passed",
       className: "info",
@@ -17,6 +21,26 @@ const StatusBadge = ({ status }) => {
     BRANCH_APPROVED: {
       label: "Branch Approved",
       className: "success",
+    },
+    UNDER_REGIONAL_REVIEW: {
+      label: "Under Regional Review",
+      className: "info",
+    },
+    DISBURSEMENT_PENDING: {
+      label: "Disbursement Pending",
+      className: "warning",
+    },
+    DISBURSED: {
+      label: "Disbursed",
+      className: "success",
+    },
+    REGIONAL_APPROVED: {
+      label: "Regional Approved",
+      className: "success",
+    },
+    REGIONAL_REJECTED: {
+      label: "Regional Rejected",
+      className: "danger",
     },
     BRANCH_REJECTED: {
       label: "Branch Rejected",

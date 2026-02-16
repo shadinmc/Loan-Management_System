@@ -177,9 +177,19 @@ td {
   color: #1d4ed8;
 }
 
+.badge.paid {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
 .badge.overdue {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.badge.closed {
+  background: #e2e8f0;
+  color: #334155;
 }
 
 /* =====================
@@ -244,6 +254,14 @@ td {
   cursor: pointer;
 }
 
+.detail-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
 /* =====================
    ANIMATION
 ===================== */
@@ -260,4 +278,29 @@ tbody tr {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.pagination-bar {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.pager-btn {
+  background: #eef2ff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.pager-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

@@ -6,10 +6,11 @@ import Input from '../../../components/Input';
 import FileUpload from '../../../components/FileUpload';
 import Button from '../../../components/Button';
 import { validateRequired, validateAmount } from '../../../utils/validators';
-import { LOAN_CONFIG, LOAN_TYPES } from '../../../utils/constants';
+import { LOAN_CONFIG, LOAN_TYPES, VEHICLE_TYPES } from '../../../utils/constants';
 import { useCreateLoan } from '../../../hooks/useCreateLoan';
 
 export default function VehicleLoanForm({ onSubmit, loading: externalLoading, config }) {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
   const { createLoan, loading, error: apiError } = useCreateLoan(
     '/loans/apply',
     { loanType: 'VEHICLE', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false }
@@ -171,9 +172,8 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
         vehicleType: formData.vehicleType,
         vehicleBrand: formData.vehicleBrand,  // Added
         vehicleModel: formData.vehicleModel.trim(),
-        vehiclePrice: Number(formData.vehiclePrice),
         downPaymentAmount: Number(formData.downPayment),
-        vehicleRegistrationNumber: formData.vehicleRegistrationNumber?.trim() || null,
+        dealerName: `${formData.vehicleBrand} Dealer`,
         proofOfIdentity,
         proofOfIncome,
         insuranceProof,
@@ -205,10 +205,7 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
 
   const vehicleTypes = [
     { value: '', label: 'Select Vehicle Type' },
-    { value: 'TWO_WHEELER', label: 'Two Wheeler' },
-    { value: 'CAR', label: 'Car' },
-    { value: 'SUV', label: 'SUV' },
-    { value: 'COMMERCIAL', label: 'Commercial Vehicle' }
+    ...VEHICLE_TYPES
   ];
 
   const tenureOptions = [

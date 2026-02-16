@@ -1,6 +1,9 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchPendingKycs, submitKycDecision } from "../../api/branchKycApi";
+import {
+  fetchManagerKycs,
+  submitManagerKycDecision,
+} from "../../api/branchKycApi";
 import "../dashboard/AdminDashboard.css";
 import "./BranchKycVerification.css";
 
@@ -10,22 +13,26 @@ const BranchKycVerification = () => {
   const [decision, setDecision] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const token = localStorage.getItem("token");
+  const rawAuth = localStorage.getItem("adminAuth");
+  const parsedAuth = rawAuth ? JSON.parse(rawAuth) : null;
+  const roles = parsedAuth?.roles || [];
+  const isBranchManager = roles.includes("BRANCH_MANAGER");
 
   const {
-    data: pendingKycs = [],
+    data: kycRecords = [],
     isLoading: kycsLoading,
-    isError: kycsError
+    isError: kycsError,
   } = useQuery({
-    queryKey: ["branch-kyc-pending", token],
-    queryFn: fetchPendingKycs,
-    enabled: !!token
+    queryKey: ["manager-kyc-records", token],
+    queryFn: fetchManagerKycs,
+    enabled: !!token,
   });
 
   const decisionMutation = useMutation({
     mutationFn: ({ userId, approved, rejectionReason: reason }) =>
-      submitKycDecision(userId, { approved, rejectionReason: reason }),
+      submitManagerKycDecision(userId, { approved, rejectionReason: reason }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["branch-kyc-pending"] });
+      queryClient.invalidateQueries({ queryKey: ["manager-kyc-records"] });
       setSelectedKyc(null);
       setDecision(null);
       setRejectionReason("");
@@ -36,7 +43,7 @@ const BranchKycVerification = () => {
         error?.message ||
         "Failed to save KYC decision";
       alert(message);
-    }
+    },
   });
 
   const guessMimeType = (base64) => {
@@ -62,13 +69,13 @@ const BranchKycVerification = () => {
         return {
           label: `Document ${index + 1}`,
           base64: data || "",
-          mimeType: mimeType || "application/octet-stream"
+          mimeType: mimeType || "application/octet-stream",
         };
       }
       return {
         label: `Document ${index + 1}`,
         base64: doc,
-        mimeType: guessMimeType(doc)
+        mimeType: guessMimeType(doc),
       };
     });
   }, [selectedKyc]);
@@ -86,7 +93,7 @@ const BranchKycVerification = () => {
     }
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], {
-      type: doc.mimeType || "application/octet-stream"
+      type: doc.mimeType || "application/octet-stream",
     });
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank", "noopener,noreferrer");
@@ -98,7 +105,7 @@ const BranchKycVerification = () => {
     decisionMutation.mutate({
       userId: selectedKyc.userId,
       approved: true,
-      rejectionReason: null
+      rejectionReason: null,
     });
   };
 
@@ -111,58 +118,73 @@ const BranchKycVerification = () => {
     decisionMutation.mutate({
       userId: selectedKyc.userId,
       approved: false,
-      rejectionReason: rejectionReason.trim()
+      rejectionReason: rejectionReason.trim(),
     });
   };
+
+  const formatDateTime = (value) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString();
+  };
+
+  const statusClass = (status) => {
+    if (status === "VERIFIED") return "success";
+    if (status === "REJECTED") return "danger";
+    return "warning";
+  };
+
+  const pendingCount = kycRecords.filter((item) => item.status === "PENDING").length;
 
   return (
     <>
       <section className="page-title">
         <h2>KYC Verification</h2>
-        <p>Review pending KYC submissions and approve or reject with notes.</p>
+        <p>List of users with KYC status, submitted date, and verified/reviewed date.</p>
       </section>
 
       <section className="card kyc-card">
         <div className="card-header">
           <div>
-            <h3>Pending Requests</h3>
+            <h3>KYC Records</h3>
             <p className="card-subtitle">
-              Review the user details and uploaded documents before making a decision.
+              Review user identity details and decision timeline.
             </p>
           </div>
-          <span className="kyc-count">Pending: {pendingKycs.length}</span>
+          <span className="kyc-count">Pending: {pendingCount} / Total: {kycRecords.length}</span>
         </div>
 
         {kycsLoading ? (
-          <div className="kyc-empty">Loading pending KYC records...</div>
+          <div className="kyc-empty">Loading KYC records...</div>
         ) : kycsError ? (
           <div className="kyc-empty">Failed to load KYC records.</div>
-        ) : pendingKycs.length === 0 ? (
-          <div className="kyc-empty">No pending KYC requests.</div>
+        ) : kycRecords.length === 0 ? (
+          <div className="kyc-empty">No KYC records found.</div>
         ) : (
           <table className="kyc-table">
             <thead>
               <tr>
-                <th>User</th>
+                <th>Name</th>
                 <th>Email</th>
-                <th>PAN</th>
-                <th>Aadhaar</th>
                 <th>Status</th>
                 <th>Submitted</th>
+                <th>Verified/Reviewed</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {pendingKycs.map((kyc) => (
+              {kycRecords.map((kyc) => (
                 <tr key={kyc.userId}>
                   <td>{kyc.fullName || "N/A"}</td>
                   <td>{kyc.email || "N/A"}</td>
-                  <td>{kyc.panNumber || "N/A"}</td>
-                  <td>{kyc.aadhaarNumber || "N/A"}</td>
                   <td>
-                    <span className="badge warning">PENDING</span>
+                    <span className={`badge ${statusClass(kyc.status)}`}>
+                      {kyc.status || "PENDING"}
+                    </span>
                   </td>
-                  <td>{kyc.createdAt || "N/A"}</td>
+                  <td>{formatDateTime(kyc.createdAt)}</td>
+                  <td>{formatDateTime(kyc.reviewedAt)}</td>
                   <td>
                     <button
                       className="kyc-review-btn"
@@ -173,7 +195,7 @@ const BranchKycVerification = () => {
                         setRejectionReason("");
                       }}
                     >
-                      Review
+                      {kyc.status === "PENDING" ? "Review" : "View"}
                     </button>
                   </td>
                 </tr>
@@ -222,6 +244,14 @@ const BranchKycVerification = () => {
                   <label>Status</label>
                   <strong>{selectedKyc.status || "PENDING"}</strong>
                 </div>
+                <div>
+                  <label>Submitted At</label>
+                  <strong>{formatDateTime(selectedKyc.createdAt)}</strong>
+                </div>
+                <div>
+                  <label>Verified/Reviewed At</label>
+                  <strong>{formatDateTime(selectedKyc.reviewedAt)}</strong>
+                </div>
               </div>
 
               <div className="kyc-docs">
@@ -244,57 +274,71 @@ const BranchKycVerification = () => {
                 )}
               </div>
 
-              <div className="kyc-decision">
-                <h4>Decision</h4>
-                <div className="kyc-decision-actions">
-                  <button
-                    className="kyc-approve"
-                    type="button"
-                    onClick={handleApproveKyc}
-                    disabled={decisionMutation.isPending}
-                  >
-                    Approve
-                  </button>
-                  <button
-                    className={`kyc-reject ${decision === "REJECT" ? "active" : ""}`}
-                    type="button"
-                    onClick={() => setDecision("REJECT")}
-                  >
-                    Reject
-                  </button>
-                </div>
-
-                {decision === "REJECT" && (
-                  <div className="kyc-reject-box">
-                    <label>Rejection Reason</label>
-                    <textarea
-                      value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
-                      placeholder="Enter reason for rejection"
-                    />
-                    <div className="kyc-reject-actions">
-                      <button
-                        className="kyc-cancel"
-                        type="button"
-                        onClick={() => {
-                          setDecision(null);
-                          setRejectionReason("");
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        className="kyc-confirm"
-                        type="button"
-                        onClick={handleRejectKyc}
-                        disabled={decisionMutation.isPending}
-                      >
-                        Submit Rejection
-                      </button>
-                    </div>
+              {isBranchManager && selectedKyc.status === "PENDING" ? (
+                <div className="kyc-decision">
+                  <h4>Decision</h4>
+                  <div className="kyc-decision-actions">
+                    <button
+                      className="kyc-approve"
+                      type="button"
+                      onClick={handleApproveKyc}
+                      disabled={decisionMutation.isPending}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      className={`kyc-reject ${decision === "REJECT" ? "active" : ""}`}
+                      type="button"
+                      onClick={() => setDecision("REJECT")}
+                    >
+                      Reject
+                    </button>
                   </div>
-                )}
-              </div>
+
+                  {decision === "REJECT" && (
+                    <div className="kyc-reject-box">
+                      <label>Rejection Reason</label>
+                      <textarea
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        placeholder="Enter reason for rejection"
+                      />
+                      <div className="kyc-reject-actions">
+                        <button
+                          className="kyc-cancel"
+                          type="button"
+                          onClick={() => {
+                            setDecision(null);
+                            setRejectionReason("");
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className="kyc-confirm"
+                          type="button"
+                          onClick={handleRejectKyc}
+                          disabled={decisionMutation.isPending}
+                        >
+                          Submit Rejection
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="kyc-decision">
+                  <h4>{isBranchManager ? "Decision Summary" : "View Only"}</h4>
+                  <p>
+                    {isBranchManager
+                      ? `This KYC is already ${selectedKyc.status}.`
+                      : "Regional manager can only view KYC records. Decision is allowed only for branch manager."}
+                    {selectedKyc.rejectionReason
+                      ? ` Reason: ${selectedKyc.rejectionReason}`
+                      : ""}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

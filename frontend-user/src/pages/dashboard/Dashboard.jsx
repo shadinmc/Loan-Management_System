@@ -83,9 +83,10 @@ export default function Dashboard() {
     return items.map((loan) => {
       const loanTypeKey = loan.loanType || '';
       const config = LOAN_CONFIG[loanTypeKey] || {};
+      const backendStatus = loan.status || loan.loanStatus || 'APPLIED';
       return {
         applicationId: loan.loanId || loan.id,
-        status: mapBackendStatus(loan.status),
+        status: mapBackendStatus(backendStatus),
         loanType: config.name || loanTypeKey,
         loanAmount: Number(loan.loanAmount || 0),
         appliedDate: loan.appliedDate || loan.createdAt || new Date().toISOString()
@@ -101,7 +102,7 @@ export default function Dashboard() {
         {/* Welcome Section */}
         <section className="welcome-section animate-fade-in-up">
           <div className="welcome-content">
-            <h1>Welcome back, {user?.username || 'User'}</h1>
+            <h1>Welcome, {user?.username || 'User'}</h1>
             <p>Manage your loans and applications from your personal dashboard</p>
           </div>
 
