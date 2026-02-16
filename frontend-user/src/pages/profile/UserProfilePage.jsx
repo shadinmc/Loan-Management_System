@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { User } from 'lucide-react';
 import { getMyUserProfile } from '../../api/authApi';
 import { useAuth } from '../../context/AuthContext';
+import { useKYC } from '../../context/KYCContext';
 
 function formatDate(value) {
   if (!value) return 'N/A';
@@ -30,6 +31,7 @@ function formatDateTime(value) {
 
 export default function UserProfilePage() {
   const { user } = useAuth();
+  const { kycData } = useKYC();
 
   const profileQuery = useQuery({
     queryKey: ['user-profile', user?.userId],
@@ -52,8 +54,9 @@ export default function UserProfilePage() {
       ['Account Created', formatDateTime(profile?.accountCreatedTimestamp)],
       ['Aadhaar No (Masked)', profile?.aadhaarNumberMasked || 'N/A'],
       ['PAN No (Masked)', profile?.panNumberMasked || 'N/A'],
+      ['CIBIL Score', kycData?.cibilScore ?? 'N/A'],
     ],
-    [profile, user]
+    [profile, user, kycData?.cibilScore]
   );
 
   return (
