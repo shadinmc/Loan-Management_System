@@ -299,7 +299,11 @@ export default function WalletPage() {
               </div>
             ) : (
               recentTransactions.map((txn) => (
-                <div key={txn.id} className="transaction-item">
+                <div
+                  key={txn.id}
+                  className="transaction-item"
+                  data-details={`ID: ${txn.id || '-'} | Method: ${txn.method || 'Wallet'} | Status: ${txn.status || 'completed'}`}
+                >
                   <div className={`txn-icon ${txn.type}`}>
                     {txn.type === 'credit' ? (
                       <ArrowDownLeft size={16} />
@@ -703,8 +707,12 @@ const styles = `
   }
 
   .wallet-container {
-    max-width: 640px;
+    max-width: 1200px;
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: 380px minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
   }
 
   .wallet-loading {
@@ -727,6 +735,7 @@ const styles = `
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 28px;
+    grid-column: 1 / -1;
   }
 
   .header-badge {
@@ -774,7 +783,7 @@ const styles = `
     padding: 32px 28px;
     border-radius: 20px;
     color: white;
-    margin-bottom: 24px;
+    margin-bottom: 0;
     border: 1px solid rgba(255, 255, 255, 0.1);
     overflow: hidden;
   }
@@ -870,10 +879,7 @@ const styles = `
 
   /* Stats Grid */
   .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-bottom: 28px;
+    display: none;
   }
 
   .stat-card {
@@ -959,6 +965,8 @@ const styles = `
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 18px;
     overflow: hidden;
+    grid-column: 2;
+    grid-row: 2 / span 2;
   }
 
   .section-header {
@@ -1013,7 +1021,10 @@ const styles = `
   }
 
   .transactions-list {
-    padding: 12px 24px 24px;
+    padding: 14px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .no-transactions {
@@ -1062,14 +1073,50 @@ const styles = `
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 14px 12px;
-    border-radius: 10px;
-    margin-bottom: 8px;
-    transition: background 0.2s ease;
+    padding: 14px 14px;
+    border-radius: 12px;
+    margin-bottom: 0;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    overflow: hidden;
   }
 
   .transaction-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(45, 190, 96, 0.35);
+    transform: translateY(-1px);
+  }
+
+  .transaction-item::after {
+    content: attr(data-details);
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(11, 30, 60, 0.95);
+    border: 1px solid rgba(45, 190, 96, 0.35);
+    color: #B8C7E3;
+    font-size: 0.74rem;
+    white-space: normal;
+    line-height: 1.35;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+  }
+
+  .transaction-item:hover::after {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .transaction-item:hover .txn-details,
+  .transaction-item:hover .txn-amount,
+  .transaction-item:hover .txn-icon {
+    opacity: 0.25;
   }
 
   .txn-icon {
@@ -1170,6 +1217,21 @@ const styles = `
   @media (max-width: 768px) {
     .wallet-page {
       padding: 90px 16px 40px;
+    }
+
+    .wallet-container {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .wallet-header {
+      grid-column: 1;
+      margin-bottom: 12px;
+    }
+
+    .transactions-section {
+      grid-column: 1;
+      grid-row: auto;
     }
 
     .stats-grid {

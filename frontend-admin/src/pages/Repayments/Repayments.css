@@ -304,3 +304,42 @@ tbody tr {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+/* =====================
+   LIGHT MODE OPTIMIZATION
+===================== */
+[data-theme="light"] .page-header p,
+[data-theme="light"] .muted {
+  color: #475569;
+}
+
+[data-theme="light"] .kpi,
+[data-theme="light"] .search-box,
+[data-theme="light"] .status-filter,
+[data-theme="light"] .table-wrapper,
+[data-theme="light"] .modal {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 14px rgba(11, 30, 60, 0.06);
+}
+
+[data-theme="light"] thead {
+  background: #f8fafc;
+}
+
+[data-theme="light"] th {
+  color: #1e293b;
+}
+
+[data-theme="light"] td {
+  border-top: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+[data-theme="light"] .search-box input {
+  color: #0f172a;
+}
+
+[data-theme="light"] .pagination-bar {
+  color: #475569;
+}

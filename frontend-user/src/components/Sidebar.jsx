@@ -156,6 +156,15 @@ export default function Sidebar({ isOpen, onClose }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
+            onClick={() => handleNavigation('/profile')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleNavigation('/profile');
+              }
+            }}
           >
             <motion.div
               className="avatar"
@@ -358,6 +367,13 @@ export default function Sidebar({ isOpen, onClose }) {
           border-radius: 16px;
           border: 1px solid rgba(45, 190, 96, 0.15);
           position: relative;
+          cursor: pointer;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .user-profile:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(16, 42, 77, 0.12);
         }
 
         .avatar {

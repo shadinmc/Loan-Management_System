@@ -382,7 +382,9 @@ const pageStyles = `
 
   .stats-section {
     padding: 72px 0;
-    background: linear-gradient(135deg, #0B1E3C 0%, #1a365d 100%);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
   }
 
   .stats-grid {
@@ -397,7 +399,11 @@ const pageStyles = `
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    color: white;
+    color: var(--text-primary);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 28px 20px;
   }
 
   .stat-icon {
@@ -416,15 +422,35 @@ const pageStyles = `
     display: block;
     font-size: 2.75rem;
     font-weight: 800;
-    color: white;
+    color: var(--text-primary);
     letter-spacing: -0.02em;
   }
 
   .stat-label {
     font-size: 0.9rem;
-    color: rgba(165, 180, 207, 0.9);
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+
+  [data-theme="dark"] .stats-section {
+    background: linear-gradient(135deg, #0B1E3C 0%, #1a365d 100%);
+    border-top: none;
+    border-bottom: none;
+  }
+
+  [data-theme="dark"] .stat-item {
+    color: white;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  [data-theme="dark"] .stat-value {
+    color: white;
+  }
+
+  [data-theme="dark"] .stat-label {
+    color: rgba(165, 180, 207, 0.9);
   }
 
   @media (max-width: 1024px) {
