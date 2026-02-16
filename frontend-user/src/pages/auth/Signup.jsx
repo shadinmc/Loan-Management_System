@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signup } from '../../api/authApi';
 import { useAuth } from '../../context/AuthContext';
+import SiteFooter from '../../components/SiteFooter';
 import {
   UserPlus,
   Wallet,
@@ -463,6 +464,7 @@ export default function Signup() {
   };
 
   return (
+    <>
     <div className="auth-page">
       <div className="auth-bg">
         <div className="bg-gradient" />
@@ -759,6 +761,10 @@ export default function Signup() {
         .bg-gradient {
           position: absolute;
           inset: 0;
+          background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
+        }
+
+        [data-theme="dark"] .bg-gradient {
           background: linear-gradient(135deg, #0B1E3C 0%, #102A4D 50%, #0B1E3C 100%);
         }
 
@@ -780,7 +786,7 @@ export default function Signup() {
         .auth-container {
           display: grid;
           grid-template-columns: 1fr 1.1fr;
-          max-width: 1050px;
+          max-width: 980px;
           width: 100%;
           background: var(--card-bg);
           border-radius: 28px;
@@ -790,14 +796,24 @@ export default function Signup() {
           z-index: 1;
         }
 
+        [data-theme="light"] .auth-container {
+          box-shadow:
+            0 24px 56px rgba(16, 42, 77, 0.16),
+            0 0 0 1px rgba(16, 42, 77, 0.08);
+        }
+
         .auth-branding {
-          background: linear-gradient(145deg, #0B1E3C 0%, #0f2847 100%);
+          background: linear-gradient(145deg, #EFF8F2 0%, #E4F3EA 100%);
           padding: 48px;
           display: flex;
           flex-direction: column;
           justify-content: center;
           position: relative;
           overflow: hidden;
+        }
+
+        [data-theme="dark"] .auth-branding {
+          background: linear-gradient(145deg, #0B1E3C 0%, #0F2847 100%);
         }
 
         .branding-content {
@@ -835,15 +851,23 @@ export default function Signup() {
         .branding-content h1 {
           font-size: 2rem;
           font-weight: 800;
-          color: white;
+          color: #16324F;
           margin-bottom: 8px;
           letter-spacing: -0.02em;
         }
 
+        [data-theme="dark"] .branding-content h1 {
+          color: white;
+        }
+
         .tagline {
-          color: #A5B4CF;
+          color: #43607D;
           font-size: 1rem;
           margin-bottom: 40px;
+        }
+
+        [data-theme="dark"] .tagline {
+          color: #A5B4CF;
         }
 
         .features-list {
@@ -859,9 +883,13 @@ export default function Signup() {
           display: flex;
           align-items: center;
           gap: 14px;
-          color: #EAF2FF;
+          color: #2A4867;
           font-size: 0.9375rem;
           cursor: default;
+        }
+
+        [data-theme="dark"] .feature-item {
+          color: #EAF2FF;
         }
 
         .feature-icon {
@@ -886,10 +914,16 @@ export default function Signup() {
           align-items: center;
           gap: 6px;
           padding: 8px 14px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(45, 190, 96, 0.12);
+          border: 1px solid rgba(45, 190, 96, 0.22);
           border-radius: 100px;
           font-size: 0.75rem;
+          color: #215538;
+        }
+
+        [data-theme="dark"] .badge {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.1);
           color: #A5B4CF;
         }
 
@@ -930,7 +964,7 @@ export default function Signup() {
         }
 
         .auth-form-section {
-          padding: 40px 48px;
+          padding: 34px 38px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -939,7 +973,7 @@ export default function Signup() {
 
         .form-content {
           width: 100%;
-          max-width: 400px;
+          max-width: 360px;
         }
 
         .form-header {
@@ -1376,7 +1410,7 @@ export default function Signup() {
           transition: all 0.2s ease;
         }
 
-        .next-btn
+        .next-btn,
         .submit-btn:hover:not(:disabled) {
           box-shadow: 0 12px 32px rgba(45, 190, 96, 0.4);
           transform: translateY(-1px);
@@ -1425,7 +1459,7 @@ export default function Signup() {
           }
 
           .auth-form-section {
-            padding: 40px 28px;
+            padding: 34px 22px;
           }
         }
 
@@ -1435,7 +1469,7 @@ export default function Signup() {
           }
 
           .auth-form-section {
-            padding: 32px 20px;
+            padding: 28px 18px;
           }
 
           .form-header h2 {
@@ -1458,5 +1492,7 @@ export default function Signup() {
         }
       `}</style>
     </div>
+    <SiteFooter />
+    </>
   );
 }

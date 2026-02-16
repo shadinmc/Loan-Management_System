@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { login } from '../../api/authApi';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import SiteFooter from '../../components/SiteFooter';
 import { useAuth } from '../../context/AuthContext';
 import {
   User,
@@ -88,6 +89,7 @@ export default function Login() {
   ];
 
   return (
+    <>
     <div className="auth-page">
       {/* Animated Background */}
       <div className="auth-bg">
@@ -439,6 +441,10 @@ export default function Login() {
         .bg-gradient {
           position: absolute;
           inset: 0;
+          background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
+        }
+
+        [data-theme="dark"] .bg-gradient {
           background: linear-gradient(135deg, #0B1E3C 0%, #102A4D 50%, #0B1E3C 100%);
         }
 
@@ -460,7 +466,7 @@ export default function Login() {
         .auth-container {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          max-width: 1000px;
+          max-width: 960px;
           width: 100%;
           background: var(--card-bg);
           border-radius: 28px;
@@ -472,14 +478,24 @@ export default function Login() {
           z-index: 1;
         }
 
+        [data-theme="light"] .auth-container {
+          box-shadow:
+            0 24px 56px rgba(16, 42, 77, 0.16),
+            0 0 0 1px rgba(16, 42, 77, 0.08);
+        }
+
         .auth-branding {
-          background: linear-gradient(145deg, #0B1E3C 0%, #0f2847 100%);
+          background: linear-gradient(145deg, #EFF8F2 0%, #E4F3EA 100%);
           padding: 48px;
           display: flex;
           flex-direction: column;
           justify-content: center;
           position: relative;
           overflow: hidden;
+        }
+
+        [data-theme="dark"] .auth-branding {
+          background: linear-gradient(145deg, #0B1E3C 0%, #0F2847 100%);
         }
 
         .branding-content {
@@ -517,15 +533,23 @@ export default function Login() {
         .branding-content h1 {
           font-size: 2rem;
           font-weight: 800;
-          color: white;
+          color: #16324F;
           margin-bottom: 8px;
           letter-spacing: -0.02em;
         }
 
+        [data-theme="dark"] .branding-content h1 {
+          color: white;
+        }
+
         .tagline {
-          color: #A5B4CF;
+          color: #43607D;
           font-size: 1rem;
           margin-bottom: 40px;
+        }
+
+        [data-theme="dark"] .tagline {
+          color: #A5B4CF;
         }
 
         .features-list {
@@ -541,9 +565,13 @@ export default function Login() {
           display: flex;
           align-items: center;
           gap: 14px;
-          color: #EAF2FF;
+          color: #2A4867;
           font-size: 0.9375rem;
           cursor: default;
+        }
+
+        [data-theme="dark"] .feature-item {
+          color: #EAF2FF;
         }
 
         .feature-icon {
@@ -568,10 +596,16 @@ export default function Login() {
           align-items: center;
           gap: 6px;
           padding: 8px 14px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(45, 190, 96, 0.12);
+          border: 1px solid rgba(45, 190, 96, 0.22);
           border-radius: 100px;
           font-size: 0.75rem;
+          color: #215538;
+        }
+
+        [data-theme="dark"] .badge {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.1);
           color: #A5B4CF;
         }
 
@@ -612,7 +646,7 @@ export default function Login() {
         }
 
         .auth-form-section {
-          padding: 48px;
+          padding: 40px 36px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -621,7 +655,7 @@ export default function Login() {
 
         .form-content {
           width: 100%;
-          max-width: 360px;
+          max-width: 330px;
         }
 
         .form-header {
@@ -926,7 +960,7 @@ export default function Login() {
           }
 
           .auth-form-section {
-            padding: 40px 28px;
+            padding: 34px 22px;
           }
         }
 
@@ -936,7 +970,7 @@ export default function Login() {
           }
 
           .auth-form-section {
-            padding: 32px 20px;
+            padding: 28px 18px;
           }
 
           .form-header h2 {
@@ -951,5 +985,7 @@ export default function Login() {
         }
       `}</style>
     </div>
+    <SiteFooter />
+    </>
   );
 }
