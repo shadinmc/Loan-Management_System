@@ -5,6 +5,7 @@ import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
 import com.lms.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -13,13 +14,18 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 
+import com.lms.audit.service.AuditService;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DisbursementScheduler {
 
     private final LoanRepository loanRepository;
     private final WalletService walletService;
+    private final AuditService auditService;
 
     @Value("${loan.activation.delay.minutes}")
     private long activationDelayMinutes;
@@ -55,6 +61,33 @@ public class DisbursementScheduler {
 
 
                 loanRepository.save(loan);
+
+                try {
+                    Map<String, Object> requestPayload = Map.of(
+                            "previousStatus", LoanStatus.DISBURSEMENT_PENDING,
+                            "approvedAmount", loan.getApprovedAmount(),
+                            "disbursementScheduledAt", loan.getDisbursementScheduledAt()
+                    );
+
+                    Map<String, Object> responsePayload = Map.of(
+                            "currentStatus", loan.getStatus(),
+                            "transactionId", loan.getTransactionId(),
+                            "disbursedAt", loan.getDisbursedAt()
+                    );
+
+                    auditService.log(
+                            "DISBURSEMENT_SCHEDULER",
+                            "LOAN_DISBURSEMENT",
+                            "LOAN",
+                            loan.getLoanId(),
+                            requestPayload,
+                            responsePayload,
+                            200,
+                            true
+                    );
+                } catch (Exception e) {
+                    log.error("AUDIT FAILED — request still successful", e);
+                }
             }
         }
     }

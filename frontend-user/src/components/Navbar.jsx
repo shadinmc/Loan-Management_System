@@ -525,6 +525,36 @@ export default function Navbar({ onMenuClick }) {
             height: 40px;
           }
         }
+
+        /* Align nav items to the right for a cleaner, professional layout */
+        .navbar-container {
+          justify-content: flex-start;
+        }
+
+        .navbar-links {
+          margin-left: auto;
+          gap: 8px;
+        }
+
+        .navbar-actions {
+          margin-left: 12px;
+        }
+
+        .nav-link {
+          font-size: 0.9rem;
+          padding: 8px 14px;
+          letter-spacing: 0.01em;
+        }
+
+        .logo-text {
+          font-size: 1.25rem;
+        }
+
+        @media (max-width: 1024px) {
+          .navbar-links {
+            display: none;
+          }
+        }
       `}</style>
     </motion.nav>
   );

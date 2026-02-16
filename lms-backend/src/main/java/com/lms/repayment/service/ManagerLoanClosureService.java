@@ -1,5 +1,7 @@
 package com.lms.repayment.service;
 
+import com.lms.audit.service.AuditService;
+import com.lms.auth.security.SecurityUtils;
 import com.lms.cibil.enums.CibilEventType;
 import com.lms.cibil.service.CibilScoreService;
 import com.lms.common.enums.LoanStatus;
@@ -12,6 +14,7 @@ import com.lms.repayment.enums.RepaymentStatus;
 import com.lms.repayment.repository.RepaymentScheduleRepository;
 import com.lms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +22,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ManagerLoanClosureService {
@@ -28,6 +34,8 @@ public class ManagerLoanClosureService {
     private final RepaymentScheduleRepository repaymentScheduleRepository;
     private final UserRepository userRepository;
     private final CibilScoreService cibilScoreService;
+    private final SecurityUtils securityUtils;
+    private final AuditService auditService;
 
     public ManagerLoanClosurePageResponse getLoanClosureRecords(int page, int size) {
         List<ManagerLoanClosureResponse> sorted = repaymentScheduleRepository.findAll().stream()
@@ -53,6 +61,7 @@ public class ManagerLoanClosureService {
 
     @Transactional
     public ManagerLoanClosureResponse closeLoan(String loanId) {
+        String actorUserId = securityUtils.getCurrentUserId();
         Loan loan = loanRepository.findByLoanId(loanId)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
@@ -79,6 +88,30 @@ public class ManagerLoanClosureService {
         }
         schedule.setUpdatedAt(Instant.now());
         repaymentScheduleRepository.save(schedule);
+
+        try {
+            Map<String, Object> requestPayload = new HashMap<>();
+            requestPayload.put("loanId", loanId);
+            requestPayload.put("outstandingAmount", schedule.getOutstandingAmount());
+
+            Map<String, Object> responsePayload = Map.of(
+                    "currentStatus", loan.getStatus(),
+                    "closedAt", loan.getClosedAt()
+            );
+
+            auditService.log(
+                    actorUserId,
+                    "LOAN_CLOSURE",
+                    "LOAN",
+                    loanId,
+                    requestPayload,
+                    responsePayload,
+                    200,
+                    true
+            );
+        } catch (Exception e) {
+            log.error("AUDIT FAILED — request still successful", e);
+        }
 
         return mapToResponse(schedule, loan);
     }

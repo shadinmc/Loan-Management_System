@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import StatusBadge from "../../components/StatusBadge";
 import RegionalLoanReview from "../loans/RegionalLoanReview";
 import { fetchRegionalPendingLoans } from "../../api/regionalLoansApi";
@@ -125,7 +124,7 @@ const RegionalLoanApplications = () => {
                   <td>
                     <button
                       className="review-btn"
-                      onClick={() => setSelectedLoanId(loan.id)}
+                      onClick={() => setSelectedLoan(loan)}
                     >
                       Review
                     </button>
