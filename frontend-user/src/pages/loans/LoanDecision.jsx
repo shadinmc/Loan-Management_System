@@ -120,6 +120,7 @@ export default function LoanDecision() {
       const uiStatus = mapBackendStatus(backendStatus);
       return {
         id: loan.loanId || loan.id,
+        loanTypeKey,
         loanType: config.name || loanTypeKey,
         amount: Number(loan.loanAmount || 0),
         tenure: loan.tenureMonths || 0,
@@ -430,6 +431,24 @@ export default function LoanDecision() {
                             <div className="decision-note">
                               <span className="decision-label">Decision Note</span>
                               <p className="decision-text">{app.decisionMessage}</p>
+                            </div>
+                          )}
+                          {app.backendStatus === 'CLARIFICATION_REQUIRED' && (
+                            <div className="card-actions">
+                              <Button
+                                variant="primary"
+                                onClick={() =>
+                                  navigate(`/loan/apply/${(app.loanTypeKey || '').toLowerCase()}`, {
+                                    state: {
+                                      resubmitLoanId: app.id,
+                                      resubmit: true,
+                                      decisionMessage: app.decisionMessage || ''
+                                    }
+                                  })
+                                }
+                              >
+                                Resubmit Clarification
+                              </Button>
                             </div>
                           )}
                         </motion.div>
