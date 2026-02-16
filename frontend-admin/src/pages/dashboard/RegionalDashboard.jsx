@@ -51,7 +51,7 @@ const RegionalDashboard = () => {
           <div>
             <p>Branch Approved Queue</p>
             <h3>{totalPending}</h3>
-            <span>Open queue -></span>
+            <span>Open queue</span>
           </div>
         </div>
 
@@ -91,7 +91,7 @@ const RegionalDashboard = () => {
             className="link"
             onClick={() => navigate("/regional/loan-applications")}
           >
-            View all ->
+            View all
           </span>
         </div>
 

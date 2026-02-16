@@ -61,7 +61,7 @@ const AdminDashboard = () => {
     return status;
   };
 
-  // ✅ ONLY 5 PENDING APPLICATIONS FOR DASHBOARD
+  // ONLY 5 PENDING APPLICATIONS FOR DASHBOARD
   const pendingApplications = loans
     .filter(l =>   l.status === "UNDER_BRANCH_REVIEW")
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))

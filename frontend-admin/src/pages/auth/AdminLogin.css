@@ -141,3 +141,26 @@
   height: auto;
    opacity: 0.75;
 }
+
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 16px;
+  color: #64748b;
+}
+
+.password-toggle:hover {
+  color: #2563eb;
+}
