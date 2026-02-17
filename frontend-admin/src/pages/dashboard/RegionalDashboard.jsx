@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchRegionalPendingLoans } from "../../api/regionalLoansApi";
 import "./RegionalDashboard.css";
-
+import StatusBadge from "../../components/StatusBadge";
 const LOAN_TYPES = ["PERSONAL", "VEHICLE", "BUSINESS", "EDUCATION"];
 
 const toLabel = (value) =>
@@ -51,7 +51,7 @@ const RegionalDashboard = () => {
           <div>
             <p>Branch Approved Queue</p>
             <h3>{totalPending}</h3>
-            <span>Open queue -></span>
+            <span>Open queue</span>
           </div>
         </div>
 
@@ -91,7 +91,7 @@ const RegionalDashboard = () => {
             className="link"
             onClick={() => navigate("/regional/loan-applications")}
           >
-            View all ->
+            View all →
           </span>
         </div>
 
@@ -122,7 +122,9 @@ const RegionalDashboard = () => {
                   <td>{loan.fullName || loan.userId}</td>
                   <td>{toLabel(loan.loanType)}</td>
                   <td className="amount">INR {Number(loan.approvedAmount || 0).toLocaleString()}</td>
-                  <td>{loan.status}</td>
+                  <td>
+                      <StatusBadge status={loan.status} />
+                  </td>
                 </tr>
               ))
             )}

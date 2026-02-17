@@ -25,6 +25,8 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
 
   //  Clear previous session when login page loads
   useEffect(() => {
@@ -115,17 +117,29 @@ const AdminLogin = () => {
               required
             />
 
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError("");
-              }}
-              required
-            />
+           <label>Password</label>
+
+           <div className="password-field">
+             <input
+               type={showPassword ? "text" : "password"}
+               placeholder="Enter password"
+               value={password}
+               onChange={(e) => {
+                 setPassword(e.target.value);
+                 setError("");
+               }}
+               required
+             />
+
+             <i
+               className={`fa-solid ${
+                 showPassword ? "fa-eye" : "fa-eye-slash"
+               } password-toggle`}
+               onClick={() => setShowPassword(!showPassword)}
+               title={showPassword ? "Hide password" : "Show password"}
+             ></i>
+           </div>
+
 
             <button type="submit">Login</button>
 
