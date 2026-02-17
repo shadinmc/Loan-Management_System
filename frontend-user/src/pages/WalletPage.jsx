@@ -22,7 +22,7 @@ import {
   X
 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as repaymentApi from '../api/repaymentApi';
 
 const toAmountString = (value) => {
@@ -30,12 +30,16 @@ const toAmountString = (value) => {
   if (!Number.isFinite(parsed)) return '0';
   return parsed.toFixed(2);
 };
+const ADD_MONEY_LIMITS_BY_METHOD = {
+  upi: 100000,
+  card: 500000,
+  netbanking: 1000000
+};
 
 export default function WalletPage() {
   const {
     balance,
     transactions,
-    addMoney,
     withdrawMoney,
     isLoading,
     page,
@@ -51,6 +55,7 @@ export default function WalletPage() {
   const [prefillWithdrawAmount, setPrefillWithdrawAmount] = useState('');
   const [withdrawMeta, setWithdrawMeta] = useState({ loanId: null, purpose: null });
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const shouldOpen = searchParams.get('add') === '1';
@@ -371,7 +376,12 @@ export default function WalletPage() {
             ? createPortal(
                 <AddMoneyModal
                   onClose={() => setShowAddMoney(false)}
-                  onSubmit={addMoney}
+                  onSubmit={(amount, paymentMethod) => {
+                    setShowAddMoney(false);
+                    navigate(
+                      `/wallet/payments/${paymentMethod}?amount=${encodeURIComponent(toAmountString(amount))}`
+                    );
+                  }}
                   initialAmount={prefillAmount}
                 />,
                 document.body
@@ -379,7 +389,12 @@ export default function WalletPage() {
             : (
               <AddMoneyModal
                 onClose={() => setShowAddMoney(false)}
-                onSubmit={addMoney}
+                onSubmit={(amount, paymentMethod) => {
+                  setShowAddMoney(false);
+                  navigate(
+                    `/wallet/payments/${paymentMethod}?amount=${encodeURIComponent(toAmountString(amount))}`
+                  );
+                }}
                 initialAmount={prefillAmount}
               />
             )
@@ -420,6 +435,9 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
   const [amount, setAmount] = useState(initialAmount || '');
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [isProcessing, setIsProcessing] = useState(false);
+  const normalizedAmount = Number(amount);
+  const methodLimit = ADD_MONEY_LIMITS_BY_METHOD[paymentMethod] || ADD_MONEY_LIMITS_BY_METHOD.upi;
+  const exceedsAddLimit = normalizedAmount > methodLimit;
 
   useEffect(() => {
     if (initialAmount) {
@@ -429,21 +447,27 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
 
   const quickAmounts = [500, 1000, 2000, 5000];
   const paymentMethods = [
-    { id: 'upi', label: 'UPI', icon: Smartphone },
-    { id: 'card', label: 'Debit/Credit Card', icon: CreditCard },
-    { id: 'netbanking', label: 'Net Banking', icon: Building }
+    { id: 'upi', label: 'UPI', icon: Smartphone, limit: ADD_MONEY_LIMITS_BY_METHOD.upi },
+    { id: 'card', label: 'Debit/Credit Card', icon: CreditCard, limit: ADD_MONEY_LIMITS_BY_METHOD.card },
+    { id: 'netbanking', label: 'Net Banking', icon: Building, limit: ADD_MONEY_LIMITS_BY_METHOD.netbanking }
   ];
+  const selectedMethodLabel = paymentMethods.find((method) => method.id === paymentMethod)?.label || 'Selected method';
 
   const handleSubmit = async () => {
-    if (!amount || amount <= 0) return;
+    if (!amount || normalizedAmount <= 0 || exceedsAddLimit) return;
 
     setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
 
     try {
       await onSubmit(parseFloat(amount), paymentMethod);
       onClose();
     } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Payment failed';
+      alert(message);
       console.error('Payment failed:', error);
     } finally {
       setIsProcessing(false);
@@ -491,8 +515,14 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"
                 min="1"
+                max={methodLimit}
               />
             </div>
+            {exceedsAddLimit && (
+              <div className="error-text">
+                Maximum for {selectedMethodLabel} is ₹{methodLimit.toLocaleString('en-IN')}
+              </div>
+            )}
           </div>
 
           <div className="quick-amounts">
@@ -519,7 +549,10 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
                   <div className="payment-icon">
                     <method.icon size={20} />
                   </div>
-                  <span>{method.label}</span>
+                  <div className="payment-text">
+                    <span className="payment-label">{method.label}</span>
+                    <span className="payment-limit">Limit: ₹{method.limit.toLocaleString('en-IN')}</span>
+                  </div>
                   {paymentMethod === method.id && <CheckCircle2 size={20} className="check" />}
                 </button>
               ))}
@@ -532,7 +565,7 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
           <button
             className="btn-primary"
             onClick={handleSubmit}
-            disabled={!amount || amount <= 0 || isProcessing}
+            disabled={!amount || normalizedAmount <= 0 || exceedsAddLimit || isProcessing}
           >
             {isProcessing ? (
               <>
@@ -1222,16 +1255,28 @@ const styles = `
     color: #10213f;
   }
 
+  [data-theme="light"] .header-badge {
+    background: #eaf8ef;
+    border-color: #bde8cb;
+    color: #0f8a43;
+  }
+
+  [data-theme="light"] .header-icon {
+    box-shadow: 0 10px 24px rgba(16, 33, 63, 0.12);
+  }
+
   [data-theme="light"] .wallet-header h1,
   [data-theme="light"] .section-title h3,
-  [data-theme="light"] .txn-description {
+  [data-theme="light"] .txn-description,
+  [data-theme="light"] .no-transactions h4 {
     color: #10213f;
   }
 
   [data-theme="light"] .wallet-header p,
   [data-theme="light"] .section-title p,
   [data-theme="light"] .txn-meta,
-  [data-theme="light"] .page-info {
+  [data-theme="light"] .page-info,
+  [data-theme="light"] .no-transactions p {
     color: #4d5f7d;
   }
 
@@ -1244,6 +1289,14 @@ const styles = `
 
   [data-theme="light"] .balance-label {
     color: #4d5f7d;
+  }
+
+  [data-theme="light"] .balance-bg-pattern {
+    background: radial-gradient(circle, rgba(45, 190, 96, 0.16) 0%, transparent 70%);
+  }
+
+  [data-theme="light"] .balance-amount {
+    color: #10213f;
   }
 
   [data-theme="light"] .toggle-balance {
@@ -1288,6 +1341,12 @@ const styles = `
     color: #0f5132;
   }
 
+  [data-theme="light"] .title-icon,
+  [data-theme="light"] .empty-icon {
+    background: #eaf8ef;
+    color: #0f8a43;
+  }
+
   [data-theme="light"] .transaction-item {
     background: #f8fbff;
     border-color: #e2e9f3;
@@ -1308,6 +1367,14 @@ const styles = `
     background: #f4f8ff;
     border-color: #c9d7ea;
     color: #10213f;
+  }
+
+  [data-theme="light"] .txn-amount.credit {
+    color: #0f8a43;
+  }
+
+  [data-theme="light"] .txn-amount.debit {
+    color: #c53030;
   }
 
   @media (max-width: 768px) {
@@ -1364,6 +1431,14 @@ const modalStyles = `
     z-index: 1001;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .modal-content::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
   }
 
   .modal-header {
@@ -1531,11 +1606,22 @@ const modalStyles = `
     color: #F1F5FF;
   }
 
-  .payment-option span {
+  .payment-text {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .payment-label {
     font-weight: 600;
     color: #F1F5FF;
     font-size: 0.9375rem;
+  }
+
+  .payment-limit {
+    font-size: 0.8125rem;
+    color: #B8C7E3;
   }
 
   .payment-option .check {
@@ -1692,7 +1778,7 @@ const modalStyles = `
   }
 
   [data-theme="light"] .modal-title-wrapper h3,
-  [data-theme="light"] .payment-option span,
+  [data-theme="light"] .payment-label,
   [data-theme="light"] .bank-name {
     color: #10213f;
   }
@@ -1700,8 +1786,13 @@ const modalStyles = `
   [data-theme="light"] .modal-title-wrapper p,
   [data-theme="light"] .currency,
   [data-theme="light"] .bank-details,
-  [data-theme="light"] .quick-btn {
+  [data-theme="light"] .quick-btn,
+  [data-theme="light"] .payment-limit {
     color: #4d5f7d;
+  }
+
+  [data-theme="light"] .input-group label {
+    color: #10213f;
   }
 
   [data-theme="light"] .modal-close,
@@ -1720,6 +1811,22 @@ const modalStyles = `
     color: #10213f;
   }
 
+  [data-theme="light"] .amount-input input::placeholder {
+    color: #7c8da8;
+  }
+
+  [data-theme="light"] .quick-btn {
+    background: #f4f8ff;
+    border: 1px solid #c9d7ea;
+  }
+
+  [data-theme="light"] .quick-btn:hover,
+  [data-theme="light"] .quick-btn.active {
+    background: #eaf8ef;
+    border-color: #bde8cb;
+    color: #0f8a43;
+  }
+
   [data-theme="light"] .btn-secondary {
     background: #f4f8ff;
     border: 1px solid #c9d7ea;
@@ -1729,7 +1836,12 @@ const modalStyles = `
   [data-theme="light"] .modal-footer {
     border-top-color: #e2e9f3;
   }
+
+  [data-theme="light"] .error-text {
+    color: #b91c1c;
+  }
 `;
 
   const settleOtsFn = repaymentApi.settleOts || repaymentApi.default?.settleOts;
   const payEmiFn = repaymentApi.payEmi || repaymentApi.default?.payEmi;
+

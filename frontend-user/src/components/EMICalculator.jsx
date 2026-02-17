@@ -606,8 +606,8 @@ export default function EMICalculator({ isModal = false, onClose }) {
 
         .calculator-tabs {
           display: flex;
-          gap: 4px;
-          padding: 16px 20px;
+          gap: 6px;
+          padding: 12px 14px;
           background: var(--bg-secondary);
           border-bottom: 1px solid var(--border-color);
           overflow-x: auto;
@@ -621,13 +621,13 @@ export default function EMICalculator({ isModal = false, onClose }) {
         .tab-btn {
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding: 12px 20px;
+          gap: 6px;
+          padding: 9px 14px;
           background: var(--tab-bg);
           border: 1px solid transparent;
-          border-radius: 12px;
+          border-radius: 10px;
           color: var(--text-secondary);
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -663,6 +663,7 @@ export default function EMICalculator({ isModal = false, onClose }) {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 0;
+          align-items: start;
         }
 
         @media (max-width: 768px) {
@@ -672,8 +673,9 @@ export default function EMICalculator({ isModal = false, onClose }) {
         }
 
         .calculator-inputs {
-          padding: 28px;
+          padding: 18px 20px;
           border-right: 1px solid var(--border-color);
+          align-self: start;
         }
 
         @media (max-width: 768px) {
@@ -686,44 +688,44 @@ export default function EMICalculator({ isModal = false, onClose }) {
         .inputs-container {
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 16px;
         }
 
         .loan-description {
           display: flex;
           align-items: center;
-          gap: 14px;
-          padding: 16px;
+          gap: 10px;
+          padding: 12px;
           background: var(--bg-secondary);
-          border-radius: 14px;
+          border-radius: 12px;
         }
 
         .desc-icon {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 44px;
-          height: 44px;
-          border-radius: 12px;
+          width: 34px;
+          height: 34px;
+          border-radius: 10px;
           flex-shrink: 0;
         }
 
         .desc-text h4 {
-          font-size: 1rem;
+          font-size: 0.95rem;
           font-weight: 600;
           color: var(--text-primary);
           margin-bottom: 2px;
         }
 
         .desc-text p {
-          font-size: 0.85rem;
+          font-size: 0.8rem;
           color: var(--text-muted);
         }
 
         .input-group {
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 8px;
         }
 
         .input-header {
@@ -736,13 +738,13 @@ export default function EMICalculator({ isModal = false, onClose }) {
           display: flex;
           align-items: center;
           gap: 6px;
-          font-size: 0.85rem;
+          font-size: 0.82rem;
           font-weight: 500;
           color: var(--text-secondary);
         }
 
         .input-value {
-          font-size: 0.95rem;
+          font-size: 0.9rem;
           font-weight: 600;
           color: var(--text-primary);
         }
@@ -751,7 +753,7 @@ export default function EMICalculator({ isModal = false, onClose }) {
         .slider-container {
           position: relative;
           width: 100%;
-          height: 8px;
+          height: 6px;
           border-radius: 4px;
           background: var(--bg-tertiary, #e5e7eb);
         }
@@ -775,7 +777,7 @@ export default function EMICalculator({ isModal = false, onClose }) {
           top: 0;
           left: 0;
           width: 100%;
-          height: 8px;
+          height: 6px;
           background: transparent;
           border-radius: 4px;
           outline: none;
@@ -785,7 +787,7 @@ export default function EMICalculator({ isModal = false, onClose }) {
 
         .range-slider::-webkit-slider-runnable-track {
           width: 100%;
-          height: 8px;
+          height: 6px;
           background: transparent;
           border-radius: 4px;
         }
@@ -793,15 +795,15 @@ export default function EMICalculator({ isModal = false, onClose }) {
         .range-slider::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
-          width: 22px;
-          height: 22px;
+          width: 18px;
+          height: 18px;
           background: var(--slider-color, #3B82F6);
           border-radius: 50%;
           cursor: pointer;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 0 4px rgba(59, 130, 246, 0.15);
-          margin-top: -7px;
+          margin-top: -6px;
           transition: transform 0.15s ease, box-shadow 0.15s ease;
-          border: 3px solid white;
+          border: 2px solid white;
         }
 
         .range-slider::-webkit-slider-thumb:hover {
@@ -811,18 +813,18 @@ export default function EMICalculator({ isModal = false, onClose }) {
 
         .range-slider::-moz-range-track {
           width: 100%;
-          height: 8px;
+          height: 6px;
           background: transparent;
           border-radius: 4px;
         }
 
         .range-slider::-moz-range-thumb {
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
           background: var(--slider-color, #3B82F6);
           border-radius: 50%;
           cursor: pointer;
-          border: 3px solid white;
+          border: 2px solid white;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
@@ -837,9 +839,9 @@ export default function EMICalculator({ isModal = false, onClose }) {
         .range-labels {
           display: flex;
           justify-content: space-between;
-          font-size: 0.75rem;
+          font-size: 0.72rem;
           color: var(--text-muted);
-          margin-top: 4px;
+          margin-top: 2px;
         }
 
         .moratorium-info {
@@ -855,22 +857,22 @@ export default function EMICalculator({ isModal = false, onClose }) {
         }
 
         .calculator-results {
-          padding: 28px;
+          padding: 18px 20px;
           background: var(--bg-secondary);
         }
 
         .results-container {
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 16px;
         }
 
         .emi-display {
           text-align: center;
-          padding: 28px 20px;
+          padding: 20px 16px;
           background: var(--card-bg);
           border: 1px solid var(--border-color);
-          border-radius: 20px;
+          border-radius: 14px;
         }
 
         .emi-label {
@@ -904,17 +906,17 @@ export default function EMICalculator({ isModal = false, onClose }) {
         .breakdown-chart {
           display: flex;
           align-items: center;
-          gap: 20px;
-          padding: 20px;
+          gap: 14px;
+          padding: 14px;
           background: var(--card-bg);
           border: 1px solid var(--border-color);
-          border-radius: 16px;
+          border-radius: 14px;
         }
 
         .chart-visual {
           position: relative;
-          width: 120px;
-          height: 120px;
+          width: 100px;
+          height: 100px;
           flex-shrink: 0;
         }
 
@@ -983,17 +985,17 @@ export default function EMICalculator({ isModal = false, onClose }) {
         .summary-stats {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 12px;
+          gap: 10px;
         }
 
         .stat-item {
           display: flex;
           flex-direction: column;
           gap: 4px;
-          padding: 14px 16px;
+          padding: 10px 12px;
           background: var(--card-bg);
           border: 1px solid var(--border-color);
-          border-radius: 12px;
+          border-radius: 10px;
         }
 
         .stat-item.highlight {
@@ -1030,11 +1032,11 @@ export default function EMICalculator({ isModal = false, onClose }) {
           justify-content: center;
           gap: 10px;
           width: 100%;
-          padding: 16px 24px;
+          padding: 12px 18px;
           border: none;
-          border-radius: 14px;
+          border-radius: 12px;
           color: white;
-          font-size: 1rem;
+          font-size: 0.95rem;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -1076,7 +1078,7 @@ export default function EMICalculator({ isModal = false, onClose }) {
         @media (max-width: 768px) {
           .calculator-inputs,
           .calculator-results {
-            padding: 20px;
+            padding: 16px;
           }
 
           .emi-amount {
@@ -1111,6 +1113,10 @@ export default function EMICalculator({ isModal = false, onClose }) {
         }
 
         @media (max-width: 480px) {
+          .calculator-tabs {
+            padding: 10px;
+          }
+
           .chart-visual {
             width: 120px;
             height: 120px;

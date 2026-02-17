@@ -145,8 +145,8 @@ function CibilScoreGauge({ score }) {
           <text x="16" y="106" className="gauge-tick">300</text>
           <text x="40" y="44" className="gauge-tick">550</text>
           <text x="90" y="20" className="gauge-tick">650</text>
-          <text x="142" y="44" className="gauge-tick">750</text>
-          <text x="168" y="106" className="gauge-tick">900</text>
+          <text x="150" y="30" className="gauge-tick">750</text>
+          <text x="164" y="109" className="gauge-tick">900</text>
         </svg>
       </div>
 

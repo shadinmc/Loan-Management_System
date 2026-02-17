@@ -343,7 +343,7 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
                   <Input label="Relationship" name="relationship" type="select" value={formData.relationship} onChange={handleChange} options={relationOptions} error={errors.relationship} required />
                 </motion.div>
                 <motion.div custom={2} variants={itemVariants} initial="hidden" animate="visible">
-                  <Input label="Annual Income (₹)" name="coApplicantIncome" type="number" value={formData.coApplicantIncome} onChange={handleChange} placeholder="e.g., 600000" error={errors.coApplicantIncome} required min="0" />
+                  <Input label="Monthly Income (₹)" name="coApplicantIncome" type="number" value={formData.coApplicantIncome} onChange={handleChange} placeholder="e.g., 600000" error={errors.coApplicantIncome} required min="0" />
                 </motion.div>
               </div>
             </motion.div>
@@ -1133,10 +1133,41 @@ const formStyles = `
   }
 
   [data-theme="light"] .emi-calculator-card {
-    background: #ffffff;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
     border: 1px solid var(--border-color);
     box-shadow: 0 8px 20px rgba(11, 30, 60, 0.12);
     color: var(--text-primary);
+  }
+
+  [data-theme="light"] .document-item {
+    background: #ffffff;
+    border-color: #b9d8c8;
+    box-shadow: 0 6px 14px rgba(11, 30, 60, 0.08);
+  }
+
+  [data-theme="light"] .document-item:hover {
+    background: #f7fcf9;
+    border-color: #2DBE60;
+    box-shadow: 0 10px 22px rgba(45, 190, 96, 0.18);
+  }
+
+  [data-theme="light"] .review-section.highlighted {
+    background: linear-gradient(135deg, #edf9f1 0%, #f8fcfa 100%);
+    border-color: rgba(45, 190, 96, 0.45);
+  }
+
+  [data-theme="light"] .review-section.highlighted .review-section-header {
+    border-bottom-color: rgba(11, 30, 60, 0.14);
+  }
+
+  [data-theme="light"] .review-section.highlighted .review-section-header h4,
+  [data-theme="light"] .review-section.highlighted .review-label,
+  [data-theme="light"] .review-section.highlighted .review-value {
+    color: var(--text-primary);
+  }
+
+  [data-theme="light"] .review-section.highlighted .review-value.highlight {
+    color: #1f9f50;
   }
 
   [data-theme="light"] .emi-label,

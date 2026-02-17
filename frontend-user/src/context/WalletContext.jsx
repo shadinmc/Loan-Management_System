@@ -14,6 +14,11 @@ import {
 } from '../api/walletApi';
 
 const WalletContext = createContext(null);
+const ADD_MONEY_LIMITS_BY_METHOD = {
+  upi: 100000,
+  card: 500000,
+  netbanking: 1000000
+};
 
 export function WalletProvider({ children }) {
   const [page, setPage] = useState(0);
@@ -73,10 +78,21 @@ export function WalletProvider({ children }) {
     return content.map(mapTransaction);
   }, [transactionsQuery.data]);
 
-  const addMoney = async (amount) => {
+  const addMoney = async (amount, paymentMethod = 'upi') => {
+    const normalizedAmount = Number(amount);
+    const methodKey = String(paymentMethod || 'upi').toLowerCase();
+    const methodLimit = ADD_MONEY_LIMITS_BY_METHOD[methodKey] || ADD_MONEY_LIMITS_BY_METHOD.upi;
+
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+      throw new Error('Amount must be greater than 0');
+    }
+    if (normalizedAmount > methodLimit) {
+      throw new Error(`Maximum add money limit for ${methodKey} is ₹${methodLimit.toLocaleString('en-IN')}`);
+    }
+
     return reimburseMutation.mutateAsync({
       loanId: 'WALLET_TOPUP',
-      amount
+      amount: normalizedAmount
     });
   };
 
