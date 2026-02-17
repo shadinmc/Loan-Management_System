@@ -5,14 +5,14 @@ import { useTheme } from '../hooks/useTheme';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, User, LogOut, Home, LayoutDashboard,
-  FileText, Clock, Settings, HelpCircle, Sun, Moon,
+  FileText, Clock, Sun, Moon,
   Shield, CheckCircle, AlertCircle, Wallet, Banknote
 } from 'lucide-react';
 import LottieAnimation from './LottieAnimation';
 
 export default function Sidebar({ isOpen, onClose }) {
   const { user, isLoggedIn, logout } = useAuth();
-  const { kycStatus, isKYCComplete, isKYCPending, isKYCRejected } = useKYC();
+  const { kycStatus, isKYCComplete } = useKYC();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -82,9 +82,6 @@ export default function Sidebar({ isOpen, onClose }) {
   };
 
   const kycStatusInfo = getKYCStatus();
-  const KYCStatusIcon = kycStatusInfo.icon;
-
-
   const navItems = isLoggedIn
     ? [
         { icon: Home, label: 'Home', path: '/', index: 0 },
@@ -95,10 +92,7 @@ export default function Sidebar({ isOpen, onClose }) {
         { icon: FileText, label: 'Apply for Loan', path: '/loan/apply', index: 5 },
         { icon: Clock, label: 'Loan Status', path: '/loan/status', index: 6 },
         { type: 'divider', index: 7 },
-        { icon: Settings, label: 'Settings', path: '/settings', index: 8 },
-        { icon: HelpCircle, label: 'Help & Support', path: '/help', index: 9 },
-        { type: 'divider', index: 10 },
-        { icon: LogOut, label: 'Logout', action: handleLogout, isLogout: true, index: 11 }
+        { icon: LogOut, label: 'Logout', action: handleLogout, isLogout: true, index: 8 }
       ]
     : [
         { icon: Home, label: 'Home', path: '/', index: 0 },
@@ -283,22 +277,6 @@ export default function Sidebar({ isOpen, onClose }) {
             })}
           </AnimatePresence>
         </nav>
-
-        <motion.div
-          className="sidebar-footer"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <div className="footer-lottie">
-            <LottieAnimation
-              src="https://lottie.host/embed/secure-badge.json"
-              style={{ width: 32, height: 32 }}
-            />
-          </div>
-          <p>LoanWise v1.0</p>
-          <p className="copyright">© 2024 All rights reserved</p>
-        </motion.div>
       </motion.aside>
 
       <style>{`
@@ -360,11 +338,11 @@ export default function Sidebar({ isOpen, onClose }) {
         .user-profile {
           display: flex;
           align-items: center;
-          gap: 16px;
-          padding: 20px;
+          gap: 12px;
+          padding: 14px;
           background: linear-gradient(135deg, rgba(45, 190, 96, 0.1) 0%, rgba(45, 190, 96, 0.05) 100%);
-          margin: 20px;
-          border-radius: 16px;
+          margin: 14px 16px;
+          border-radius: 14px;
           border: 1px solid rgba(45, 190, 96, 0.15);
           position: relative;
           cursor: pointer;
@@ -377,62 +355,63 @@ export default function Sidebar({ isOpen, onClose }) {
         }
 
         .avatar {
-          width: 52px;
-          height: 52px;
+          width: 42px;
+          height: 42px;
           background: linear-gradient(135deg, #2DBE60 0%, #22a652 100%);
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
-          font-size: 1.25rem;
+          font-size: 1rem;
           font-weight: 700;
           box-shadow: 0 4px 12px rgba(45, 190, 96, 0.3);
         }
 
         .user-info h4 {
-          font-size: 1.05rem;
+          font-size: 0.95rem;
           font-weight: 600;
           color: var(--text-primary);
-          margin-bottom: 4px;
+          margin-bottom: 2px;
         }
 
         .user-info p {
-          font-size: 0.85rem;
+          font-size: 0.78rem;
           color: var(--text-muted);
+          line-height: 1.2;
         }
 
         .user-lottie {
           position: absolute;
-          top: 12px;
-          right: 12px;
+          top: 8px;
+          right: 8px;
         }
 
         .theme-toggle-section {
-          padding: 20px;
-          margin: 0 20px 12px;
+          padding: 14px;
+          margin: 0 16px 10px;
           background: var(--bg-secondary);
-          border-radius: 16px;
+          border-radius: 14px;
           border: 1px solid var(--border-color);
         }
 
         .theme-label {
           display: block;
-          font-size: 0.75rem;
+          font-size: 0.7rem;
           font-weight: 600;
           color: var(--text-muted);
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          margin-bottom: 14px;
+          margin-bottom: 10px;
         }
 
         .theme-toggle-btn {
           width: 100%;
           display: flex;
-          padding: 5px;
+          padding: 4px;
           background: var(--bg-primary);
           border: 1px solid var(--border-color);
-          border-radius: 12px;
+          border-radius: 10px;
           cursor: pointer;
         }
 
@@ -441,12 +420,12 @@ export default function Sidebar({ isOpen, onClose }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
-          padding: 12px;
-          font-size: 0.9rem;
+          gap: 6px;
+          padding: 9px;
+          font-size: 0.82rem;
           font-weight: 500;
           color: var(--text-secondary);
-          border-radius: 10px;
+          border-radius: 8px;
           transition: all 0.25s ease;
         }
 
@@ -518,28 +497,6 @@ export default function Sidebar({ isOpen, onClose }) {
           height: 1px;
           background: var(--border-color);
           margin: 16px 0;
-        }
-
-        .sidebar-footer {
-          padding: 20px 24px;
-          border-top: 1px solid var(--border-color);
-          text-align: center;
-        }
-
-        .footer-lottie {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 12px;
-        }
-
-        .sidebar-footer p {
-          font-size: 0.8rem;
-          color: var(--text-muted);
-        }
-
-        .sidebar-footer .copyright {
-          margin-top: 4px;
-          font-size: 0.7rem;
         }
 
         @media (max-width: 480px) {

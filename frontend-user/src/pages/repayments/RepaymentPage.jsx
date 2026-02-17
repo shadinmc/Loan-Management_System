@@ -315,7 +315,7 @@ export default function RepaymentPage() {
                       </div>
                       {emis.map((emi) => (
                         <div key={`${emi.emiNumber}-${emi.dueDate}`} className="emi-row">
-                          <span>{emi.emiNumber}</span>
+                          <span>{emi.emiNumber}</span>can 
                           <span>{emi.dueDate ? new Date(emi.dueDate).toLocaleDateString() : '-'}</span>
                           <span>₹{Number(emi.emiAmount || 0).toLocaleString('en-IN')}</span>
                           <span>₹{Number(emi.paidAmount || 0).toLocaleString('en-IN')}</span>

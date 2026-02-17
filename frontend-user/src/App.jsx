@@ -11,6 +11,11 @@ import WalletPage from './pages/WalletPage';
 import WalletTransactionPage from './components/WalletTransaction';
 import RepaymentPage from './pages/repayments/RepaymentPage';
 import UserProfilePage from './pages/profile/UserProfilePage';
+import {
+  UpiWalletPaymentPage,
+  CardWalletPaymentPage,
+  NetBankingWalletPaymentPage
+} from './pages/wallet/payments/WalletPaymentPages';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -39,6 +44,9 @@ export default function App() {
             <Route path="/kyc" element={<KYCPage />} />
             <Route path="/wallet" element={<WalletPage />} />
             <Route path="/wallet/transactions" element={<WalletTransactionPage />} />
+            <Route path="/wallet/payments/upi" element={<UpiWalletPaymentPage />} />
+            <Route path="/wallet/payments/card" element={<CardWalletPaymentPage />} />
+            <Route path="/wallet/payments/netbanking" element={<NetBankingWalletPaymentPage />} />
             <Route path="/repayments" element={<RepaymentPage />} />
             <Route path="/profile" element={<UserProfilePage />} />
             <Route path="/loan/apply" element={<LoanApply />} />
