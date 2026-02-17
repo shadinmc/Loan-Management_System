@@ -9,8 +9,8 @@ import {
 import Button from '../../components/Button';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { APPLICATION_STATUS, LOAN_CONFIG } from '../../utils/constants';
-import { useQuery } from '@tanstack/react-query';
-import { getMyLoans } from '../../api/loanApi';
+import { useQuery, useQueries } from '@tanstack/react-query';
+import { getMyLoans, getLoanById } from '../../api/loanApi';
 
 export default function LoanDecision() {
   const navigate = useNavigate();
@@ -36,8 +36,21 @@ export default function LoanDecision() {
     { value: APPLICATION_STATUS.DISBURSED, label: 'Disbursed', icon: Banknote, color: '#8B5CF6' }
   ];
 
+  const normalizeLoanType = (loanType) => {
+    const raw = String(loanType || '').toUpperCase();
+    if (LOAN_CONFIG[raw]) return raw;
+    if (raw.includes('PERSONAL')) return 'PERSONAL';
+    if (raw.includes('EDUCATION')) return 'EDUCATION';
+    if (raw.includes('BUSINESS')) return 'BUSINESS';
+    if (raw.includes('VEHICLE')) return 'VEHICLE';
+    return raw;
+  };
+
   const mapBackendStatus = (status) => {
+    const normalized = String(status || '').toUpperCase();
     const map = {
+      SUBMITTED: APPLICATION_STATUS.SUBMITTED,
+      UNDER_REVIEW: APPLICATION_STATUS.UNDER_REVIEW,
       APPLIED: APPLICATION_STATUS.SUBMITTED,
       ELIGIBILITY_CHECK_PASSED: APPLICATION_STATUS.UNDER_REVIEW,
       ELIGIBLE: APPLICATION_STATUS.UNDER_REVIEW,
@@ -54,9 +67,10 @@ export default function LoanDecision() {
       DISBURSEMENT_PENDING: APPLICATION_STATUS.APPROVED,
       CLARIFICATION_REQUIRED: APPLICATION_STATUS.UNDER_REVIEW,
       NOT_ELIGIBLE: APPLICATION_STATUS.REJECTED,
-      CLOSED: APPLICATION_STATUS.DISBURSED
+      CLOSED: APPLICATION_STATUS.DISBURSED,
+      ACTIVE: APPLICATION_STATUS.DISBURSED
     };
-    return map[status] || APPLICATION_STATUS.SUBMITTED;
+    return map[normalized] || APPLICATION_STATUS.SUBMITTED;
   };
 
   const getStage = (backendStatus) => {
@@ -111,21 +125,61 @@ export default function LoanDecision() {
     }));
   };
 
-  const applications = useMemo(() => {
-    const items = loansQuery.data || [];
-    return items.map((loan) => {
-      const loanTypeKey = loan.loanType || '';
-      const config = LOAN_CONFIG[loanTypeKey] || {};
-      const backendStatus = loan.status || loan.loanStatus || 'APPLIED';
-      const uiStatus = mapBackendStatus(backendStatus);
+  const baseLoans = loansQuery.data || [];
+  const loanDetailQueries = useQueries({
+    queries: baseLoans.map((loan) => {
+      const loanId = loan?.loanId || loan?.id;
       return {
-        id: loan.loanId || loan.id,
-        loanType: config.name || loanTypeKey,
+        queryKey: ['loan', 'detail', loanId],
+        queryFn: () => getLoanById(loanId),
+        enabled: Boolean(loanId),
+        retry: false,
+        staleTime: 60 * 1000,
+      };
+    }),
+  });
+
+  const loanDetailsById = useMemo(() => {
+    const map = new Map();
+    baseLoans.forEach((loan, idx) => {
+      const loanId = loan?.loanId || loan?.id;
+      const detail = loanDetailQueries[idx]?.data;
+      if (loanId && detail) {
+        map.set(loanId, detail);
+      }
+    });
+    return map;
+  }, [baseLoans, loanDetailQueries]);
+
+  const applications = useMemo(() => {
+    const items = baseLoans;
+    return items.map((loan) => {
+      const loanId = loan.loanId || loan.id;
+      const detail = loanDetailsById.get(loanId) || {};
+      const loanTypeKey = normalizeLoanType(detail.loanType || loan.loanType || '');
+      const config = LOAN_CONFIG[loanTypeKey] || {};
+      const backendStatus = String(detail.status || loan.status || loan.loanStatus || 'APPLIED').toUpperCase();
+      const uiStatus = mapBackendStatus(backendStatus);
+      const tenure = detail.tenureMonths ?? loan.tenureMonths ?? loan.tenure ?? null;
+      const interestRate = detail.interestRate ?? loan.interestRate ?? config.interestRate ?? null;
+      const emi = detail.emiAmount ?? loan.emiAmount ?? null;
+      const rawEmiEligible = detail.emiEligible ?? loan.emiEligible;
+      const eligibility = typeof rawEmiEligible === 'boolean'
+        ? rawEmiEligible
+        : backendStatus === 'NOT_ELIGIBLE'
+          ? false
+          : ['ELIGIBILITY_CHECK_PASSED', 'ELIGIBLE', 'UNDER_BRANCH_REVIEW', 'BRANCH_APPROVED', 'PENDING_REGIONAL_REVIEW', 'UNDER_REGIONAL_REVIEW', 'REGIONAL_APPROVED', 'APPROVED', 'DISBURSEMENT_PENDING', 'DISBURSED', 'ACTIVE', 'CLOSED'].includes(backendStatus)
+            ? true
+            : null;
+
+      return {
+        id: loanId,
+        loanType: config.name || String(loanTypeKey || loan.loanType || 'Loan').replaceAll('_', ' '),
         amount: Number(loan.loanAmount || 0),
-        tenure: loan.tenureMonths || 0,
-        interestRate: Number(loan.interestRate || 0),
-        emi: Number(loan.emiAmount || 0),
-        emiEligible: Boolean(loan.emiEligible),
+        tenure,
+        interestRate: interestRate != null ? Number(interestRate) : null,
+        emi: emi != null ? Number(emi) : null,
+        emiEligible: eligibility,
         status: uiStatus,
         backendStatus,
         decisionMessage: loan.decisionMessage || "",
@@ -133,7 +187,7 @@ export default function LoanDecision() {
         timeline: buildTimeline(backendStatus, loan.appliedDate || loan.createdAt, loan.updatedAt)
       };
     });
-  }, [loansQuery.data]);
+  }, [baseLoans, loanDetailsById]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -162,8 +216,10 @@ export default function LoanDecision() {
   };
 
   const filteredApplications = applications.filter(app => {
-    const matchesSearch = app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.loanType.toLowerCase().includes(searchTerm.toLowerCase());
+    const appId = String(app.id || '').toLowerCase();
+    const loanType = String(app.loanType || '').toLowerCase();
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = appId.includes(term) || loanType.includes(term);
     const matchesFilter = filterStatus === 'all' ? true : app.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
@@ -372,22 +428,26 @@ export default function LoanDecision() {
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Tenure</span>
-                        <span className="detail-value">{app.tenure} months</span>
+                        <span className="detail-value">{app.tenure != null ? `${app.tenure} months` : 'N/A'}</span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Interest Rate</span>
-                        <span className="detail-value">{app.interestRate}% p.a.</span>
+                        <span className="detail-value">{app.interestRate != null ? `${app.interestRate}% p.a.` : 'N/A'}</span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Eligibility</span>
                         <span className="detail-value">
-                          {app.emiEligible ? 'Eligible' : app.backendStatus === 'NOT_ELIGIBLE' ? 'Not Eligible' : 'Pending'}
+                          {app.emiEligible === true ? 'Eligible' : app.emiEligible === false ? 'Not Eligible' : 'Pending'}
                         </span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">EMI</span>
                         <span className="detail-value emi">
-                          {app.emiEligible ? `INR ${app.emi.toLocaleString()}/mo` : 'Pending'}
+                          {app.emi != null && app.emi > 0
+                            ? `INR ${app.emi.toLocaleString()}/mo`
+                            : app.emiEligible === false
+                              ? 'Not Eligible'
+                              : 'Pending'}
                         </span>
                       </div>
                     </div>

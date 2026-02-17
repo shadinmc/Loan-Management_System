@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, MoreVertical, Wallet, Banknote } from 'lucide-react';
+import { Menu, Wallet, Banknote } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import LottieAnimation from './LottieAnimation';
@@ -245,7 +245,7 @@ export default function Navbar({ onMenuClick }) {
             whileHover={{ scale: 1.05, borderColor: '#2DBE60' }}
             whileTap={{ scale: 0.95 }}
           >
-            <MoreVertical size={20} />
+            <Menu size={20} />
           </motion.button>
 
           {/* Mobile Menu */}
@@ -536,3 +536,4 @@ export default function Navbar({ onMenuClick }) {
     </motion.nav>
   );
 }
+

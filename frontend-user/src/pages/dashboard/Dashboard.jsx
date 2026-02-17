@@ -114,14 +114,17 @@ export default function Dashboard() {
           <div className="loan-grid">
             {loanTypes.map((loan, idx) => {
               const IconComponent = iconMap[loan.id] || Wallet;
+              const iconBackground = loan.gradient || loan.iconBg || loan.color || '#2DBE60';
+              const cardHoverGradient = loan.gradient
+                || `linear-gradient(135deg, ${loan.color || '#2DBE60'} 0%, ${loan.iconBg || loan.color || '#25A854'} 100%)`;
               return (
                 <div
                   key={loan.id}
                   className="quick-loan-card"
-                  style={{ '--card-gradient': loan.gradient }}
+                  style={{ '--card-gradient': cardHoverGradient }}
                   onClick={() => navigate(`/loan/apply/${loan.id}`)}
                 >
-                  <div className="card-icon" style={{ background: loan.gradient }}>
+                  <div className="card-icon" style={{ background: iconBackground }}>
                     <IconComponent size={24} />
                   </div>
                   <div className="card-info">
