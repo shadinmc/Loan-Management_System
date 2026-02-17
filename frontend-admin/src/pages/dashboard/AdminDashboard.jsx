@@ -6,6 +6,7 @@ import {
 import { FiCheckCircle } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import StatusBadge from "../../components/StatusBadge";
 import { fetchBranchLoans } from "../../api/branchLoansApi";
 
 const AdminDashboard = () => {
@@ -61,7 +62,7 @@ const AdminDashboard = () => {
     return status;
   };
 
-  // ✅ ONLY 5 PENDING APPLICATIONS FOR DASHBOARD
+  // ONLY 5 PENDING APPLICATIONS FOR DASHBOARD
   const pendingApplications = loans
     .filter(l =>   l.status === "UNDER_BRANCH_REVIEW" || 
                         l.status === "APPLIED")
@@ -176,9 +177,7 @@ const AdminDashboard = () => {
                     ₹{loan.loanAmount?.toLocaleString?.() || "-"}
                   </td>
                   <td>
-                    <span className={getBadgeClass(loan.status)}>
-                      {getStatusText(loan.status)}
-                    </span>
+                   <StatusBadge status={loan.status} />
                   </td>
                 </tr>
               ))
