@@ -19,3 +19,4 @@ export const submitManagerKycDecision = async (userId, decision) => {
   const response = await api.post(`/manager/kyc/${userId}/decision`, decision);
   return response.data;
 };
+ 

@@ -7,8 +7,9 @@ import Button from '../../../components/Button';
 import { validateRequired, validateAmount } from '../../../utils/validators';
 import { LOAN_CONFIG, LOAN_TYPES } from '../../../utils/constants';
 import { useCreateLoan } from '../../../hooks/useCreateLoan';
+import { resubmitLoan } from '../../../api/loanApi';
 
-export default function BusinessLoanForm({ onSubmit, loading: externalLoading, config }) {
+export default function BusinessLoanForm({ onSubmit, loading: externalLoading, config, resubmitLoanId = null }) {
   const { createLoan, loading, error: apiError } = useCreateLoan(
     '/loans/apply',
     { loanType: 'BUSINESS', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false }
@@ -146,7 +147,9 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
     };
 
     try {
-      const res = await createLoan(payload, { loanType: 'BUSINESS', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
+      const res = resubmitLoanId
+        ? await resubmitLoan(resubmitLoanId, payload)
+        : await createLoan(payload, { loanType: 'BUSINESS', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
       setSubmissionResult(res);
       setIsSuccess(true);
       if (onSubmit) onSubmit({ response: res, payload });
@@ -1943,14 +1946,36 @@ const formStyles = `
   }
 
   [data-theme="light"] .emi-calculator {
-    background: #ffffff;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
     border: 1px solid var(--border-color);
     box-shadow: 0 8px 20px rgba(11, 30, 60, 0.12);
+  }
+
+  [data-theme="light"] .document-item {
+    background: #ffffff;
+    border-color: #b9d8c8;
+    box-shadow: 0 6px 14px rgba(11, 30, 60, 0.08);
+  }
+
+  [data-theme="light"] .document-item:hover {
+    background: #f7fcf9;
+    border-color: #2DBE60;
+    box-shadow: 0 10px 22px rgba(45, 190, 96, 0.18);
+  }
+
+  [data-theme="light"] .document-item.optional {
+    border-color: #d2e4da;
   }
 
   [data-theme="light"] .emi-header {
     background: var(--bg-secondary);
     border-bottom-color: var(--border-color);
+  }
+
+  [data-theme="light"] .emi-breakdown {
+    background: #f7fbff;
+    border-radius: 10px;
+    padding: 12px;
   }
 
   [data-theme="light"] .emi-title,
@@ -1966,6 +1991,25 @@ const formStyles = `
 
   [data-theme="light"] .emi-divider {
     background: var(--border-color);
+  }
+
+  [data-theme="light"] .review-section.highlighted {
+    background: linear-gradient(135deg, #edf9f1 0%, #f8fcfa 100%);
+    border-color: rgba(45, 190, 96, 0.45);
+  }
+
+  [data-theme="light"] .review-section.highlighted .review-section-header {
+    border-bottom-color: rgba(11, 30, 60, 0.14);
+  }
+
+  [data-theme="light"] .review-section.highlighted .review-section-header h4,
+  [data-theme="light"] .review-section.highlighted .review-label,
+  [data-theme="light"] .review-section.highlighted .review-value {
+    color: var(--text-primary);
+  }
+
+  [data-theme="light"] .review-section.highlighted .review-value.highlight {
+    color: #1f9f50;
   }
 
   /* Responsive */

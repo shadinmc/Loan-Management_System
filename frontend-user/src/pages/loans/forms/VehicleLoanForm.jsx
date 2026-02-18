@@ -1460,15 +1460,30 @@ const formStyles = `
   }
 
   [data-theme="light"] .emi-calculator-card {
-    background: #ffffff;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
     border: 1px solid var(--border-color);
     box-shadow: 0 8px 20px rgba(11, 30, 60, 0.12);
     color: var(--text-primary);
   }
 
+  [data-theme="light"] .document-item {
+    background: #ffffff;
+    border-color: #b9d8c8;
+    box-shadow: 0 6px 14px rgba(11, 30, 60, 0.08);
+  }
+
+  [data-theme="light"] .document-item:hover {
+    background: #f7fcf9;
+    border-color: #2DBE60;
+    box-shadow: 0 10px 22px rgba(45, 190, 96, 0.18);
+  }
+
   [data-theme="light"] .emi-breakdown {
+    background: #f7fbff;
     border-top-color: var(--border-color);
     border-bottom-color: var(--border-color);
+    border-radius: 10px;
+    padding: 14px 12px;
   }
 
   [data-theme="light"] .emi-label,
@@ -1479,6 +1494,25 @@ const formStyles = `
 
   [data-theme="light"] .breakdown-item span:last-child {
     color: var(--text-primary);
+  }
+
+  [data-theme="light"] .review-section.highlighted {
+    background: linear-gradient(135deg, #edf9f1 0%, #f8fcfa 100%);
+    border-color: rgba(45, 190, 96, 0.45);
+  }
+
+  [data-theme="light"] .review-section.highlighted .review-section-header {
+    border-bottom-color: rgba(11, 30, 60, 0.14);
+  }
+
+  [data-theme="light"] .review-section.highlighted .review-section-header h4,
+  [data-theme="light"] .review-section.highlighted .review-label,
+  [data-theme="light"] .review-section.highlighted .review-value {
+    color: var(--text-primary);
+  }
+
+  [data-theme="light"] .review-section.highlighted .review-value.highlight {
+    color: #1f9f50;
   }
 
   @media (max-width: 768px) {

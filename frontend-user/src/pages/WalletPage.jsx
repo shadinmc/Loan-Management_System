@@ -1,5 +1,5 @@
 // src/pages/WalletPage.jsx - PROFESSIONAL ENHANCED VERSION
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -22,7 +22,7 @@ import {
   X
 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import * as repaymentApi from '../api/repaymentApi';
 
 const toAmountString = (value) => {
@@ -30,12 +30,16 @@ const toAmountString = (value) => {
   if (!Number.isFinite(parsed)) return '0';
   return parsed.toFixed(2);
 };
+const ADD_MONEY_LIMITS_BY_METHOD = {
+  upi: 100000,
+  card: 500000,
+  netbanking: 1000000
+};
 
 export default function WalletPage() {
   const {
     balance,
     transactions,
-    addMoney,
     withdrawMoney,
     isLoading,
     page,
@@ -50,14 +54,28 @@ export default function WalletPage() {
   const [prefillAmount, setPrefillAmount] = useState('');
   const [prefillWithdrawAmount, setPrefillWithdrawAmount] = useState('');
   const [withdrawMeta, setWithdrawMeta] = useState({ loanId: null, purpose: null });
+  const [transferAnimation, setTransferAnimation] = useState(null);
+  const transferAnimationTimeoutRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const shouldOpen = searchParams.get('add') === '1';
     const shouldWithdraw = searchParams.get('withdraw') === '1';
+    const topupSuccess = searchParams.get('topupSuccess') === '1';
+    const transferType = searchParams.get('transfer') || 'credit';
     const amountParam = searchParams.get('amount');
     const loanIdParam = searchParams.get('loanId');
     const purposeParam = searchParams.get('purpose');
+    if (topupSuccess) {
+      triggerTransferAnimation(transferType, amountParam);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('topupSuccess');
+      nextParams.delete('transfer');
+      nextParams.delete('amount');
+      setSearchParams(nextParams, { replace: true });
+    }
     if (shouldOpen) {
       if (amountParam) {
         setPrefillAmount(amountParam);
@@ -84,6 +102,14 @@ export default function WalletPage() {
   }, [searchParams, setSearchParams]);
 
   useEffect(() => {
+    const stateAnimation = location.state?.transferAnimation;
+    if (!stateAnimation) return;
+
+    triggerTransferAnimation(stateAnimation.type || 'credit', stateAnimation.amount);
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+  }, [location.pathname, location.search, location.state, navigate]);
+
+  useEffect(() => {
     const shouldLock = showAddMoney || showWithdraw;
     if (!shouldLock) return;
     const original = document.body.style.overflow;
@@ -92,6 +118,26 @@ export default function WalletPage() {
       document.body.style.overflow = original;
     };
   }, [showAddMoney, showWithdraw]);
+
+  useEffect(() => () => {
+    if (transferAnimationTimeoutRef.current) {
+      clearTimeout(transferAnimationTimeoutRef.current);
+    }
+  }, []);
+
+  const triggerTransferAnimation = (type, amount) => {
+    if (transferAnimationTimeoutRef.current) {
+      clearTimeout(transferAnimationTimeoutRef.current);
+    }
+    setTransferAnimation({
+      type,
+      amount: Number(amount) || 0,
+      id: Date.now()
+    });
+    transferAnimationTimeoutRef.current = setTimeout(() => {
+      setTransferAnimation(null);
+    }, 1800);
+  };
 
   if (isLoading) {
     return (
@@ -371,7 +417,12 @@ export default function WalletPage() {
             ? createPortal(
                 <AddMoneyModal
                   onClose={() => setShowAddMoney(false)}
-                  onSubmit={addMoney}
+                  onSubmit={(amount, paymentMethod) => {
+                    setShowAddMoney(false);
+                    navigate(
+                      `/wallet/payments/${paymentMethod}?amount=${encodeURIComponent(toAmountString(amount))}`
+                    );
+                  }}
                   initialAmount={prefillAmount}
                 />,
                 document.body
@@ -379,7 +430,12 @@ export default function WalletPage() {
             : (
               <AddMoneyModal
                 onClose={() => setShowAddMoney(false)}
-                onSubmit={addMoney}
+                onSubmit={(amount, paymentMethod) => {
+                  setShowAddMoney(false);
+                  navigate(
+                    `/wallet/payments/${paymentMethod}?amount=${encodeURIComponent(toAmountString(amount))}`
+                  );
+                }}
                 initialAmount={prefillAmount}
               />
             )
@@ -392,6 +448,7 @@ export default function WalletPage() {
                   balance={balance}
                   onClose={() => setShowWithdraw(false)}
                   onSubmit={handleWalletWithdraw}
+                  onSuccess={(amount) => triggerTransferAnimation('debit', amount)}
                   initialAmount={prefillWithdrawAmount}
                   requireBank={!withdrawMeta?.purpose}
                 />,
@@ -402,11 +459,21 @@ export default function WalletPage() {
                 balance={balance}
                 onClose={() => setShowWithdraw(false)}
                 onSubmit={handleWalletWithdraw}
+                onSuccess={(amount) => triggerTransferAnimation('debit', amount)}
                 initialAmount={prefillWithdrawAmount}
                 requireBank={!withdrawMeta?.purpose}
               />
             )
         )}
+        <AnimatePresence>
+          {transferAnimation && (
+            <FundTransferAnimation
+              key={transferAnimation.id}
+              type={transferAnimation.type}
+              amount={transferAnimation.amount}
+            />
+          )}
+        </AnimatePresence>
       </div>
 
       <style>{styles}</style>
@@ -420,6 +487,9 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
   const [amount, setAmount] = useState(initialAmount || '');
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [isProcessing, setIsProcessing] = useState(false);
+  const normalizedAmount = Number(amount);
+  const methodLimit = ADD_MONEY_LIMITS_BY_METHOD[paymentMethod] || ADD_MONEY_LIMITS_BY_METHOD.upi;
+  const exceedsAddLimit = normalizedAmount > methodLimit;
 
   useEffect(() => {
     if (initialAmount) {
@@ -429,21 +499,27 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
 
   const quickAmounts = [500, 1000, 2000, 5000];
   const paymentMethods = [
-    { id: 'upi', label: 'UPI', icon: Smartphone },
-    { id: 'card', label: 'Debit/Credit Card', icon: CreditCard },
-    { id: 'netbanking', label: 'Net Banking', icon: Building }
+    { id: 'upi', label: 'UPI', icon: Smartphone, limit: ADD_MONEY_LIMITS_BY_METHOD.upi },
+    { id: 'card', label: 'Debit/Credit Card', icon: CreditCard, limit: ADD_MONEY_LIMITS_BY_METHOD.card },
+    { id: 'netbanking', label: 'Net Banking', icon: Building, limit: ADD_MONEY_LIMITS_BY_METHOD.netbanking }
   ];
+  const selectedMethodLabel = paymentMethods.find((method) => method.id === paymentMethod)?.label || 'Selected method';
 
   const handleSubmit = async () => {
-    if (!amount || amount <= 0) return;
+    if (!amount || normalizedAmount <= 0 || exceedsAddLimit) return;
 
     setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
 
     try {
       await onSubmit(parseFloat(amount), paymentMethod);
       onClose();
     } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Payment failed';
+      alert(message);
       console.error('Payment failed:', error);
     } finally {
       setIsProcessing(false);
@@ -491,8 +567,14 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"
                 min="1"
+                max={methodLimit}
               />
             </div>
+            {exceedsAddLimit && (
+              <div className="error-text">
+                Maximum for {selectedMethodLabel} is ₹{methodLimit.toLocaleString('en-IN')}
+              </div>
+            )}
           </div>
 
           <div className="quick-amounts">
@@ -519,7 +601,10 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
                   <div className="payment-icon">
                     <method.icon size={20} />
                   </div>
-                  <span>{method.label}</span>
+                  <div className="payment-text">
+                    <span className="payment-label">{method.label}</span>
+                    <span className="payment-limit">Limit: ₹{method.limit.toLocaleString('en-IN')}</span>
+                  </div>
                   {paymentMethod === method.id && <CheckCircle2 size={20} className="check" />}
                 </button>
               ))}
@@ -532,7 +617,7 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
           <button
             className="btn-primary"
             onClick={handleSubmit}
-            disabled={!amount || amount <= 0 || isProcessing}
+            disabled={!amount || normalizedAmount <= 0 || exceedsAddLimit || isProcessing}
           >
             {isProcessing ? (
               <>
@@ -555,7 +640,7 @@ function AddMoneyModal({ onClose, onSubmit, initialAmount = '' }) {
 }
 
 // Complete WithdrawModal component
-function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '', requireBank = true }) {
+function WithdrawModal({ balance, onClose, onSubmit, onSuccess, initialAmount = '', requireBank = true }) {
   const [amount, setAmount] = useState(initialAmount || '');
   const [selectedBank, setSelectedBank] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -574,6 +659,7 @@ function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '', require
 
     try {
       await onSubmit(parseFloat(amount), selectedBank);
+      onSuccess?.(parseFloat(amount));
       onClose();
     } catch (error) {
       const message =
@@ -686,7 +772,7 @@ function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '', require
             ) : (
               <>
                 <Send size={16} />
-                Withdraw ₹{amount || 0}
+                Pay ₹{amount || 0}
               </>
             )}
           </button>
@@ -695,6 +781,78 @@ function WithdrawModal({ balance, onClose, onSubmit, initialAmount = '', require
       <style>{modalStyles}</style>
     </motion.div>,
     document.body
+  );
+}
+
+function FundTransferAnimation({ type, amount }) {
+  const isCredit = type === 'credit';
+  const amountText = Number.isFinite(amount) ? amount.toLocaleString('en-IN') : '0';
+  const title = isCredit ? 'Money Added Successfully' : 'Withdrawal Successful';
+  const subtitle = isCredit ? 'Amount credited to wallet' : 'Amount sent to bank';
+  const fromLabel = isCredit ? 'Bank' : 'Wallet';
+  const toLabel = isCredit ? 'Wallet' : 'Bank';
+  const dotStart = isCredit ? '-46%' : '46%';
+  const dotEnd = isCredit ? '46%' : '-46%';
+  const ArrowIcon = isCredit ? ArrowDownLeft : ArrowUpRight;
+
+  return (
+    <motion.div
+      className="fund-transfer-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        className="fund-transfer-scene"
+        initial={{ y: 14, scale: 0.94, opacity: 0 }}
+        animate={{ y: 0, scale: 1, opacity: 1 }}
+        exit={{ y: 12, scale: 0.95, opacity: 0 }}
+        transition={{ type: 'spring', damping: 22, stiffness: 210 }}
+      >
+        <div className="transfer-header">
+          <span className={`transfer-pill ${isCredit ? 'credit' : 'debit'}`}>{title}</span>
+          <span className="transfer-amount">INR {amountText}</span>
+        </div>
+        <p className="transfer-subtitle">{subtitle}</p>
+
+        <div className="transfer-simple">
+          <div className="transfer-node">
+            <Building size={18} />
+            <span>{fromLabel}</span>
+          </div>
+          <div className="transfer-rail">
+            <motion.div
+              className={`transfer-dot ${isCredit ? 'credit' : 'debit'}`}
+              initial={{ x: dotStart, opacity: 0.7 }}
+              animate={{ x: dotEnd, opacity: 1 }}
+              transition={{ duration: 1.1, ease: 'easeInOut' }}
+            />
+          </div>
+          <div className="transfer-node">
+            <WalletIcon size={18} />
+            <span>{toLabel}</span>
+          </div>
+        </div>
+        <motion.div
+          className={`transfer-icon-wrap ${isCredit ? 'credit' : 'debit'}`}
+          initial={{ scale: 0.85, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.35 }}
+        >
+          <ArrowIcon size={20} />
+          <span>{isCredit ? 'Credit' : 'Debit'}</span>
+        </motion.div>
+        <motion.div
+          className="transfer-done"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55, duration: 0.3 }}
+        >
+          <CheckCircle2 size={16} />
+          <span>Completed</span>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -1214,6 +1372,152 @@ const styles = `
     cursor: not-allowed;
   }
 
+  .fund-transfer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 950;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(7, 16, 34, 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  .fund-transfer-scene {
+    width: min(760px, calc(100vw - 24px));
+    background: linear-gradient(150deg, #44bf5a 0%, #30ad4e 100%);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    padding: 18px 18px 28px;
+    box-shadow: 0 24px 46px rgba(7, 16, 34, 0.35);
+  }
+
+  .transfer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .transfer-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .transfer-pill.credit {
+    background: rgba(15, 35, 68, 0.24);
+    color: #e7f3ff;
+  }
+
+  .transfer-pill.debit {
+    background: rgba(11, 30, 60, 0.32);
+    color: #f0f7ff;
+  }
+
+  .transfer-amount {
+    color: #f2fbff;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .transfer-subtitle {
+    margin: 8px 0 14px;
+    color: rgba(235, 249, 255, 0.9);
+    font-size: 0.84rem;
+  }
+
+  .transfer-simple {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    border-radius: 12px;
+    background: rgba(11, 30, 60, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px;
+  }
+
+  .transfer-node {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #f2fbff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .transfer-rail {
+    position: relative;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.32);
+    overflow: hidden;
+  }
+
+  .transfer-dot {
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+  }
+
+  .transfer-dot.credit {
+    background: #9ff2b9;
+    box-shadow: 0 0 0 4px rgba(159, 242, 185, 0.25);
+  }
+
+  .transfer-dot.debit {
+    background: #bfdbfe;
+    box-shadow: 0 0 0 4px rgba(191, 219, 254, 0.25);
+  }
+
+  .transfer-icon-wrap {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  .transfer-icon-wrap.credit {
+    background: rgba(45, 190, 96, 0.22);
+    color: #f2fffa;
+  }
+
+  .transfer-icon-wrap.debit {
+    background: rgba(59, 130, 246, 0.24);
+    color: #f0f7ff;
+  }
+
+  .transfer-done {
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #e6fff1;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  [data-theme="light"] .fund-transfer-overlay {
+    background: rgba(16, 33, 63, 0.2);
+  }
+
+  [data-theme="light"] .fund-transfer-scene {
+    box-shadow: 0 22px 44px rgba(16, 33, 63, 0.22);
+  }
+
   [data-theme="light"] .wallet-page {
     background: linear-gradient(180deg, #f6f9ff 0%, #eef3fb 100%);
   }
@@ -1222,16 +1526,28 @@ const styles = `
     color: #10213f;
   }
 
+  [data-theme="light"] .header-badge {
+    background: #eaf8ef;
+    border-color: #bde8cb;
+    color: #0f8a43;
+  }
+
+  [data-theme="light"] .header-icon {
+    box-shadow: 0 10px 24px rgba(16, 33, 63, 0.12);
+  }
+
   [data-theme="light"] .wallet-header h1,
   [data-theme="light"] .section-title h3,
-  [data-theme="light"] .txn-description {
+  [data-theme="light"] .txn-description,
+  [data-theme="light"] .no-transactions h4 {
     color: #10213f;
   }
 
   [data-theme="light"] .wallet-header p,
   [data-theme="light"] .section-title p,
   [data-theme="light"] .txn-meta,
-  [data-theme="light"] .page-info {
+  [data-theme="light"] .page-info,
+  [data-theme="light"] .no-transactions p {
     color: #4d5f7d;
   }
 
@@ -1244,6 +1560,14 @@ const styles = `
 
   [data-theme="light"] .balance-label {
     color: #4d5f7d;
+  }
+
+  [data-theme="light"] .balance-bg-pattern {
+    background: radial-gradient(circle, rgba(45, 190, 96, 0.16) 0%, transparent 70%);
+  }
+
+  [data-theme="light"] .balance-amount {
+    color: #10213f;
   }
 
   [data-theme="light"] .toggle-balance {
@@ -1288,6 +1612,12 @@ const styles = `
     color: #0f5132;
   }
 
+  [data-theme="light"] .title-icon,
+  [data-theme="light"] .empty-icon {
+    background: #eaf8ef;
+    color: #0f8a43;
+  }
+
   [data-theme="light"] .transaction-item {
     background: #f8fbff;
     border-color: #e2e9f3;
@@ -1308,6 +1638,14 @@ const styles = `
     background: #f4f8ff;
     border-color: #c9d7ea;
     color: #10213f;
+  }
+
+  [data-theme="light"] .txn-amount.credit {
+    color: #0f8a43;
+  }
+
+  [data-theme="light"] .txn-amount.debit {
+    color: #c53030;
   }
 
   @media (max-width: 768px) {
@@ -1337,6 +1675,24 @@ const styles = `
     .balance-amount {
       font-size: 2rem;
     }
+
+    .fund-transfer-scene {
+      padding: 16px 14px 20px;
+    }
+
+    .transfer-simple {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .transfer-node {
+      justify-content: center;
+    }
+
+    .transfer-rail {
+      width: 100%;
+    }
   }
 `;
 
@@ -1364,6 +1720,14 @@ const modalStyles = `
     z-index: 1001;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .modal-content::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
   }
 
   .modal-header {
@@ -1531,11 +1895,22 @@ const modalStyles = `
     color: #F1F5FF;
   }
 
-  .payment-option span {
+  .payment-text {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .payment-label {
     font-weight: 600;
     color: #F1F5FF;
     font-size: 0.9375rem;
+  }
+
+  .payment-limit {
+    font-size: 0.8125rem;
+    color: #B8C7E3;
   }
 
   .payment-option .check {
@@ -1692,7 +2067,7 @@ const modalStyles = `
   }
 
   [data-theme="light"] .modal-title-wrapper h3,
-  [data-theme="light"] .payment-option span,
+  [data-theme="light"] .payment-label,
   [data-theme="light"] .bank-name {
     color: #10213f;
   }
@@ -1700,8 +2075,13 @@ const modalStyles = `
   [data-theme="light"] .modal-title-wrapper p,
   [data-theme="light"] .currency,
   [data-theme="light"] .bank-details,
-  [data-theme="light"] .quick-btn {
+  [data-theme="light"] .quick-btn,
+  [data-theme="light"] .payment-limit {
     color: #4d5f7d;
+  }
+
+  [data-theme="light"] .input-group label {
+    color: #10213f;
   }
 
   [data-theme="light"] .modal-close,
@@ -1720,6 +2100,22 @@ const modalStyles = `
     color: #10213f;
   }
 
+  [data-theme="light"] .amount-input input::placeholder {
+    color: #7c8da8;
+  }
+
+  [data-theme="light"] .quick-btn {
+    background: #f4f8ff;
+    border: 1px solid #c9d7ea;
+  }
+
+  [data-theme="light"] .quick-btn:hover,
+  [data-theme="light"] .quick-btn.active {
+    background: #eaf8ef;
+    border-color: #bde8cb;
+    color: #0f8a43;
+  }
+
   [data-theme="light"] .btn-secondary {
     background: #f4f8ff;
     border: 1px solid #c9d7ea;
@@ -1729,7 +2125,12 @@ const modalStyles = `
   [data-theme="light"] .modal-footer {
     border-top-color: #e2e9f3;
   }
+
+  [data-theme="light"] .error-text {
+    color: #b91c1c;
+  }
 `;
 
   const settleOtsFn = repaymentApi.settleOts || repaymentApi.default?.settleOts;
   const payEmiFn = repaymentApi.payEmi || repaymentApi.default?.payEmi;
+

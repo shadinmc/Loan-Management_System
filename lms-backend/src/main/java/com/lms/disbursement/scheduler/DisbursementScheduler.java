@@ -27,8 +27,8 @@ public class DisbursementScheduler {
     private final WalletService walletService;
     private final AuditService auditService;
 
-    @Value("${loan.activation.delay.minutes}")
-    private long activationDelayMinutes;
+    @Value("${loan.activation.delay.seconds}")
+    private long activationDelaySeconds;
 
 
     @Scheduled(fixedRate = 60000)
@@ -56,7 +56,7 @@ public class DisbursementScheduler {
                 loan.setTransactionId(walletResponse.getTransactionId());
                 loan.setUpdatedAt(Instant.now());
                 loan.setActivationScheduledAt(
-                        Instant.now().plus(activationDelayMinutes, ChronoUnit.MINUTES)
+                        Instant.now().plus(activationDelaySeconds, ChronoUnit.SECONDS)
                 );
 
 

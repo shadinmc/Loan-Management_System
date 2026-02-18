@@ -1,11 +1,6 @@
 // src/context/WalletContext.jsx
-import { createContext, useContext, useMemo, useState } from 'react';
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient
-} from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { create } from 'zustand';
 import {
   getMyWallet,
   getMyTransactionsPaged,
@@ -13,115 +8,122 @@ import {
   withdrawWallet
 } from '../api/walletApi';
 
-const WalletContext = createContext(null);
+const ADD_MONEY_LIMITS_BY_METHOD = {
+  upi: 100000,
+  card: 500000,
+  netbanking: 1000000
+};
+
+const mapTransaction = (tx) => {
+  const isCredit = tx.action === 'CREDIT' || tx.action === 'REIMBURSEMENT';
+  const type = isCredit ? 'credit' : 'debit';
+  const base = tx.action === 'WITHDRAWN' ? 'Withdrawal' : 'Wallet';
+  const loanRef = tx.loanId ? ` (${tx.loanId})` : '';
+  return {
+    id: tx.transactionId,
+    type,
+    amount: Number(tx.amount),
+    description: `${base} ${tx.action}${loanRef}`,
+    method: 'Wallet',
+    date: tx.doneAt,
+    status: 'completed'
+  };
+};
+
+const useWalletStore = create((set, get) => ({
+  balance: 0,
+  transactions: [],
+  isLoading: false,
+  page: 0,
+  size: 10,
+  totalPages: 0,
+  totalElements: 0,
+
+  setPage: (page) => set({ page }),
+
+  resetWalletState: () => set({
+    balance: 0,
+    transactions: [],
+    isLoading: false,
+    page: 0,
+    totalPages: 0,
+    totalElements: 0
+  }),
+
+  fetchWalletData: async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      get().resetWalletState();
+      return;
+    }
+
+    const { page, size } = get();
+    set({ isLoading: true });
+    try {
+      const [wallet, transactionsResponse] = await Promise.all([
+        getMyWallet(),
+        getMyTransactionsPaged(page, size)
+      ]);
+
+      const content = transactionsResponse?.content || [];
+      set({
+        balance: Number(wallet?.balance || 0),
+        transactions: content.map(mapTransaction),
+        totalPages: transactionsResponse?.totalPages || 0,
+        totalElements: transactionsResponse?.totalElements || 0,
+        isLoading: false
+      });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  refreshWalletData: async () => {
+    await get().fetchWalletData();
+  },
+
+  addMoney: async (amount, paymentMethod = 'upi') => {
+    const normalizedAmount = Number(amount);
+    const methodKey = String(paymentMethod || 'upi').toLowerCase();
+    const methodLimit = ADD_MONEY_LIMITS_BY_METHOD[methodKey] || ADD_MONEY_LIMITS_BY_METHOD.upi;
+
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+      throw new Error('Amount must be greater than 0');
+    }
+    if (normalizedAmount > methodLimit) {
+      throw new Error(`Maximum add money limit for ${methodKey} is ₹${methodLimit.toLocaleString('en-IN')}`);
+    }
+
+    await reimburseWallet('WALLET_TOPUP', normalizedAmount);
+    await get().refreshWalletData();
+  },
+
+  withdrawMoney: async (amount) => {
+    await withdrawWallet('WALLET_WITHDRAW', amount);
+    await get().refreshWalletData();
+  }
+}));
 
 export function WalletProvider({ children }) {
-  const [page, setPage] = useState(0);
-  const [size] = useState(10);
-  const queryClient = useQueryClient();
-  const hasToken = !!localStorage.getItem('token');
-
-  const walletQuery = useQuery({
-    queryKey: ['wallet', 'me'],
-    queryFn: getMyWallet,
-    enabled: hasToken,
-    retry: false,
-  });
-
-  const transactionsQuery = useQuery({
-    queryKey: ['wallet', 'transactions', page, size],
-    queryFn: () => getMyTransactionsPaged(page, size),
-    placeholderData: keepPreviousData,
-    enabled: hasToken,
-    retry: false,
-  });
-
-  const reimburseMutation = useMutation({
-    mutationFn: ({ loanId, amount }) => reimburseWallet(loanId, amount),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wallet', 'me'] });
-      queryClient.invalidateQueries({ queryKey: ['wallet', 'transactions'] });
-    },
-  });
-
-  const withdrawMutation = useMutation({
-    mutationFn: ({ loanId, amount }) => withdrawWallet(loanId, amount),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wallet', 'me'] });
-      queryClient.invalidateQueries({ queryKey: ['wallet', 'transactions'] });
-    },
-  });
-
-  const mapTransaction = (tx) => {
-    const isCredit = tx.action === 'CREDIT' || tx.action === 'REIMBURSEMENT';
-    const type = isCredit ? 'credit' : 'debit';
-    const base = tx.action === 'WITHDRAWN' ? 'Withdrawal' : 'Wallet';
-    const loanRef = tx.loanId ? ` (${tx.loanId})` : '';
-    return {
-      id: tx.transactionId,
-      type,
-      amount: Number(tx.amount),
-      description: `${base} ${tx.action}${loanRef}`,
-      method: 'Wallet',
-      date: tx.doneAt,
-      status: 'completed'
-    };
-  };
-
-  const transactions = useMemo(() => {
-    const content = transactionsQuery.data?.content || [];
-    return content.map(mapTransaction);
-  }, [transactionsQuery.data]);
-
-  const addMoney = async (amount) => {
-    return reimburseMutation.mutateAsync({
-      loanId: 'WALLET_TOPUP',
-      amount
-    });
-  };
-
-  const withdrawMoney = async (amount) => {
-    return withdrawMutation.mutateAsync({
-      loanId: 'WALLET_WITHDRAW',
-      amount
-    });
-  };
-
-  const balance = Number(walletQuery.data?.balance || 0);
-  const isLoading = walletQuery.isLoading || transactionsQuery.isLoading;
-  const refreshWalletData = () => {
-    queryClient.invalidateQueries({ queryKey: ['wallet', 'me'] });
-    queryClient.invalidateQueries({ queryKey: ['wallet', 'transactions'] });
-  };
-
-  const totalPages = transactionsQuery.data?.totalPages || 0;
-  const totalElements = transactionsQuery.data?.totalElements || 0;
-
-  return (
-    <WalletContext.Provider
-      value={{
-        balance,
-        transactions,
-        isLoading,
-        addMoney,
-        withdrawMoney,
-        page,
-        setPage,
-        size,
-        totalPages,
-        totalElements,
-        refreshWalletData
-      }}
-    >
-      {children}
-    </WalletContext.Provider>
-  );
+  return children;
 }
 
 export function useWallet() {
-  const context = useContext(WalletContext);
-  if (!context) {
-    throw new Error('useWallet must be used within a WalletProvider');
-  }
-  return context;
+  const store = useWalletStore();
+  const page = useWalletStore((state) => state.page);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      store.resetWalletState();
+      return;
+    }
+
+    store.fetchWalletData().catch((error) => {
+      console.error('Error fetching wallet data:', error);
+    });
+  }, [page]);
+
+  return store;
 }

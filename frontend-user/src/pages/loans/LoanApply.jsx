@@ -1,6 +1,6 @@
 // src/pages/loans/LoanApply.jsx
 import { useState, useEffect, Suspense, lazy } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
 import { LOAN_TYPES, LOAN_CONFIG } from '../../utils/constants';
@@ -15,8 +15,11 @@ const VehicleLoanForm = lazy(() => import('./forms/VehicleLoanForm'));
 export default function LoanApply() {
   const { loanType } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const resubmitLoanId = location.state?.resubmitLoanId || null;
+  const isResubmit = Boolean(resubmitLoanId);
 
   const normalizedType = loanType?.toUpperCase() || 'PERSONAL';
   const config = LOAN_CONFIG[normalizedType] || LOAN_CONFIG[LOAN_TYPES.PERSONAL];
@@ -59,7 +62,12 @@ export default function LoanApply() {
   };
 
   const renderForm = () => {
-    const formProps = { onSubmit: handleSubmit, loading: isSubmitting, config };
+    const formProps = {
+      onSubmit: handleSubmit,
+      loading: isSubmitting,
+      config,
+      resubmitLoanId
+    };
     const forms = {
       [LOAN_TYPES.PERSONAL]: <PersonalLoanForm {...formProps} />,
       [LOAN_TYPES.EDUCATION]: <EducationLoanForm {...formProps} />,
@@ -131,8 +139,12 @@ export default function LoanApply() {
               <Sparkles size={14} />
               <span>Quick Application</span>
             </motion.div>
-            <h1>Apply for {config?.name || 'Loan'}</h1>
-            <p>Complete the form below to submit your application</p>
+            <h1>{isResubmit ? `Resubmit ${config?.name || 'Loan'} Application` : `Apply for ${config?.name || 'Loan'}`}</h1>
+            <p>
+              {isResubmit
+                ? `Update details and resubmit the same application ID: ${resubmitLoanId}`
+                : 'Complete the form below to submit your application'}
+            </p>
           </div>
 
           <motion.div

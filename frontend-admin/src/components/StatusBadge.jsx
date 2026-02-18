@@ -46,10 +46,6 @@ const StatusBadge = ({ status }) => {
       label: "Pending Regional Review",
       className: "info",
     },
-    DISBURSEMENT_PENDING: {
-      label: "Approved (Pending Disbursement)",
-      className: "success",
-    },
     APPROVED: {
       label: "Approved",
       className: "success",
@@ -69,7 +65,7 @@ const StatusBadge = ({ status }) => {
   };
 
   const config = statusConfig[status] || {
-    label: status.replaceAll("_", " "),
+    label: status ? status.replaceAll("_", " ") : "Unknown",
     className: "neutral",
   };
 
