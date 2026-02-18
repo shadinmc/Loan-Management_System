@@ -439,7 +439,7 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
               <motion.div className="terms-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <label className="terms-checkbox">
                   <input type="checkbox" required />
-                  <span>I agree to the <a href="/terms">Terms & Conditions</a> and <a href="/privacy">Privacy Policy</a></span>
+                  <span>I agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms & Conditions</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a></span>
                 </label>
               </motion.div>
             </motion.div>

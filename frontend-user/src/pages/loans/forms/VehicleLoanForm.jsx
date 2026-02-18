@@ -540,8 +540,8 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
                 <label className="terms-checkbox">
                   <input type="checkbox" required />
                   <span>
-                    I agree to the <a href="/terms" target="_blank">Terms & Conditions</a> and{' '}
-                    <a href="/privacy" target="_blank">Privacy Policy</a>.
+                    I agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms & Conditions</a> and{' '}
+                    <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>.
                   </span>
                 </label>
               </motion.div>

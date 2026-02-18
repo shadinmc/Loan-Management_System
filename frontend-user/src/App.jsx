@@ -11,6 +11,8 @@ import WalletPage from './pages/WalletPage';
 import WalletTransactionPage from './components/WalletTransaction';
 import RepaymentPage from './pages/repayments/RepaymentPage';
 import UserProfilePage from './pages/profile/UserProfilePage';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -33,6 +35,8 @@ export default function App() {
           <Route path="/" element={<LoanTypes />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/terms" element={<TermsAndConditions />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />

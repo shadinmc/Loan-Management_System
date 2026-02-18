@@ -720,7 +720,7 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
                   <input type="checkbox" required />
                   <span className="checkmark" />
                   <span className="terms-text">
-                    I agree to the <a href="/terms" className="terms-link">Terms & Conditions</a> and <a href="/privacy" className="terms-link">Privacy Policy</a>
+                    I agree to the <a href="/terms" className="terms-link" target="_blank" rel="noreferrer">Terms & Conditions</a> and <a href="/privacy" className="terms-link" target="_blank" rel="noreferrer">Privacy Policy</a>
                   </span>
                 </label>
               </motion.div>
