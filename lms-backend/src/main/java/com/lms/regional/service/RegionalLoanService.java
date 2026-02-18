@@ -73,7 +73,7 @@ public class RegionalLoanService {
 
         if (approved) {
             loan.setStatus(LoanStatus.DISBURSEMENT_PENDING);
-            loan.setDisbursementScheduledAt(Instant.now().plusSeconds(30));
+            loan.setDisbursementScheduledAt(Instant.now().plusSeconds(15));
         } else {
             loan.setStatus(LoanStatus.REJECTED);
             loan.setDisbursementScheduledAt(null);

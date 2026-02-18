@@ -88,57 +88,43 @@
   background: white;
 }
 
-/* ========================= */
-/* TABLE */
-/* ========================= */
-
-.table-card {
-  background: white;
-  border-radius: 16px;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
+th:nth-child(1),
+td:nth-child(1) {
+  width: 26%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+th:nth-child(2),
+td:nth-child(2) {
+  width: 16%;
+  white-space: nowrap;
 }
 
-thead th {
-  text-align: left;
-  padding: 12px;
-  font-size: 13px;
-  color: #64748b;
-  border-bottom: 1px solid #e5e7eb;
+th:nth-child(3),
+td:nth-child(3) {
+  width: 20%;
 }
-/* Amount column alignment fix */
+
 th:nth-child(4),
 td:nth-child(4) {
+  width: 14%;
   text-align: right;
-}
-
-/* Make numbers align properly */
-td:nth-child(4) {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
-tbody td {
-  padding: 14px 12px;
-  border-bottom: 1px solid #f1f5f9;
+th:nth-child(5),
+td:nth-child(5) {
+  width: 14%;
+  text-align: center;
 }
 
-tbody tr:hover {
-  background: #f8fafc;
-}
-
-.amount {
-  font-weight: 600;
-}
-
-.email {
-  font-size: 11px;
-  color: #94a3b8;
+th:nth-child(6),
+td:nth-child(6) {
+  width: 10%;
+  text-align: center;
 }
 
 /* ========================= */

@@ -205,49 +205,53 @@ const RepaymentMonitoring = () => {
               <X onClick={() => setSelectedLoanId(null)} />
             </div>
 
-            {detailQuery.isLoading || !selectedLoan ? (
-              <div className="empty">Loading repayment detail...</div>
-            ) : (
-              <>
-                <div className="detail-summary-grid">
-                  <div><strong>Borrower:</strong> {selectedLoan.fullName || selectedLoan.userId}</div>
-                  <div><strong>Total Paid:</strong> {formatInr(selectedLoan.totalPaidAmount)}</div>
-                  <div><strong>Remaining Months:</strong> {selectedLoan.remainingMonths}</div>
-                  <div><strong>Progress:</strong> {selectedLoan.paidProgressPercent}%</div>
-                  <div><strong>Status:</strong> {STATUS_LABELS[selectedLoan.status] || selectedLoan.status}</div>
-                </div>
+            <div className="modal-body">
+              {detailQuery.isLoading || !selectedLoan ? (
+                <div className="empty">Loading repayment detail...</div>
+              ) : (
+                <>
+                  <div className="detail-summary-grid">
+                    <div><strong>Borrower:</strong> {selectedLoan.fullName || selectedLoan.userId}</div>
+                    <div><strong>Total Paid:</strong> {formatInr(selectedLoan.totalPaidAmount)}</div>
+                    <div><strong>Remaining Months:</strong> {selectedLoan.remainingMonths}</div>
+                    <div><strong>Progress:</strong> {selectedLoan.paidProgressPercent}%</div>
+                    <div><strong>Status:</strong> {STATUS_LABELS[selectedLoan.status] || selectedLoan.status}</div>
+                  </div>
 
-                <table>
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Due Date</th>
-                      <th>EMI Amount</th>
-                      <th>Paid Amount</th>
-                      <th>Penalty</th>
-                      <th>Status</th>
-                      <th>Paid On</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(selectedLoan.emis || []).map((emi) => (
-                      <tr
-                        key={emi.emiNumber}
-                        className={emi.status === "OVERDUE" ? "row-overdue" : ""}
-                      >
-                        <td>{emi.emiNumber}</td>
-                        <td>{emi.dueDate ? new Date(emi.dueDate).toLocaleDateString() : "-"}</td>
-                        <td>{formatInr(emi.emiAmount)}</td>
-                        <td>{formatInr(emi.paidAmount)}</td>
-                        <td>{formatInr(emi.penaltyAmount)}</td>
-                        <td>{STATUS_LABELS[emi.status] || emi.status}</td>
-                        <td>{emi.paidAt ? new Date(emi.paidAt).toLocaleString() : "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </>
-            )}
+                  <div className="modal-table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Due Date</th>
+                          <th>EMI Amount</th>
+                          <th>Paid Amount</th>
+                          <th>Penalty</th>
+                          <th>Status</th>
+                          <th>Paid On</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(selectedLoan.emis || []).map((emi) => (
+                          <tr
+                            key={emi.emiNumber}
+                            className={emi.status === "OVERDUE" ? "row-overdue" : ""}
+                          >
+                            <td>{emi.emiNumber}</td>
+                            <td>{emi.dueDate ? new Date(emi.dueDate).toLocaleDateString() : "-"}</td>
+                            <td>{formatInr(emi.emiAmount)}</td>
+                            <td>{formatInr(emi.paidAmount)}</td>
+                            <td>{formatInr(emi.penaltyAmount)}</td>
+                            <td>{STATUS_LABELS[emi.status] || emi.status}</td>
+                            <td>{emi.paidAt ? new Date(emi.paidAt).toLocaleString() : "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
