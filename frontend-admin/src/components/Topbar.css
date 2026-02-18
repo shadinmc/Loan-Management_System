@@ -1,0 +1,217 @@
+.admin-topbar {
+  --tb-bg: rgba(255, 255, 255, 0.95);
+  --tb-border: #dce5ee;
+  --tb-shadow: 0 4px 12px rgba(16, 42, 77, 0.08);
+  --tb-text: #0b1e3c;
+  --tb-muted: #475569;
+  --tb-chip-bg: rgba(45, 190, 96, 0.12);
+  --tb-chip-border: rgba(45, 190, 96, 0.28);
+  --tb-chip-text: #16803d;
+  --tb-btn-bg: #1fa34f;
+  --tb-btn-text: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 120;
+  height: 64px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--tb-bg);
+  border-bottom: 1px solid var(--tb-border);
+  box-shadow: var(--tb-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+[data-theme="dark"] .admin-topbar {
+  --tb-bg: rgba(255, 255, 255, 0.95);
+  --tb-border: #dce5ee;
+  --tb-shadow: 0 4px 12px rgba(16, 42, 77, 0.08);
+  --tb-text: #0b1e3c;
+  --tb-muted: #475569;
+  --tb-chip-bg: rgba(45, 190, 96, 0.2);
+  --tb-chip-border: rgba(74, 222, 128, 0.38);
+  --tb-chip-text: #16803d;
+  --tb-btn-bg: #16803d;
+  --tb-btn-text: #f8fafc;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .admin-topbar {
+    --tb-bg: rgba(255, 255, 255, 0.95);
+    --tb-border: #dce5ee;
+    --tb-shadow: 0 4px 12px rgba(16, 42, 77, 0.08);
+    --tb-text: #0b1e3c;
+    --tb-muted: #475569;
+    --tb-chip-bg: rgba(45, 190, 96, 0.2);
+    --tb-chip-border: rgba(74, 222, 128, 0.38);
+    --tb-chip-text: #16803d;
+    --tb-btn-bg: #16803d;
+    --tb-btn-text: #f8fafc;
+  }
+}
+
+.admin-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.admin-topbar-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2dbe60 0%, #1a9e4c 100%);
+  box-shadow: 0 6px 18px rgba(45, 190, 96, 0.35);
+  flex-shrink: 0;
+}
+
+.admin-topbar-brand h1 {
+  margin: 0;
+  color: var(--tb-text);
+  font-size: 1.02rem;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.admin-topbar-brand p {
+  margin: 2px 0 0;
+  color: var(--tb-muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-role-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--tb-chip-bg);
+  border: 1px solid var(--tb-chip-border);
+  color: var(--tb-chip-text);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.admin-user-chip {
+  border: 1px solid var(--tb-border);
+  background: rgba(255, 255, 255, 0.3);
+  color: var(--tb-text);
+  height: 36px;
+  border-radius: 12px;
+  padding: 0 10px 0 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.admin-user-chip:hover {
+  border-color: rgba(45, 190, 96, 0.45);
+  background: rgba(45, 190, 96, 0.1);
+}
+
+.admin-user-chip:active {
+  transform: translateY(1px);
+}
+
+.admin-user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2dbe60 0%, #1a9e4c 100%);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.admin-user-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.admin-logout-btn {
+  border: none;
+  height: 36px;
+  border-radius: 12px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--tb-btn-bg);
+  color: var(--tb-btn-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.admin-logout-btn:hover {
+  opacity: 0.9;
+}
+
+.admin-logout-btn:active {
+  transform: translateY(1px);
+}
+
+.admin-user-chip:focus-visible,
+.admin-logout-btn:focus-visible {
+  outline: 2px solid #2dbe60;
+  outline-offset: 2px;
+}
+
+@media (max-width: 820px) {
+  .admin-topbar {
+    padding: 0 14px;
+  }
+
+  .admin-role-badge {
+    display: none;
+  }
+
+  .admin-user-name {
+    display: none;
+  }
+
+  .admin-user-chip {
+    padding-right: 6px;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-topbar-brand h1 {
+    font-size: 0.92rem;
+  }
+
+  .admin-topbar-brand p {
+    display: none;
+  }
+
+  .admin-logout-btn span {
+    display: none;
+  }
+
+  .admin-logout-btn {
+    padding: 0 10px;
+  }
+}
