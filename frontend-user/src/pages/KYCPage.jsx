@@ -546,6 +546,7 @@ export default function KYCForm({ onSuccess, backgroundColor, padding }) {
           margin: 0 0 4px 0;
           font-size: 1.5rem;
           font-weight: 700;
+          color: #FFFFFF;
         }
 
         .header-content p {
@@ -748,6 +749,74 @@ export default function KYCForm({ onSuccess, backgroundColor, padding }) {
           font-size: 1rem;
           color: var(--text-secondary);
           margin: 0;
+        }
+
+        [data-theme="light"] .kyc-container {
+          max-width: 520px;
+        }
+
+        [data-theme="light"] .kyc-header {
+          background: linear-gradient(135deg, #FFFFFF 0%, #F7FBFF 100%);
+          border: 1px solid #DCE5EE;
+          box-shadow: 0 10px 24px rgba(16, 42, 77, 0.08);
+          color: #0B1E3C;
+        }
+
+        [data-theme="light"] .header-icon {
+          background: rgba(45, 190, 96, 0.14);
+          color: #1FAE57;
+        }
+
+        [data-theme="light"] .header-content h2 {
+          color: #0B1E3C;
+        }
+
+        [data-theme="light"] .header-content p {
+          color: #4E607D;
+        }
+
+        [data-theme="light"] .progress-bar {
+          background: #E8EEF5;
+        }
+
+        [data-theme="light"] .kyc-form {
+          background: #FFFFFF;
+          border-color: #DCE5EE;
+          box-shadow: 0 10px 24px rgba(16, 42, 77, 0.05);
+        }
+
+        [data-theme="light"] .file-upload-area {
+          background: #FBFDFF;
+          border-color: #C8D6E6;
+        }
+
+        [data-theme="light"] .file-upload-area:hover {
+          background: #F3FBF6;
+        }
+
+        [data-theme="light"] .uploaded-file {
+          background: #F2FBF5;
+          border-color: #BFE7CF;
+        }
+
+        [data-theme="light"] .input-wrapper input {
+          background: #FFFFFF;
+          border-color: #C8D6E6;
+        }
+
+        [data-theme="light"] .input-wrapper input:focus {
+          background: #FFFFFF;
+          border-color: #2DBE60;
+          box-shadow: 0 0 0 4px rgba(45, 190, 96, 0.14);
+        }
+
+        [data-theme="light"] .toggle-visibility {
+          color: #5F718E;
+        }
+
+        [data-theme="light"] .security-notice {
+          background: #F2FBF5;
+          border-color: #BFE7CF;
         }
 
         @media (max-width: 768px) {

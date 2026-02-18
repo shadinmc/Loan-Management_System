@@ -238,20 +238,38 @@ td {
   width: 90%;
   max-width: 900px;
   max-height: 80vh;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border-radius: 16px;
-  padding: 20px;
+  padding: 0;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: inherit;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .modal-header svg {
   cursor: pointer;
+}
+
+.modal-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 20px 20px;
+  min-height: 0;
+}
+
+.modal-table-wrap {
+  overflow-x: auto;
 }
 
 .detail-summary-grid {
@@ -321,6 +339,10 @@ tbody tr {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   box-shadow: 0 4px 14px rgba(11, 30, 60, 0.06);
+}
+
+[data-theme="light"] .modal-header {
+  border-bottom: 1px solid #e2e8f0;
 }
 
 [data-theme="light"] thead {
