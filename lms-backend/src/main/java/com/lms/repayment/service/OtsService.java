@@ -207,6 +207,10 @@ public class OtsService {
         schedule.setOutstandingPrincipal(BigDecimal.ZERO);
         schedule.setNextEmiAmount(BigDecimal.ZERO);
         schedule.setNextEmiDate(null);
+        schedule.setTotalPaidAmount(
+                (schedule.getTotalPaidAmount() == null ? BigDecimal.ZERO : schedule.getTotalPaidAmount())
+                        .add(amount)
+        );
 
         schedule.getEmis().forEach(emi -> {
             if (emi.getStatus() != RepaymentStatus.PAID) {

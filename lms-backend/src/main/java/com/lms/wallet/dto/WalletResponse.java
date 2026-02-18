@@ -15,4 +15,5 @@ public class WalletResponse {
     private BigDecimal balance;
     private Boolean active;
     private LocalDateTime updatedAt;
+    private String transactionId;
 }

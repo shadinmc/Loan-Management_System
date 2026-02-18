@@ -102,7 +102,7 @@ public class WalletService {
         log.info("CREDIT WALLET | userId={} loanId={} amount={}",
                 userId, loanId, amount);
         log.info("WALLET BALANCE AFTER CREDIT = {}", saved.getBalance());
-        return mapWallet(saved);
+        return mapWallet(saved, tx.getId());
     }
 
 
@@ -149,7 +149,7 @@ public class WalletService {
         } catch (Exception e) {
             log.error("AUDIT FAILED — request still successful", e);
         }
-        return mapWallet(saved);
+        return mapWallet(saved, tx.getId());
     }
 
     @Transactional
@@ -209,7 +209,7 @@ public class WalletService {
         } catch (Exception e) {
             log.error("AUDIT FAILED — request still successful", e);
         }
-        return mapWallet(saved);
+        return mapWallet(saved, tx.getId());
     }
 
     @Transactional
@@ -250,7 +250,7 @@ public class WalletService {
         } catch (Exception e) {
             log.error("AUDIT FAILED — request still successful", e);
         }
-        return mapWallet(saved);
+        return mapWallet(saved, tx.getId());
     }
 
     public WalletResponse updateMyWalletStatus(boolean active) {
@@ -315,12 +315,17 @@ public class WalletService {
     }
 
     private WalletResponse mapWallet(Wallet wallet) {
+        return mapWallet(wallet, null);
+    }
+
+    private WalletResponse mapWallet(Wallet wallet, String transactionId) {
         return new WalletResponse(
                 wallet.getId(),
                 wallet.getUserId(),
                 wallet.getBalance(),
                 wallet.getActive(),
-                wallet.getUpdatedAt()
+                wallet.getUpdatedAt(),
+                transactionId
         );
     }
 
