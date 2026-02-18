@@ -50,17 +50,9 @@ const StatusBadge = ({ status }) => {
       label: "Clarification Required",
       className: "warning",
     },
-    UNDER_REGIONAL_REVIEW: {
-      label: "Under Regional Review",
-      className: "info",
-    },
     PENDING_REGIONAL_REVIEW: {
       label: "Pending Regional Review",
       className: "info",
-    },
-    DISBURSEMENT_PENDING: {
-      label: "Approved (Pending Disbursement)",
-      className: "success",
     },
     APPROVED: {
       label: "Approved",
@@ -81,7 +73,7 @@ const StatusBadge = ({ status }) => {
   };
 
   const config = statusConfig[status] || {
-    label: status.replaceAll("_", " "),
+    label: status ? status.replaceAll("_", " ") : "Unknown",
     className: "neutral",
   };
 
