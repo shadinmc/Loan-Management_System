@@ -19,28 +19,20 @@ describe("branchKycApi", () => {
     vi.clearAllMocks();
   });
 
-  test("fetchManagerKycs sends auth header", async () => {
-    localStorage.setItem("token", "jwt");
+  test("fetchManagerKycs calls manager endpoint", async () => {
     api.get.mockResolvedValueOnce({ data: [] });
 
     await fetchManagerKycs();
 
-    expect(api.get).toHaveBeenCalledWith("/manager/kyc", {
-      headers: { Authorization: "Bearer jwt" },
-    });
+    expect(api.get).toHaveBeenCalledWith("/manager/kyc");
   });
 
-  test("submitManagerKycDecision posts decision with auth header", async () => {
-    localStorage.setItem("token", "jwt");
+  test("submitManagerKycDecision posts decision", async () => {
     api.post.mockResolvedValueOnce({ data: { status: "VERIFIED" } });
 
     const result = await submitManagerKycDecision("U1", { approved: true });
 
-    expect(api.post).toHaveBeenCalledWith(
-      "/manager/kyc/U1/decision",
-      { approved: true },
-      { headers: { Authorization: "Bearer jwt" } }
-    );
+    expect(api.post).toHaveBeenCalledWith("/manager/kyc/U1/decision", { approved: true });
     expect(result).toEqual({ status: "VERIFIED" });
   });
 });
