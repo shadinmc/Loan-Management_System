@@ -44,7 +44,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         System.out.println("JWT FILTER HIT: " + request.getServletPath());
 
-
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -53,40 +52,57 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String jwt = authHeader.substring(7);
-        String email = jwtService.extractEmail(jwt);
 
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        try {
+            String email = jwtService.extractEmail(jwt);
 
-            var userOpt = userRepository.findByEmail(email);
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            if (userOpt.isPresent()
-                    && jwtService.isTokenValid(jwt)
-                    && userOpt.get().getRoles() != null
-                    && !userOpt.get().getRoles().isEmpty()) {
+                var userOpt = userRepository.findByEmail(email);
 
-                var user = userOpt.get();
+                if (userOpt.isPresent()
+                        && jwtService.isTokenValid(jwt)
+                        && userOpt.get().getRoles() != null
+                        && !userOpt.get().getRoles().isEmpty()) {
 
-                var authorities = user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
-                        .collect(Collectors.toList());
+                    var user = userOpt.get();
 
-                var authToken = new UsernamePasswordAuthenticationToken(
-                        user,
-                        null,
-                        authorities
-                );
+                    var authorities = user.getRoles().stream()
+                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
+                            .collect(Collectors.toList());
 
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
+                    var authToken = new UsernamePasswordAuthenticationToken(
+                            user,
+                            null,
+                            authorities
+                    );
 
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
 
-                System.out.println("AUTH SET: " + SecurityContextHolder.getContext().getAuthentication());
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
 
+                    System.out.println("AUTH SET: " + email);
+                }
             }
-        }
 
-        filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response);
+
+        } catch (io.jsonwebtoken.ExpiredJwtException ex) {
+
+            // THIS IS THE IMPORTANT PART
+            SecurityContextHolder.clearContext();
+
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("""
+            {
+              "error": "JWT_EXPIRED",
+              "message": "Session expired. Please login again."
+            }
+        """);
+        }
     }
+
 }
