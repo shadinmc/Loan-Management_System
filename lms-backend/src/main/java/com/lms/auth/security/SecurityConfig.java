@@ -42,8 +42,6 @@ public class    SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/loans/types").permitAll()
                         .requestMatchers("/api/repayments/**").permitAll()
-                        .requestMatchers("/api/payments/stripe/webhook").permitAll()
-                        .requestMatchers("/api/payments/stripe/**").hasRole("USER")
                         .requestMatchers("/api/loans/**").hasRole("USER")
                         .requestMatchers("/api/kyc/**").hasRole("USER")
                         .requestMatchers("/api/branch/**").hasAnyRole("BRANCH_MANAGER", "REGIONAL_MANAGER")
