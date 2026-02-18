@@ -84,6 +84,16 @@ export const getLoanById = async (loanId) => {
   }
 };
 
+export const resubmitLoan = async (loanId, payload) => {
+  try {
+    const response = await axiosInstance.patch(`/loans/${loanId}/resubmit`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error resubmitting loan:', error);
+    throw error;
+  }
+};
+
 /**
  * Update an existing loan application
  * @param {string} loanId - The loan ID
@@ -249,6 +259,7 @@ export default {
   getAllLoans,
   getMyLoans,
   getLoanById,
+  resubmitLoan,
   updateLoan,
   cancelLoan,
   fetchLoanTypes,

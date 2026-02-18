@@ -258,7 +258,7 @@ export default function WalletPage() {
               whileTap={{ scale: 0.98 }}
             >
               <Send size={18} />
-              <span>Pay</span>
+              <span>Withdraw</span>
             </motion.button>
           </div>
         </motion.div>
@@ -772,7 +772,7 @@ function WithdrawModal({ balance, onClose, onSubmit, onSuccess, initialAmount = 
             ) : (
               <>
                 <Send size={16} />
-                Withdraw ₹{amount || 0}
+                Pay ₹{amount || 0}
               </>
             )}
           </button>

@@ -8,8 +8,9 @@ import Button from '../../../components/Button';
 import { validateRequired, validateAmount } from '../../../utils/validators';
 import { LOAN_CONFIG, LOAN_TYPES } from '../../../utils/constants';
 import { useCreateLoan } from '../../../hooks/useCreateLoan';
+import { resubmitLoan } from '../../../api/loanApi';
 
-export default function PersonalLoanForm({ onSubmit, loading: externalLoading, config }) {
+export default function PersonalLoanForm({ onSubmit, loading: externalLoading, config, resubmitLoanId = null }) {
   const { createLoan, loading, error } = useCreateLoan(
     '/loans/apply',
     { loanType: 'PERSONAL', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false }
@@ -147,7 +148,9 @@ export default function PersonalLoanForm({ onSubmit, loading: externalLoading, c
     };
 
     try {
-      const res = await createLoan(payload, { loanType: 'PERSONAL', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
+      const res = resubmitLoanId
+        ? await resubmitLoan(resubmitLoanId, payload)
+        : await createLoan(payload, { loanType: 'PERSONAL', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
 
       if (onSubmit) {
         onSubmit({ response: res, payload });
