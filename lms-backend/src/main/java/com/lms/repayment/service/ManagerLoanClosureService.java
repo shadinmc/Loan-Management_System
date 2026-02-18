@@ -83,8 +83,33 @@ public class ManagerLoanClosureService {
         schedule.setClosed(true);
         schedule.setNextEmiDate(null);
         schedule.setNextEmiAmount(BigDecimal.ZERO);
-        if (schedule.getOutstandingAmount() == null || schedule.getOutstandingAmount().compareTo(BigDecimal.ZERO) < 0) {
-            schedule.setOutstandingAmount(BigDecimal.ZERO);
+        BigDecimal outstandingToSettle = schedule.getOutstandingAmount();
+        if (outstandingToSettle == null || outstandingToSettle.compareTo(BigDecimal.ZERO) < 0) {
+            outstandingToSettle = BigDecimal.ZERO;
+        }
+        BigDecimal currentTotalPaid = schedule.getTotalPaidAmount() == null
+                ? BigDecimal.ZERO
+                : schedule.getTotalPaidAmount();
+        BigDecimal totalPayable = schedule.getTotalPayableAmount() == null
+                ? BigDecimal.ZERO
+                : schedule.getTotalPayableAmount();
+        BigDecimal remainingToSettle = outstandingToSettle;
+        if (remainingToSettle.compareTo(BigDecimal.ZERO) == 0 && totalPayable.compareTo(BigDecimal.ZERO) > 0) {
+            remainingToSettle = totalPayable.subtract(currentTotalPaid).max(BigDecimal.ZERO);
+        }
+        schedule.setTotalPaidAmount(currentTotalPaid.add(remainingToSettle));
+        schedule.setOutstandingAmount(BigDecimal.ZERO);
+        if (schedule.getEmis() != null) {
+            schedule.getEmis().forEach(emi -> {
+                if (emi.getStatus() != RepaymentStatus.PAID) {
+                    emi.setStatus(RepaymentStatus.PAID);
+                    if (emi.getPaidAmount() == null || emi.getPaidAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                        emi.setPaidAmount(emi.getEmiAmount());
+                    }
+                    emi.setPenaltyAmount(BigDecimal.ZERO);
+                    emi.setPaidAt(Instant.now());
+                }
+            });
         }
         schedule.setUpdatedAt(Instant.now());
         repaymentScheduleRepository.save(schedule);

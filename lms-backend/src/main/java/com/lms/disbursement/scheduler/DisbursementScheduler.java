@@ -3,6 +3,7 @@ package com.lms.disbursement.scheduler;
 import com.lms.common.enums.LoanStatus;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
+import com.lms.wallet.dto.WalletResponse;
 import com.lms.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +44,7 @@ public class DisbursementScheduler {
             if (Instant.now().isAfter(loan.getDisbursementScheduledAt())) {
 
                 // 💰 CREDIT WALLET FIRST
-                walletService.creditForLoanSystem(
+                WalletResponse walletResponse = walletService.creditForLoanSystem(
                         loan.getUserId(),
                         loan.getLoanId(),
                         loan.getApprovedAmount()
@@ -53,7 +53,7 @@ public class DisbursementScheduler {
                 // ✅ UPDATE LOAN
                 loan.setStatus(LoanStatus.DISBURSED);
                 loan.setDisbursedAt(Instant.now());
-                loan.setTransactionId("TXN-" + System.currentTimeMillis());
+                loan.setTransactionId(walletResponse.getTransactionId());
                 loan.setUpdatedAt(Instant.now());
                 loan.setActivationScheduledAt(
                         Instant.now().plus(activationDelayMinutes, ChronoUnit.MINUTES)

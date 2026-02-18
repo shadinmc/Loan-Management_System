@@ -22,14 +22,6 @@ const StatusBadge = ({ status }) => {
       label: "Branch Approved",
       className: "success",
     },
-    UNDER_REGIONAL_REVIEW: {
-      label: "Under Regional Review",
-      className: "info",
-    },
-    DISBURSEMENT_PENDING: {
-      label: "Disbursement Pending",
-      className: "warning",
-    },
     DISBURSED: {
       label: "Disbursed",
       className: "success",
@@ -49,10 +41,6 @@ const StatusBadge = ({ status }) => {
     CLARIFICATION_REQUIRED: {
       label: "Clarification Required",
       className: "warning",
-    },
-    UNDER_REGIONAL_REVIEW: {
-      label: "Under Regional Review",
-      className: "info",
     },
     PENDING_REGIONAL_REVIEW: {
       label: "Pending Regional Review",
