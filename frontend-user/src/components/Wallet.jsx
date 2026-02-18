@@ -91,7 +91,7 @@ export default function Wallet() {
             whileTap={{ scale: 0.98 }}
           >
             <Minus size={20} />
-            Withdraw
+            Pay
           </motion.button>
         </div>
       </motion.div>

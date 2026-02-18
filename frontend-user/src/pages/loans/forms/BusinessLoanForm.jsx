@@ -7,8 +7,9 @@ import Button from '../../../components/Button';
 import { validateRequired, validateAmount } from '../../../utils/validators';
 import { LOAN_CONFIG, LOAN_TYPES } from '../../../utils/constants';
 import { useCreateLoan } from '../../../hooks/useCreateLoan';
+import { resubmitLoan } from '../../../api/loanApi';
 
-export default function BusinessLoanForm({ onSubmit, loading: externalLoading, config }) {
+export default function BusinessLoanForm({ onSubmit, loading: externalLoading, config, resubmitLoanId = null }) {
   const { createLoan, loading, error: apiError } = useCreateLoan(
     '/loans/apply',
     { loanType: 'BUSINESS', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false }
@@ -146,7 +147,9 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
     };
 
     try {
-      const res = await createLoan(payload, { loanType: 'BUSINESS', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
+      const res = resubmitLoanId
+        ? await resubmitLoan(resubmitLoanId, payload)
+        : await createLoan(payload, { loanType: 'BUSINESS', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
       setSubmissionResult(res);
       setIsSuccess(true);
       if (onSubmit) onSubmit({ response: res, payload });
