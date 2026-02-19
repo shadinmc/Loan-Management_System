@@ -46,6 +46,11 @@ const RegionalSidebar = () => {
           <CheckCircle size={18} />
           Loan Closure
         </NavLink>
+
+        <NavLink to="/regional/audit-logs" className="nav-link">
+          <FileText size={18} />
+          Audit Logs
+        </NavLink>
       </nav>
     </aside>
   );
