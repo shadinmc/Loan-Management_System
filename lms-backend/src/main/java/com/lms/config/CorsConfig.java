@@ -32,7 +32,11 @@ public class CorsConfig {
                 "Content-Type",
                 "X-Idempotency-Key"
         ));
-        config.setExposedHeaders(List.of("Authorization"));
+        config.setExposedHeaders(List.of(
+                "Authorization",
+                "Content-Disposition",
+                "Content-Type"
+        ));
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
