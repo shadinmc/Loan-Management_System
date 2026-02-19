@@ -13,5 +13,7 @@ public interface RepaymentScheduleRepository
     boolean existsByLoanId(String loanId);
 
     Optional<RepaymentSchedule> findByLoanId(String loanId);
+
+    List<RepaymentSchedule> findByClosedTrue();
 }
 

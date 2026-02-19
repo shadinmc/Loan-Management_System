@@ -3,6 +3,7 @@ package com.lms.repayment.controller;
 import com.lms.repayment.dto.ManagerLoanClosurePageResponse;
 import com.lms.repayment.dto.ManagerLoanClosureResponse;
 import com.lms.repayment.service.ManagerLoanClosureService;
+import com.lms.repayment.service.RepaymentTotalBackfillService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/manager/loan-closure")
 @RequiredArgsConstructor
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ManagerLoanClosureController {
 
     private final ManagerLoanClosureService managerLoanClosureService;
+    private final RepaymentTotalBackfillService repaymentTotalBackfillService;
 
     @GetMapping
     public ResponseEntity<ManagerLoanClosurePageResponse> getLoanClosureRecords(
@@ -34,5 +38,12 @@ public class ManagerLoanClosureController {
             @PathVariable String loanId
     ) {
         return ResponseEntity.ok(managerLoanClosureService.closeLoan(loanId));
+    }
+
+    @PostMapping("/backfill-totals")
+    public ResponseEntity<Map<String, Object>> backfillTotals(
+            @RequestParam(defaultValue = "false") boolean dryRun
+    ) {
+        return ResponseEntity.ok(repaymentTotalBackfillService.backfillClosedTotals(dryRun));
     }
 }
