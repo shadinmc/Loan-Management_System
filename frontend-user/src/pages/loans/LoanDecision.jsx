@@ -46,6 +46,30 @@ export default function LoanDecision() {
     return raw;
   };
 
+  const unwrapLoanDetail = (rawDetail) => {
+    if (!rawDetail || typeof rawDetail !== 'object') return {};
+    if (rawDetail.data && typeof rawDetail.data === 'object') return rawDetail.data;
+    if (rawDetail.loan && typeof rawDetail.loan === 'object') return rawDetail.loan;
+    return rawDetail;
+  };
+
+  const getDecisionMessage = (detail, loan) => {
+    const candidates = [
+      detail?.decisionMessage,
+      detail?.decisionReason,
+      detail?.rejectionReason,
+      detail?.remarks,
+      detail?.note,
+      loan?.decisionMessage,
+      loan?.decisionReason,
+      loan?.rejectionReason,
+      loan?.remarks,
+      loan?.note
+    ];
+    const first = candidates.find((value) => typeof value === 'string' && value.trim().length > 0);
+    return first ? first.trim() : '';
+  };
+
   const mapBackendStatus = (status) => {
     const normalized = String(status || '').toUpperCase();
     const map = {
@@ -143,7 +167,7 @@ export default function LoanDecision() {
     const map = new Map();
     baseLoans.forEach((loan, idx) => {
       const loanId = loan?.loanId || loan?.id;
-      const detail = loanDetailQueries[idx]?.data;
+      const detail = unwrapLoanDetail(loanDetailQueries[idx]?.data);
       if (loanId && detail) {
         map.set(loanId, detail);
       }
@@ -182,7 +206,7 @@ export default function LoanDecision() {
         emiEligible: eligibility,
         status: uiStatus,
         backendStatus,
-        decisionMessage: loan.decisionMessage || "",
+        decisionMessage: getDecisionMessage(detail, loan),
         appliedDate: loan.appliedDate || loan.createdAt || null,
         timeline: buildTimeline(backendStatus, loan.appliedDate || loan.createdAt, loan.updatedAt)
       };
@@ -529,10 +553,23 @@ export default function LoanDecision() {
 }
 
 const styles = `.status-page {
+    --decision-note-bg: rgba(245, 158, 11, 0.12);
+    --decision-note-border: rgba(245, 158, 11, 0.35);
+    --decision-note-label: #FBBF24;
+    --decision-note-text: #FED7AA;
+    --decision-note-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
     min-height: calc(100vh - 70px);
     background: var(--bg-secondary);
     padding: 32px 0 64px;
     position: relative;
+  }
+
+  [data-theme="light"] .status-page {
+    --decision-note-bg: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+    --decision-note-border: rgba(251, 146, 60, 0.38);
+    --decision-note-label: #9A3412;
+    --decision-note-text: #7C2D12;
+    --decision-note-shadow: 0 8px 20px rgba(154, 52, 18, 0.08);
   }
 
   .status-page.loading-state {
@@ -1012,27 +1049,30 @@ const styles = `.status-page {
 
   .decision-note {
     margin-top: 16px;
-    padding: 14px 16px;
-    background: rgba(245, 158, 11, 0.08);
-    border: 1px solid rgba(245, 158, 11, 0.25);
+    padding: 14px 16px 15px;
+    background: var(--decision-note-bg);
+    border: 1px solid var(--decision-note-border);
     border-radius: 12px;
+    box-shadow: var(--decision-note-shadow);
+    backdrop-filter: blur(2px);
   }
 
   .decision-label {
     display: block;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: #92400E;
-    margin-bottom: 6px;
+    letter-spacing: 0.7px;
+    color: var(--decision-note-label);
+    margin-bottom: 7px;
   }
 
   .decision-text {
     margin: 0;
-    font-size: 0.9rem;
-    color: #78350F;
-    line-height: 1.5;
+    font-size: 0.95rem;
+    color: var(--decision-note-text);
+    line-height: 1.55;
+    font-weight: 500;
   }
 
   .card-actions {

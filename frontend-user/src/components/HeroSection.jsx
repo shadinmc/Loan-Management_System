@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Sparkles, Shield, Clock, CheckCircle,
-  TrendingUp, Calculator, GraduationCap
+  TrendingUp, Calculator, GraduationCap, X
 } from 'lucide-react';
 import Button from './Button';
 import Carousel from './Carousel';
@@ -16,6 +16,8 @@ import LottieAnimation from './LottieAnimation';
 export default function HeroSection() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [calculatorReturnTo, setCalculatorReturnTo] = useState('');
 
   const highlights = [
     { icon: Sparkles, text: 'Instant Eligibility Check', animation: 'sparkle' },
@@ -36,15 +38,26 @@ export default function HeroSection() {
     }
 
     if (location.state?.scrollToCalculator) {
-      setTimeout(() => {
-        const calculator = document.getElementById('emi-calculator');
-        if (calculator) {
-          calculator.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
+      setCalculatorReturnTo(location.state?.calculatorReturnTo || '');
+      setIsCalculatorOpen(true);
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
+  useEffect(() => {
+    if (!isCalculatorOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.classList.add('emi-popup-open');
+    document.documentElement.classList.add('emi-popup-open');
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.classList.remove('emi-popup-open');
+      document.documentElement.classList.remove('emi-popup-open');
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isCalculatorOpen]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -57,6 +70,16 @@ export default function HeroSection() {
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
+  };
+
+  const closeCalculator = () => {
+    const returnTo = calculatorReturnTo;
+    setIsCalculatorOpen(false);
+    setCalculatorReturnTo('');
+
+    if (returnTo && returnTo !== '/') {
+      navigate(returnTo);
+    }
   };
 
   const carouselSlides = [
@@ -229,10 +252,7 @@ export default function HeroSection() {
         <motion.button
           type="button"
           className="hero-emi-fab"
-          onClick={() => {
-            const calculator = document.getElementById('emi-calculator');
-            calculator?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }}
+          onClick={() => setIsCalculatorOpen(true)}
           whileTap={{ scale: 0.96 }}
           aria-label="Open EMI calculator"
         >
@@ -265,40 +285,51 @@ export default function HeroSection() {
           })}
         </motion.div>
 
+        <AnimatePresence>
+          {isCalculatorOpen && (
+            <motion.div
+              className="emi-popup-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeCalculator}
+            >
+              <motion.div
+                className="emi-popup"
+                initial={{ opacity: 0, y: 24, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 16, scale: 0.98 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-label="EMI Calculator"
+              >
+                <div className="emi-popup-header">
+                  <div>
+                    <h3>EMI Calculator</h3>
+                    <p>Plan your loan with instant estimates.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="emi-popup-close"
+                    onClick={closeCalculator}
+                    aria-label="Close EMI calculator"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="emi-popup-content">
+                  <EMICalculator isModal />
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
 
-      {/* EMI Calculator Section */}
-      <div id="emi-calculator" className="calculator-section">
-        <div className="calculator-container">
-          <motion.div
-            className="section-header"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <span className="section-badge calculator-badge">
-              <LottieAnimation
-                src="https://assets8.lottiefiles.com/packages/lf20_4fuy5t7m.json"
-                style={{ width: 18, height: 18 }}
-              />
-              Smart Tool
-            </span>
-            <h2>EMI Calculator</h2>
-            <p>Plan your loan with our intelligent EMI calculator. Get instant estimates for all loan types.</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <EMICalculator />
-          </motion.div>
-        </div>
-      </div><style>{`
+      <style>{`
         .hero-section {
           position: relative;
           overflow: hidden;
@@ -774,19 +805,83 @@ export default function HeroSection() {
           filter: brightness(1.1);
         }
 
-        /* Calculator Section */
-        .calculator-section {
-          background: var(--bg-primary);
-          padding: 100px 0 120px;
-          position: relative;
+        .emi-popup-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(11, 30, 60, 0.55);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          z-index: 1200;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 34px 20px 20px;
         }
 
-        .calculator-container {
-          max-width: 1000px;
+        .emi-popup {
+          width: min(860px, 100%);
+          max-height: calc(100vh - 40px);
+          overflow: auto;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          border-radius: 20px;
+          box-shadow: var(--shadow-xl);
+        }
+
+        .emi-popup::-webkit-scrollbar {
+          display: none;
+        }
+
+        .emi-popup-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 24px 20px 8px;
+        }
+
+        .emi-popup-header h3 {
+          margin: 0;
+          font-size: 1.3rem;
+          color: var(--text-primary);
+        }
+
+        .emi-popup-header p {
+          margin: 4px 0 0;
+          font-size: 0.92rem;
+          color: var(--text-secondary);
+        }
+
+        .emi-popup-close {
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          border: 1px solid var(--border-color);
+          background: var(--bg-secondary);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+          margin-top: 6px;
+        }
+
+        .emi-popup-close:hover {
+          background: var(--bg-tertiary);
+          color: var(--text-primary);
+          border-color: var(--text-muted);
+        }
+
+        .emi-popup-content {
+          padding: 8px 20px 20px;
+        }
+
+        .emi-popup-content .emi-calculator {
+          max-width: 760px;
           margin: 0 auto;
-          padding: 0 24px;
-          position: relative;
-          z-index: 1;
         }
 
         /* Purple button variant */
@@ -808,6 +903,11 @@ export default function HeroSection() {
 
         .hero-section .carousel-dot:hover:not(.active) {
           background: #7b8798;
+        }
+
+        body.emi-popup-open .navbar,
+        html.emi-popup-open .navbar {
+          display: none !important;
         }
 
         /* Light mode optimization */
@@ -918,12 +1018,27 @@ export default function HeroSection() {
             font-size: 2rem;
           }
 
-          .calculator-section {
-            padding: 60px 0 80px;
+          .emi-popup-overlay {
+            padding: 20px 12px 12px;
+          }
+
+          .emi-popup {
+            border-radius: 14px;
+          }
+
+          .emi-popup-header {
+            padding: 18px 14px 6px;
+          }
+
+          .emi-popup-content {
+            padding: 8px 14px 14px;
+          }
+
+          .emi-popup-content .emi-calculator {
+            max-width: 100%;
           }
         }
       `}</style>
     </section>
   );
 }
-

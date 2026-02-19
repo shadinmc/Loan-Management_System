@@ -188,6 +188,7 @@ public class LoanService {
                         loan.getLoanId(),
                         loan.getLoanType(),
                         loan.getStatus(),
+                        loan.getDecisionMessage(),
                         loan.getLoanAmount(),
                         loan.getAppliedDate()
                                 .atZone(ZoneId.systemDefault())
@@ -220,6 +221,7 @@ public class LoanService {
                 .tenureMonths(loan.getTenureMonths())
                 .emiAmount(loan.getEmiAmount())
                 .outstandingPrincipal(loan.getOutstandingPrincipal())
+                .decisionMessage(loan.getDecisionMessage())
                 .appliedDate(loan.getAppliedDate().atZone(ZoneId.systemDefault()).toLocalDate())
                 .approvedDate(loan.getApprovedDate() == null ? null : loan.getApprovedDate().atZone(ZoneId.systemDefault()).toLocalDate()
         )

@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, Wallet, Banknote } from 'lucide-react';
+import { Menu, Wallet, Banknote, Calculator } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import LottieAnimation from './LottieAnimation';
@@ -23,6 +23,13 @@ export default function Navbar({ onMenuClick }) {
         loansSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
+  };
+
+  const openCalculator = () => {
+    const returnTo = `${location.pathname}${location.search}${location.hash}`;
+    navigate('/', {
+      state: { scrollToCalculator: true, calculatorReturnTo: returnTo }
+    });
   };
 
   return (
@@ -168,6 +175,16 @@ export default function Navbar({ onMenuClick }) {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
         >
+        <motion.button
+          type="button"
+          className="calculator-btn"
+          onClick={openCalculator}
+          aria-label="Open EMI calculator"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Calculator size={18} />
+        </motion.button>
 
         {isLoggedIn && (
           <motion.div

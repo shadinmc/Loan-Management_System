@@ -1,47 +1,143 @@
 import { LogOut, ShieldCheck } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { memo, useMemo, useCallback } from "react";
 import "./Topbar.css";
 
-const Topbar = () => {
+/**
+ * Enhanced Admin Topbar Component
+ * Features:
+ * - Memoized for optimal performance
+ * - Improved error handling and data validation
+ * - Enhanced accessibility
+ * - Clean separation of concerns
+ * - Type-safe user role detection
+ */
+
+const ROLES = {
+  REGIONAL_MANAGER: "REGIONAL_MANAGER",
+  BRANCH_MANAGER: "BRANCH_MANAGER",
+  USER: "USER"
+};
+
+const ROLE_LABELS = {
+  [ROLES.REGIONAL_MANAGER]: "Regional Manager",
+  [ROLES.BRANCH_MANAGER]: "Branch Manager",
+  [ROLES.USER]: "User"
+};
+
+const PAGE_ROUTES = {
+  "/dashboard": "Dashboard",
+  "/loan-applications": "Loan Applications",
+  "/disbursements": "Disbursements",
+  "/repayments": "Repayments",
+  "/kyc": "KYC Verification",
+  "/closure": "Loan Closure",
+  "/loan-closure": "Loan Closure"
+};
+
+/**
+ * Safely parse user data from localStorage
+ */
+const getUserData = () => {
+  try {
+    const adminAuth = localStorage.getItem("adminAuth");
+    if (!adminAuth) return null;
+
+    const user = JSON.parse(adminAuth);
+
+    // Validate user object structure
+    if (!user || typeof user !== "object") return null;
+
+    return {
+      username: user.username || "Admin",
+      roles: Array.isArray(user.roles) ? user.roles : [],
+      ...user
+    };
+  } catch (error) {
+    console.error("Failed to parse admin auth data:", error);
+    return null;
+  }
+};
+
+/**
+ * Get user's primary role
+ */
+const getUserRole = (roles = []) => {
+  if (roles.includes(ROLES.REGIONAL_MANAGER)) return ROLES.REGIONAL_MANAGER;
+  if (roles.includes(ROLES.BRANCH_MANAGER)) return ROLES.BRANCH_MANAGER;
+  return ROLES.USER;
+};
+
+/**
+ * Determine page title from current route
+ */
+const getPageTitle = (pathname) => {
+  // Find matching route
+  for (const [route, title] of Object.entries(PAGE_ROUTES)) {
+    if (pathname.includes(route)) return title;
+  }
+  return "Control Center";
+};
+
+const Topbar = memo(() => {
   const navigate = useNavigate();
   const location = useLocation();
-  let user = null;
-  try {
-    user = JSON.parse(localStorage.getItem("adminAuth") || "null");
-  } catch {
-    user = null;
-  }
 
-  const handleLogout = () => {
-    localStorage.removeItem("adminAuth");
-    localStorage.removeItem("token");
-    navigate("/login/admin");
-  };
+  // Memoize user data - only re-compute on location change
+  const user = useMemo(() => getUserData(), [location.pathname]);
 
-  const roleLabel = user?.roles?.includes("BRANCH_MANAGER")
-    ? "Branch Manager"
-    : user?.roles?.includes("REGIONAL_MANAGER")
-    ? "Regional Manager"
-    : "User";
+  // Memoize computed values
+  const userRole = useMemo(() => getUserRole(user?.roles), [user?.roles]);
+  const roleLabel = useMemo(() => ROLE_LABELS[userRole], [userRole]);
+  const pageTitle = useMemo(() => getPageTitle(location.pathname), [location.pathname]);
+  const username = useMemo(() => user?.username || "Admin", [user?.username]);
+  const userInitial = useMemo(() => username.charAt(0).toUpperCase(), [username]);
 
-  const pageTitle = (() => {
-    const path = location.pathname;
-    if (path.includes("/dashboard")) return "Dashboard";
-    if (path.includes("/loan-applications")) return "Loan Applications";
-    if (path.includes("/disbursements")) return "Disbursements";
-    if (path.includes("/repayments")) return "Repayments";
-    if (path.includes("/kyc")) return "KYC Verification";
-    if (path.includes("/closure") || path.includes("/loan-closure")) return "Loan Closure";
-    return "Control Center";
-  })();
+  // Determine dashboard route based on role
+  const dashboardRoute = useMemo(() => {
+    return userRole === ROLES.REGIONAL_MANAGER
+      ? "/regional/dashboard"
+      : "/admin/dashboard";
+  }, [userRole]);
 
-  const username = user?.username || "Admin";
+  // Optimized event handlers
+  const handleLogout = useCallback(() => {
+    try {
+      localStorage.removeItem("adminAuth");
+      localStorage.removeItem("token");
+      navigate("/login/admin", { replace: true });
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Force navigation even if localStorage fails
+      navigate("/login/admin", { replace: true });
+    }
+  }, [navigate]);
+
+  const handleDashboardClick = useCallback(() => {
+    navigate(dashboardRoute);
+  }, [navigate, dashboardRoute]);
+
+  // Keyboard navigation for user chip
+  const handleUserChipKeyDown = useCallback((e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleDashboardClick();
+    }
+  }, [handleDashboardClick]);
+
+  // Keyboard navigation for logout
+  const handleLogoutKeyDown = useCallback((e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleLogout();
+    }
+  }, [handleLogout]);
 
   return (
-    <header className="admin-topbar">
+    <header className="admin-topbar" role="banner">
       <div className="admin-topbar-left">
         <div className="admin-topbar-logo" aria-hidden="true">
-          <ShieldCheck size={16} />
+          <ShieldCheck size={16} strokeWidth={2} />
         </div>
         <div className="admin-topbar-brand">
           <h1>Loan Management System</h1>
@@ -49,32 +145,39 @@ const Topbar = () => {
         </div>
       </div>
 
-      <div className="admin-topbar-right">
-        <span className="admin-role-badge">{roleLabel}</span>
+      <nav className="admin-topbar-right" aria-label="User navigation">
+        <span className="admin-role-badge" aria-label={`Current role: ${roleLabel}`}>
+          {roleLabel}
+        </span>
 
         <button
           type="button"
           className="admin-user-chip"
-          onClick={() =>
-            navigate(
-              user?.roles?.includes("REGIONAL_MANAGER")
-                ? "/regional/dashboard"
-                : "/admin/dashboard"
-            )
-          }
-          aria-label="Go to dashboard"
+          onClick={handleDashboardClick}
+          onKeyDown={handleUserChipKeyDown}
+          aria-label={`${username}, go to dashboard`}
         >
-          <span className="admin-user-avatar">{username.charAt(0).toUpperCase()}</span>
+          <span className="admin-user-avatar" aria-hidden="true">
+            {userInitial}
+          </span>
           <span className="admin-user-name">{username}</span>
         </button>
 
-        <button type="button" className="admin-logout-btn" onClick={handleLogout}>
-          <LogOut size={15} />
+        <button
+          type="button"
+          className="admin-logout-btn"
+          onClick={handleLogout}
+          onKeyDown={handleLogoutKeyDown}
+          aria-label="Logout from admin panel"
+        >
+          <LogOut size={15} strokeWidth={2} aria-hidden="true" />
           <span>Logout</span>
         </button>
-      </div>
+      </nav>
     </header>
   );
-};
+});
+
+Topbar.displayName = "Topbar";
 
 export default Topbar;

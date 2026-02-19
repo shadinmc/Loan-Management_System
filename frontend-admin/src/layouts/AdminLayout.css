@@ -3,6 +3,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: linear-gradient(180deg, #f6fef2 0%, #ecfbe5 48%, #dff6d3 100%);
 }
 
 .body-layout {
@@ -14,4 +15,5 @@
 .main-content {
   flex: 1;
   padding: 28px 32px;
+  background: linear-gradient(180deg, #f6fef2 0%, #ecfbe5 48%, #dff6d3 100%);
 }
