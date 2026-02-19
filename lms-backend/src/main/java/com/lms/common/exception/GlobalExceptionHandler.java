@@ -42,6 +42,40 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(
+            IllegalArgumentException ex,
+            HttpServletRequest request) {
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("correlationId", MDC.get("correlationId"));
+        body.put("error", "Bad request");
+        body.put("message", ex.getMessage());
+        body.put("path", request.getRequestURI());
+        body.put("timestamp", Instant.now());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(body);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalState(
+            IllegalStateException ex,
+            HttpServletRequest request) {
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("correlationId", MDC.get("correlationId"));
+        body.put("error", "Conflict");
+        body.put("message", ex.getMessage());
+        body.put("path", request.getRequestURI());
+        body.put("timestamp", Instant.now());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(body);
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(
             RuntimeException ex,
@@ -50,7 +84,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("correlationId", MDC.get("correlationId"));
         body.put("error", "Internal server error");
-        body.put("details", ex.getMessage()); // log-only info
+        body.put("message", ex.getMessage());
         body.put("path", request.getRequestURI());
         body.put("timestamp", Instant.now());
 
@@ -110,3 +144,5 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 }
+
+

@@ -475,11 +475,12 @@ export default function HeroSection() {
         }
 
         .slide-title {
+          font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
           font-size: 3.2rem;
-          font-weight: 800;
+          font-weight: 700;
           color: white;
           line-height: 1.1;
-          letter-spacing: -0.03em;
+          letter-spacing: -0.01em;
         }
 
         .slide-title .highlight {
@@ -1042,3 +1043,4 @@ export default function HeroSection() {
     </section>
   );
 }
+

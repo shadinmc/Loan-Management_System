@@ -1,15 +1,12 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, Wallet, Banknote, Calculator } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import LottieAnimation from './LottieAnimation';
-import { useState } from 'react';
 
 export default function Navbar({ onMenuClick }) {
   const { user, isLoggedIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isLogoHovered, setIsLogoHovered] = useState(false);
 
   const isActive = (path) => location.pathname === path;
 
@@ -47,8 +44,6 @@ export default function Navbar({ onMenuClick }) {
           to="/"
           className="navbar-brand"
           aria-label="LoanWise - Go to homepage"
-          onMouseEnter={() => setIsLogoHovered(true)}
-          onMouseLeave={() => setIsLogoHovered(false)}
         >
           <motion.div
             className="logo-icon"
@@ -56,31 +51,19 @@ export default function Navbar({ onMenuClick }) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <AnimatePresence mode="wait">
-              {isLogoHovered ? (
-                <motion.div
-                  key="lottie"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <LottieAnimation
-                    src="https://lottie.host/embed/wallet-animation.json"
-                    style={{ width: 24, height: 24 }}
-                    loop
-                  />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="icon"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                ><Wallet size={20} />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <svg
+              viewBox="0 0 64 64"
+              width="24"
+              height="24"
+              role="img"
+              aria-label="LoanWise logo mark"
+            >
+              <rect x="10" y="12" width="44" height="40" rx="10" fill="none" stroke="white" strokeWidth="3" />
+              <path d="M18 26h22a4 4 0 1 1 0 8H18z" fill="white" />
+              <circle cx="43" cy="30" r="2.5" fill="#16a34a" />
+              <path d="M20 42h24" stroke="white" strokeWidth="3" strokeLinecap="round" />
+              <path d="M20 18l9-6" stroke="white" strokeWidth="3" strokeLinecap="round" />
+            </svg>
           </motion.div>
           <motion.span
             className="logo-text"

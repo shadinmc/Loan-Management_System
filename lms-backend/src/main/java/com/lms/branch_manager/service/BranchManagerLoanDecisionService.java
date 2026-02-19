@@ -35,6 +35,7 @@ public class BranchManagerLoanDecisionService {
         LoanStatus previousStatus = loan.getStatus();
 
         if (previousStatus != LoanStatus.APPLIED
+                && previousStatus != LoanStatus.NOT_ELIGIBLE
                 && previousStatus != LoanStatus.CLARIFICATION_REQUIRED
                 && previousStatus != LoanStatus.UNDER_BRANCH_REVIEW) {
             throw new IllegalStateException(
@@ -94,4 +95,5 @@ public class BranchManagerLoanDecisionService {
         }
     }
 }
+
 
