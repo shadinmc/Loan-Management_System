@@ -56,7 +56,7 @@ public class EducationLoanEligibilityStrategy implements LoanEligibilityStrategy
             passedRules.add("Course duration meets minimum requirement");
             score += 30;
         } else {
-            failedRules.add("Course duration must be at least 6 months");
+            failedRules.add("Course duration must be at least 18 months");
         }
 
         /* 4️ Co-applicant income check */
