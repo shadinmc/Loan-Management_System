@@ -16,6 +16,7 @@ public class LoanSummaryResponse {
     private String loanId;
     private LoanType loanType;
     private LoanStatus status;
+    private String decisionMessage;
     private BigDecimal loanAmount;
     private LocalDate appliedDate;
 }

@@ -21,10 +21,10 @@ const SiteFooter = () => {
       <style>{`
         .admin-footer {
           margin-top: auto;
-          border-top: 1px solid #1E3A5F;
-          background: #0B1E3C;
+          border-top: 1px solid #d5ebcb;
+          background: linear-gradient(180deg, #f6fef2 0%, #ecfbe5 48%, #dff6d3 100%);
           padding: 16px 28px;
-          color: #EAF2FF;
+          color: #0f172a;
         }
 
         .admin-footer__inner {
@@ -45,12 +45,12 @@ const SiteFooter = () => {
         }
 
         .admin-footer__copyright {
-          color: #A5B4CF;
+          color: #475569;
           font-weight: 600;
         }
 
         .admin-footer__support a {
-          color: #2DBE60;
+          color: #16803d;
           text-decoration: none;
           font-weight: 600;
         }

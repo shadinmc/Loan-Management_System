@@ -21,6 +21,7 @@ public class LoanDetailResponse {
 
     private BigDecimal emiAmount;
     private BigDecimal outstandingPrincipal;
+    private String decisionMessage;
 
     private LocalDate appliedDate;
     private LocalDate approvedDate;

@@ -61,7 +61,7 @@ public class Loan {
 
     private String decisionMessage;   // reason / clarification note
 
-
+    /* Dto Updated with decision message */
     /* Dates */
     private Instant appliedDate;
     private Instant approvedDate;

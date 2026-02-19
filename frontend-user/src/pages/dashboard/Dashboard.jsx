@@ -44,49 +44,39 @@ export default function Dashboard() {
   };
 
   const getStatusColor = (status) => {
-    const colors = {
-      SUBMITTED: '#f59e0b',
-      UNDER_REVIEW: '#3b82f6',
-      VERIFIED: '#8b5cf6',
-      APPROVED: '#10b981',
-      REJECTED: '#ef4444',
-      DISBURSED: '#10b981'
-    };
-    return colors[status] || '#94a3b8';
+    const normalized = String(status || '').toUpperCase();
+    if (['REJECTED', 'BRANCH_REJECTED', 'REGIONAL_REJECTED', 'NOT_ELIGIBLE'].includes(normalized)) {
+      return '#ef4444';
+    }
+    if (['DISBURSED', 'ACTIVE', 'CLOSED'].includes(normalized)) {
+      return '#8b5cf6';
+    }
+    if (['APPROVED', 'REGIONAL_APPROVED', 'BRANCH_APPROVED', 'DISBURSEMENT_PENDING'].includes(normalized)) {
+      return '#10b981';
+    }
+    if (normalized === 'CLARIFICATION_REQUIRED') {
+      return '#f59e0b';
+    }
+    return '#3b82f6';
   };
 
-  const mapBackendStatus = (status) => {
-    const map = {
-      APPLIED: 'SUBMITTED',
-      ELIGIBILITY_CHECK_PASSED: 'UNDER_REVIEW',
-      ELIGIBLE: 'UNDER_REVIEW',
-      UNDER_BRANCH_REVIEW: 'UNDER_REVIEW',
-      UNDER_REGIONAL_REVIEW: 'UNDER_REVIEW',
-      PENDING_REGIONAL_REVIEW: 'UNDER_REVIEW',
-      BRANCH_APPROVED: 'VERIFIED',
-      REGIONAL_APPROVED: 'VERIFIED',
-      APPROVED: 'APPROVED',
-      DISBURSED: 'DISBURSED',
-      REJECTED: 'REJECTED',
-      BRANCH_REJECTED: 'REJECTED',
-      REGIONAL_REJECTED: 'REJECTED',
-      DISBURSEMENT_PENDING: 'APPROVED',
-      CLARIFICATION_REQUIRED: 'UNDER_REVIEW',
-      NOT_ELIGIBLE: 'REJECTED',
-      CLOSED: 'DISBURSED'
-    };
-    return map[status] || 'SUBMITTED';
-  };
+  const formatStatusLabel = (status) =>
+    String(status || 'APPLIED')
+      .toLowerCase()
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
 
   const applications = useMemo(() => {
     const items = applicationsQuery.data || [];
     return items.map((loan) => {
       const loanTypeKey = loan.loanType || '';
       const config = LOAN_CONFIG[loanTypeKey] || {};
-      const backendStatus = loan.status || loan.loanStatus || 'APPLIED';
+      const backendStatus = String(loan.status || loan.loanStatus || 'APPLIED').toUpperCase();
       return {
         applicationId: loan.loanId || loan.id,
-        status: mapBackendStatus(backendStatus),
+        backendStatus,
+        statusLabel: formatStatusLabel(backendStatus),
         loanType: config.name || loanTypeKey,
         loanAmount: Number(loan.loanAmount || 0),
         appliedDate: loan.appliedDate || loan.createdAt || new Date().toISOString()
@@ -169,9 +159,9 @@ export default function Dashboard() {
                     <span className="app-id">{app.applicationId}</span>
                     <span
                       className="app-status"
-                      style={{ background: getStatusColor(app.status) + '20', color: getStatusColor(app.status) }}
+                      style={{ background: getStatusColor(app.backendStatus) + '20', color: getStatusColor(app.backendStatus) }}
                     >
-                      {app.status}
+                      {app.statusLabel}
                     </span>
                   </div>
                   <div className="app-details">

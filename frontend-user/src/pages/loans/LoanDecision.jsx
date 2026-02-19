@@ -28,12 +28,26 @@ export default function LoanDecision() {
 
   const statusOptions = [
     { value: 'all', label: 'All Applications', icon: FileText, color: '#6B7280' },
-    { value: APPLICATION_STATUS.SUBMITTED, label: 'Submitted', icon: FileText, color: '#3B82F6' },
-    { value: APPLICATION_STATUS.UNDER_REVIEW, label: 'Under Review', icon: Clock, color: '#F59E0B' },
-    { value: APPLICATION_STATUS.BRANCH_APPROVED, label: 'Branch Approved', icon: CheckCircle, color: '#10B981' },
-    { value: APPLICATION_STATUS.APPROVED, label: 'Approved', icon: CheckCircle, color: '#2DBE60' },
-    { value: APPLICATION_STATUS.REJECTED, label: 'Rejected', icon: XCircle, color: '#EF4444' },
-    { value: APPLICATION_STATUS.DISBURSED, label: 'Disbursed', icon: Banknote, color: '#8B5CF6' }
+    { value: 'SUBMITTED', label: 'Submitted', icon: FileText, color: '#3B82F6' },
+    { value: 'UNDER_REVIEW', label: 'Under Review', icon: Clock, color: '#F59E0B' },
+    { value: 'APPLIED', label: 'Applied', icon: FileText, color: '#3B82F6' },
+    { value: 'ELIGIBILITY_CHECK_PASSED', label: 'Eligibility Check Passed', icon: CheckCircle, color: '#10B981' },
+    { value: 'NOT_ELIGIBLE', label: 'Not Eligible', icon: XCircle, color: '#EF4444' },
+    { value: 'ELIGIBLE', label: 'Eligible', icon: CheckCircle, color: '#10B981' },
+    { value: 'UNDER_BRANCH_REVIEW', label: 'Under Branch Review', icon: Clock, color: '#F59E0B' },
+    { value: 'BRANCH_APPROVED', label: 'Branch Approved', icon: CheckCircle, color: '#10B981' },
+    { value: 'CLARIFICATION_REQUIRED', label: 'Clarification Required', icon: AlertCircle, color: '#F59E0B' },
+    { value: 'BRANCH_REJECTED', label: 'Branch Rejected', icon: XCircle, color: '#EF4444' },
+    { value: 'PENDING_REGIONAL_REVIEW', label: 'Pending Regional Review', icon: Clock, color: '#F59E0B' },
+    { value: 'REJECTED', label: 'Rejected', icon: XCircle, color: '#EF4444' },
+    { value: 'UNDER_REGIONAL_REVIEW', label: 'Under Regional Review', icon: Clock, color: '#F59E0B' },
+    { value: 'APPROVED', label: 'Approved', icon: CheckCircle, color: '#10B981' },
+    { value: 'DISBURSEMENT_PENDING', label: 'Disbursement Pending', icon: Clock, color: '#F59E0B' },
+    { value: 'REGIONAL_APPROVED', label: 'Regional Approved', icon: CheckCircle, color: '#10B981' },
+    { value: 'REGIONAL_REJECTED', label: 'Regional Rejected', icon: XCircle, color: '#EF4444' },
+    { value: 'DISBURSED', label: 'Disbursed', icon: Banknote, color: '#8B5CF6' },
+    { value: 'ACTIVE', label: 'Active', icon: Banknote, color: '#8B5CF6' },
+    { value: 'CLOSED', label: 'Closed', icon: Banknote, color: '#8B5CF6' }
   ];
 
   const normalizeLoanType = (loanType) => {
@@ -45,6 +59,37 @@ export default function LoanDecision() {
     if (raw.includes('VEHICLE')) return 'VEHICLE';
     return raw;
   };
+
+  const unwrapLoanDetail = (rawDetail) => {
+    if (!rawDetail || typeof rawDetail !== 'object') return {};
+    if (rawDetail.data && typeof rawDetail.data === 'object') return rawDetail.data;
+    if (rawDetail.loan && typeof rawDetail.loan === 'object') return rawDetail.loan;
+    return rawDetail;
+  };
+
+  const getDecisionMessage = (detail, loan) => {
+    const candidates = [
+      detail?.decisionMessage,
+      detail?.decisionReason,
+      detail?.rejectionReason,
+      detail?.remarks,
+      detail?.note,
+      loan?.decisionMessage,
+      loan?.decisionReason,
+      loan?.rejectionReason,
+      loan?.remarks,
+      loan?.note
+    ];
+    const first = candidates.find((value) => typeof value === 'string' && value.trim().length > 0);
+    return first ? first.trim() : '';
+  };
+
+  const formatStatusLabel = (status) =>
+    String(status || 'APPLIED')
+      .toLowerCase()
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
 
   const mapBackendStatus = (status) => {
     const normalized = String(status || '').toUpperCase();
@@ -90,6 +135,7 @@ export default function LoanDecision() {
       APPROVED: 5,
       DISBURSEMENT_PENDING: 5,
       DISBURSED: 6,
+      ACTIVE: 6,
       CLOSED: 6
     };
     return stageMap[backendStatus] || 1;
@@ -143,7 +189,7 @@ export default function LoanDecision() {
     const map = new Map();
     baseLoans.forEach((loan, idx) => {
       const loanId = loan?.loanId || loan?.id;
-      const detail = loanDetailQueries[idx]?.data;
+      const detail = unwrapLoanDetail(loanDetailQueries[idx]?.data);
       if (loanId && detail) {
         map.set(loanId, detail);
       }
@@ -174,6 +220,7 @@ export default function LoanDecision() {
 
       return {
         id: loanId,
+        loanTypeKey,
         loanType: config.name || String(loanTypeKey || loan.loanType || 'Loan').replaceAll('_', ' '),
         amount: Number(loan.loanAmount || 0),
         tenure,
@@ -182,7 +229,8 @@ export default function LoanDecision() {
         emiEligible: eligibility,
         status: uiStatus,
         backendStatus,
-        decisionMessage: loan.decisionMessage || "",
+        statusLabel: formatStatusLabel(backendStatus),
+        decisionMessage: getDecisionMessage(detail, loan),
         appliedDate: loan.appliedDate || loan.createdAt || null,
         timeline: buildTimeline(backendStatus, loan.appliedDate || loan.createdAt, loan.updatedAt)
       };
@@ -199,7 +247,25 @@ export default function LoanDecision() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const getStatusConfig = (status) => {
+  const getStatusConfig = (backendStatus) => {
+    const normalized = String(backendStatus || '').toUpperCase();
+
+    if (['REJECTED', 'BRANCH_REJECTED', 'REGIONAL_REJECTED', 'NOT_ELIGIBLE'].includes(normalized)) {
+      return { icon: XCircle, color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)' };
+    }
+
+    if (['DISBURSED', 'ACTIVE', 'CLOSED'].includes(normalized)) {
+      return { icon: Banknote, color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.1)' };
+    }
+
+    if (['APPROVED', 'REGIONAL_APPROVED', 'DISBURSEMENT_PENDING', 'BRANCH_APPROVED'].includes(normalized)) {
+      return { icon: CheckCircle, color: '#2DBE60', bg: 'rgba(45, 190, 96, 0.1)' };
+    }
+
+    if (normalized === 'CLARIFICATION_REQUIRED') {
+      return { icon: AlertCircle, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' };
+    }
+
     const configs = {
       [APPLICATION_STATUS.SUBMITTED]: { icon: FileText, color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)', label: 'Submitted' },
       [APPLICATION_STATUS.UNDER_REVIEW]: { icon: Clock, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)', label: 'Under Review' },
@@ -208,7 +274,7 @@ export default function LoanDecision() {
       [APPLICATION_STATUS.REJECTED]: { icon: XCircle, color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)', label: 'Rejected' },
       [APPLICATION_STATUS.DISBURSED]: { icon: Banknote, color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.1)', label: 'Disbursed' }
     };
-    return configs[status] || configs[APPLICATION_STATUS.SUBMITTED];
+    return configs[APPLICATION_STATUS.UNDER_REVIEW];
   };
 
   const getSelectedOption = () => {
@@ -220,7 +286,9 @@ export default function LoanDecision() {
     const loanType = String(app.loanType || '').toLowerCase();
     const term = searchTerm.toLowerCase();
     const matchesSearch = appId.includes(term) || loanType.includes(term);
-    const matchesFilter = filterStatus === 'all' ? true : app.status === filterStatus;
+    const matchesFilter = filterStatus === 'all'
+      ? true
+      : String(app.backendStatus || '').toUpperCase() === filterStatus;
     return matchesSearch && matchesFilter;
   });
 
@@ -389,7 +457,7 @@ export default function LoanDecision() {
               animate="visible"
             >
               {filteredApplications.map((app) => {
-                const statusConfig = getStatusConfig(app.status);
+                const statusConfig = getStatusConfig(app.backendStatus);
                 const StatusIcon = statusConfig.icon;
                 const isExpanded = expandedCard === app.id;
 
@@ -413,7 +481,7 @@ export default function LoanDecision() {
                           style={{ background: statusConfig.bg, color: statusConfig.color }}
                         >
                           <StatusIcon size={14} />
-                          {statusConfig.label}
+                          {app.statusLabel}
                         </span>
                         <button className="expand-btn" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
                           {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -497,7 +565,7 @@ export default function LoanDecision() {
                               <Button
                                 variant="primary"
                                 onClick={() =>
-                                  navigate(`/loan/apply/${(app.loanTypeKey || '').toLowerCase()}`, {
+                                  navigate(`/loan/apply/${normalizeLoanType(app.loanTypeKey || app.loanType).toLowerCase()}`, {
                                     state: {
                                       resubmitLoanId: app.id,
                                       resubmit: true,
@@ -529,10 +597,23 @@ export default function LoanDecision() {
 }
 
 const styles = `.status-page {
+    --decision-note-bg: rgba(245, 158, 11, 0.12);
+    --decision-note-border: rgba(245, 158, 11, 0.35);
+    --decision-note-label: #FBBF24;
+    --decision-note-text: #FED7AA;
+    --decision-note-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
     min-height: calc(100vh - 70px);
     background: var(--bg-secondary);
     padding: 32px 0 64px;
     position: relative;
+  }
+
+  [data-theme="light"] .status-page {
+    --decision-note-bg: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+    --decision-note-border: rgba(251, 146, 60, 0.38);
+    --decision-note-label: #9A3412;
+    --decision-note-text: #7C2D12;
+    --decision-note-shadow: 0 8px 20px rgba(154, 52, 18, 0.08);
   }
 
   .status-page.loading-state {
@@ -1012,27 +1093,30 @@ const styles = `.status-page {
 
   .decision-note {
     margin-top: 16px;
-    padding: 14px 16px;
-    background: rgba(245, 158, 11, 0.08);
-    border: 1px solid rgba(245, 158, 11, 0.25);
+    padding: 14px 16px 15px;
+    background: var(--decision-note-bg);
+    border: 1px solid var(--decision-note-border);
     border-radius: 12px;
+    box-shadow: var(--decision-note-shadow);
+    backdrop-filter: blur(2px);
   }
 
   .decision-label {
     display: block;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: #92400E;
-    margin-bottom: 6px;
+    letter-spacing: 0.7px;
+    color: var(--decision-note-label);
+    margin-bottom: 7px;
   }
 
   .decision-text {
     margin: 0;
-    font-size: 0.9rem;
-    color: #78350F;
-    line-height: 1.5;
+    font-size: 0.95rem;
+    color: var(--decision-note-text);
+    line-height: 1.55;
+    font-weight: 500;
   }
 
   .card-actions {

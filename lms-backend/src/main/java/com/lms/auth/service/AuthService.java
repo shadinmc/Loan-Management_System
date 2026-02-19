@@ -8,14 +8,18 @@ import com.lms.auth.security.JwtTokenProvider;
 import com.lms.user.entity.User;
 import com.lms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -106,16 +110,17 @@ public class AuthService {
             // Find user by email or username
             User user = userRepository.findByEmail(request.getUsernameOrEmail())
                     .orElseGet(() -> userRepository.findByUsername(request.getUsernameOrEmail())
-                            .orElseThrow(() -> new RuntimeException("User not found")));
+                            .orElseThrow(() -> new ResponseStatusException(
+                                    HttpStatus.UNAUTHORIZED, "Invalid credentials")));
 
             // Verify password
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                throw new RuntimeException("Invalid credentials");
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
             }
 
             // Check if active
             if (!user.isActive()) {
-                throw new RuntimeException("User account is disabled");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User account is disabled");
             }
 
             String token = jwtTokenProvider.generateToken(user);
@@ -130,7 +135,7 @@ public class AuthService {
             );
 
             //  SUCCESS AUDIT
-            auditService.log(
+            safeAuditLog(
                     user.getId(),
                     "USER_LOGIN",
                     "AUTH",
@@ -146,7 +151,7 @@ public class AuthService {
         } catch (Exception ex) {
 
             // FAILURE AUDIT (VERY IMPORTANT)
-            auditService.log(
+            safeAuditLog(
                     request.getUsernameOrEmail(),
                     "USER_LOGIN",
                     "AUTH",
@@ -158,6 +163,23 @@ public class AuthService {
             );
 
             throw ex;
+        }
+    }
+
+    private void safeAuditLog(
+            String userId,
+            String action,
+            String resourceType,
+            String resourceId,
+            Object request,
+            Object response,
+            int httpStatus,
+            boolean success
+    ) {
+        try {
+            auditService.log(userId, action, resourceType, resourceId, request, response, httpStatus, success);
+        } catch (Exception e) {
+            log.error("Audit logging failed for action={} resourceId={}", action, resourceId, e);
         }
     }
 

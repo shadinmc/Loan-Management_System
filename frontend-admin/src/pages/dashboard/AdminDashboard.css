@@ -6,11 +6,11 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: "Poppins", "Segoe UI", Roboto, system-ui, sans-serif;
 }
 
 body {
-  background: linear-gradient(180deg, #f0f6ff 0%, #f7fbff 100%);
+  background: linear-gradient(180deg, #f6fef2 0%, #ecfbe5 48%, #dff6d3 100%);
 }
 
 /* ============================= */
