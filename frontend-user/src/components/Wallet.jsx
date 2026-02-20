@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import LottieAnimation from './LottieAnimation';
+import { fallbackAnimations } from '../assets/lottie/animations';
 
 export default function Wallet() {
   const {
@@ -48,7 +49,7 @@ export default function Wallet() {
     return (
       <div className="wallet-loading">
         <LottieAnimation
-          src="https://lottie.host/embed/wallet-loading.json"
+          fallback={fallbackAnimations.loading}
           style={{ width: 100, height: 100 }}
         />
         <p>Loading wallet...</p>

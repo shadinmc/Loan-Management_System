@@ -20,6 +20,14 @@ const STATUS_LABELS = {
 };
 
 const formatInr = (value) => `INR ${Number(value || 0).toLocaleString()}`;
+const formatLoanType = (value) => {
+  if (!value) return "-";
+  return value
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+};
 
 const RepaymentMonitoring = () => {
   const [search, setSearch] = useState("");
@@ -238,6 +246,7 @@ const RepaymentMonitoring = () => {
                 <>
                   <div className="detail-summary-grid">
                     <div><strong>Borrower:</strong> {selectedLoan.fullName || selectedLoan.userId}</div>
+                    <div><strong>Loan Type:</strong> {formatLoanType(selectedLoan.loanType)}</div>
                     <div><strong>Total Paid:</strong> {formatInr(selectedLoan.totalPaidAmount)}</div>
                     <div><strong>Remaining Months:</strong> {selectedLoan.remainingMonths}</div>
                     <div><strong>Progress:</strong> {selectedLoan.paidProgressPercent}%</div>

@@ -1,5 +1,6 @@
 package com.lms.repayment.dto;
 
+import com.lms.common.enums.LoanType;
 import com.lms.common.enums.LoanStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,6 +25,7 @@ public class ManagerRepaymentDetailResponse {
     private Integer paidProgressPercent;
     private Instant nextEmiDate;
     private BigDecimal nextEmiAmount;
+    private LoanType loanType;
     private LoanStatus status;
     private List<ManagerEmiViewResponse> emis;
 }

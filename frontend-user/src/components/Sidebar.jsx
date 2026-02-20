@@ -9,6 +9,7 @@ import {
   Shield, CheckCircle, AlertCircle, Wallet, Banknote
 } from 'lucide-react';
 import LottieAnimation from './LottieAnimation';
+import { fallbackAnimations } from '../assets/lottie/animations';
 
 export default function Sidebar({ isOpen, onClose }) {
   const { user, isLoggedIn, logout } = useAuth();
@@ -172,7 +173,7 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
             <div className="user-lottie">
               <LottieAnimation
-                src="https://lottie.host/embed/verified-badge.json"
+                fallback={fallbackAnimations.loading}
                 style={{ width: 24, height: 24 }}
               />
             </div>
@@ -199,7 +200,7 @@ export default function Sidebar({ isOpen, onClose }) {
             >
               {theme === 'light' ? (
                 <LottieAnimation
-                  src="https://lottie.host/embed/sun-animation.json"
+                  fallback={fallbackAnimations.loading}
                   style={{ width: 18, height: 18 }}
                 />
               ) : (
@@ -213,7 +214,7 @@ export default function Sidebar({ isOpen, onClose }) {
             >
               {theme === 'dark' ? (
                 <LottieAnimation
-                  src="https://lottie.host/embed/moon-animation.json"
+                  fallback={fallbackAnimations.loading}
                   style={{ width: 18, height: 18 }}
                 />
               ) : (
