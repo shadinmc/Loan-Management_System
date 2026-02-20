@@ -14,7 +14,7 @@ export default function FeatureShowcase() {
       icon: Zap,
       title: 'Quick Approval',
       description: 'Get your loan approved within 24 hours with minimal documentation.',
-      color: '#F59E0B',
+      color: '#2DBE60',
       bgColor: '#FEF3C7'
     },
     {
@@ -28,14 +28,14 @@ export default function FeatureShowcase() {
       icon: Clock,
       title: 'Fast Disbursement',
       description: 'Funds transferred to your account within 48 hours of approval.',
-      color: '#2F54EB',
+      color: '#2DBE60',
       bgColor: '#E6ECFF'
     },
     {
       icon: Award,
       title: 'Best Rates',
       description: 'Competitive interest rates starting from just 10.5% p.a.',
-      color: '#8B5CF6',
+      color: '#2DBE60',
       bgColor: '#F3E8FF'
     },
     {
@@ -49,7 +49,7 @@ export default function FeatureShowcase() {
       icon: CheckCircle,
       title: 'Easy EMI',
       description: 'Simple EMI options that fit your monthly budget.',
-      color: '#2F54EB',
+      color: '#2DBE60',
       bgColor: '#E6ECFF'
     }
   ];
