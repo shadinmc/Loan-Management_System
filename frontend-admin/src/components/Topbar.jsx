@@ -30,9 +30,7 @@ const PAGE_ROUTES = {
   "/loan-applications": "Loan Applications",
   "/disbursements": "Disbursements",
   "/repayments": "Repayments",
-  "/kyc": "KYC Verification",
-  "/closure": "Loan Closure",
-  "/loan-closure": "Loan Closure"
+  "/kyc": "KYC Verification"
 };
 
 /**

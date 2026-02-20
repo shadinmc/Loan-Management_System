@@ -48,4 +48,30 @@ describe("Repayments", () => {
     await userEvent.click(within(row).getByRole("button"));
     expect(await screen.findByText(/Repayment Detail - LN-1/)).toBeInTheDocument();
   });
+
+  test("toggles status filter from KPI cards", async () => {
+    getManagerRepayments.mockResolvedValueOnce({
+      content: [
+        { loanId: "LN-1", fullName: "Ava", status: "ACTIVE", totalPaidAmount: 5000 },
+        { loanId: "LN-2", fullName: "Ben", status: "CLOSED", totalPaidAmount: 8000 },
+      ],
+      page: 0,
+      totalPages: 1,
+      first: true,
+      last: true,
+    });
+
+    renderWithQuery(<Repayments />);
+
+    expect(await screen.findByText("LN-1")).toBeInTheDocument();
+    expect(screen.getByText("LN-2")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /Active/i }));
+    expect(screen.getByText("LN-1")).toBeInTheDocument();
+    expect(screen.queryByText("LN-2")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /Active/i }));
+    expect(screen.getByText("LN-1")).toBeInTheDocument();
+    expect(screen.getByText("LN-2")).toBeInTheDocument();
+  });
 });

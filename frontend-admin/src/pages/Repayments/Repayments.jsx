@@ -56,6 +56,10 @@ const RepaymentMonitoring = () => {
   }, [loans, search, filter]);
 
   const countByStatus = (status) => loans.filter((loan) => loan.status === status).length;
+  const toggleStatusFilter = (status) => {
+    setFilter((current) => (current === status ? "ALL" : status));
+    setPage(0);
+  };
 
   const selectedLoan = detailQuery.data || null;
 
@@ -69,10 +73,32 @@ const RepaymentMonitoring = () => {
       </div>
 
       <div className="kpi-grid">
-        <div className="kpi warning">
+        <div
+          className={`kpi warning clickable ${filter === "ACTIVE" ? "active" : ""}`}
+          onClick={() => toggleStatusFilter("ACTIVE")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggleStatusFilter("ACTIVE");
+            }
+          }}
+        >
           <Clock /> Active <strong>{countByStatus("ACTIVE")}</strong>
         </div>
-        <div className="kpi success">
+        <div
+          className={`kpi success clickable ${filter === "CLOSED" ? "active" : ""}`}
+          onClick={() => toggleStatusFilter("CLOSED")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggleStatusFilter("CLOSED");
+            }
+          }}
+        >
           <CheckCircle /> Closed <strong>{countByStatus("CLOSED")}</strong>
         </div>
         <div className="kpi info">
