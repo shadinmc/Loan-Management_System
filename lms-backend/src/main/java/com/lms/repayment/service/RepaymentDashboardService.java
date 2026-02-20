@@ -1,7 +1,9 @@
 package com.lms.repayment.service;
 
 import com.lms.auth.security.SecurityUtils;
+import com.lms.common.enums.LoanType;
 import com.lms.common.enums.LoanStatus;
+import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
 import com.lms.repayment.dto.EmiViewResponse;
 import com.lms.repayment.dto.ManagerEmiViewResponse;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -67,15 +70,20 @@ public class RepaymentDashboardService {
     public ManagerRepaymentPageResponse getManagerRepaymentSummaries(int page, int size) {
         List<ManagerRepaymentSummaryResponse> sorted = repository.findAll()
                 .stream()
-                .sorted(Comparator.comparing(RepaymentSchedule::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
                 .map(schedule -> {
                     LoanStatus loanStatus = deriveLoanStatus(schedule.getLoanId());
-                    if (loanStatus != LoanStatus.ACTIVE && loanStatus != LoanStatus.CLOSED) {
-                        return null;
-                    }
-                    return toSummary(schedule, loanStatus);
+                    return new RepaymentSummaryCandidate(schedule, loanStatus);
                 })
-                .filter(item -> item != null)
+                .filter(item -> item.loanStatus() == LoanStatus.ACTIVE || item.loanStatus() == LoanStatus.CLOSED)
+                .sorted(
+                        Comparator
+                                .comparingInt((RepaymentSummaryCandidate item) -> statusOrder(item.loanStatus()))
+                                .thenComparing(
+                                        item -> item.schedule().getUpdatedAt(),
+                                        Comparator.nullsLast(Comparator.reverseOrder())
+                                )
+                )
+                .map(item -> toSummary(item.schedule(), item.loanStatus()))
                 .toList();
 
         return toPage(sorted, page, size);
@@ -92,7 +100,13 @@ public class RepaymentDashboardService {
                         .count();
         int remainingMonths = Math.max(totalEmis - paidEmis, 0);
         int paidProgressPercent = totalEmis == 0 ? 0 : (paidEmis * 100) / totalEmis;
-        LoanStatus loanStatus = deriveLoanStatus(schedule.getLoanId());
+        Optional<Loan> loanOpt = loanRepository.findByLoanId(schedule.getLoanId());
+        LoanStatus loanStatus = loanOpt
+                .map(loan -> loan.getStatus())
+                .orElse(LoanStatus.ACTIVE);
+        LoanType loanType = loanOpt
+                .map(loan -> loan.getLoanType())
+                .orElse(null);
 
         List<ManagerEmiViewResponse> emis = schedule.getEmis() == null ? List.of() :
                 schedule.getEmis().stream()
@@ -120,6 +134,7 @@ public class RepaymentDashboardService {
                 paidProgressPercent,
                 schedule.getNextEmiDate(),
                 schedule.getNextEmiAmount(),
+                loanType,
                 loanStatus,
                 emis
         );
@@ -182,11 +197,27 @@ public class RepaymentDashboardService {
                 .orElse(LoanStatus.ACTIVE);
     }
 
+    private int statusOrder(LoanStatus status) {
+        if (status == LoanStatus.ACTIVE) {
+            return 0;
+        }
+        if (status == LoanStatus.CLOSED) {
+            return 1;
+        }
+        return 9;
+    }
+
     private String resolveFullName(String userId) {
         return userRepository.findById(userId)
                 .map(user -> user.getFullName() == null || user.getFullName().isBlank()
                         ? userId
                         : user.getFullName())
                 .orElse(userId);
+    }
+
+    private record RepaymentSummaryCandidate(
+            RepaymentSchedule schedule,
+            LoanStatus loanStatus
+    ) {
     }
 }

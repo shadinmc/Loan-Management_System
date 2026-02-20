@@ -63,7 +63,18 @@ public class DisbursementController {
                         ));
 
         List<DisbursementResponse> sorted = loans.stream()
-                .sorted(Comparator.comparing(Loan::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                .sorted(
+                        Comparator
+                                .comparingInt((Loan loan) -> statusOrder(loan.getStatus()))
+                                .thenComparing(
+                                        Loan::getDisbursedAt,
+                                        Comparator.nullsLast(Comparator.reverseOrder())
+                                )
+                                .thenComparing(
+                                        Loan::getUpdatedAt,
+                                        Comparator.nullsLast(Comparator.reverseOrder())
+                                )
+                )
                 .map(loan -> {
                     WalletTransaction tx = latestCreditTxByLoanId.get(loan.getLoanId());
                     return new DisbursementResponse(
@@ -81,6 +92,22 @@ public class DisbursementController {
                 .toList();
 
         return toPage(sorted, page, size);
+    }
+
+    private int statusOrder(LoanStatus status) {
+        if (status == LoanStatus.ACTIVE) {
+            return 0;
+        }
+        if (status == LoanStatus.DISBURSED) {
+            return 1;
+        }
+        if (status == LoanStatus.DISBURSEMENT_PENDING) {
+            return 2;
+        }
+        if (status == LoanStatus.CLOSED) {
+            return 3;
+        }
+        return 9;
     }
 
     private DisbursementPageResponse toPage(
