@@ -4,11 +4,14 @@ import com.lms.audit.service.AuditService;
 import com.lms.auth.security.SecurityUtils;
 import com.lms.branch_manager.dto.LoanDecisionRequest;
 import com.lms.common.enums.LoanStatus;
+import com.lms.common.util.EmiCalculator;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
+import com.lms.loan.service.InterestRateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -23,6 +26,7 @@ public class BranchManagerLoanDecisionService {
     private final LoanRepository loanRepository;
     private final AuditService auditService;
     private final SecurityUtils securityUtils;
+    private final InterestRateService interestRateService;
 
 
     public void decideLoan(String loanId, LoanDecisionRequest request) {
@@ -44,6 +48,17 @@ public class BranchManagerLoanDecisionService {
 
         switch (request.decision()) {
             case APPROVE -> {
+
+                // Eligibility override scenario
+                if (Boolean.FALSE.equals(loan.getEmiEligible())
+                        || loan.getApprovedAmount() == null) {
+
+                    applyApprovalOverride(loan);
+
+                    loan.setEligibilityRemarks(
+                            "Eligibility overridden by Branch Manager");
+                }
+
                 loan.setStatus(LoanStatus.BRANCH_APPROVED);
                 loan.setDecisionMessage(null);
             }
@@ -93,6 +108,26 @@ public class BranchManagerLoanDecisionService {
             throw new IllegalArgumentException(
                     "Message is required for this decision");
         }
+    }
+
+    private void applyApprovalOverride(Loan loan) {
+
+        BigDecimal interestRate =
+                interestRateService.getRate(loan.getLoanType());
+
+        BigDecimal approvedAmount = loan.getLoanAmount();
+
+        BigDecimal emi = EmiCalculator.calculateEmi(
+                approvedAmount,
+                interestRate,
+                loan.getTenureMonths()
+        );
+
+        loan.setInterestRate(interestRate);
+        loan.setApprovedAmount(approvedAmount);
+        loan.setEmiAmount(emi);
+        loan.setEmiEligible(true);
+        loan.setApprovedDate(Instant.now());
     }
 }
 
