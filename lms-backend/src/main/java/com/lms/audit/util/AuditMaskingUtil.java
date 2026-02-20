@@ -19,9 +19,12 @@ public final class AuditMaskingUtil {
             "proofofidentity",
             "proofofincome",
             "proofofaddress",
+            "proofofbusiness",
+            "proofofadmission",
             "insuranceproof",
             "downpaymentproof",
-            "collateraldocuments"
+            "collateraldocuments",
+            "documents"
     );
 
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -84,3 +87,5 @@ public final class AuditMaskingUtil {
         }
     }
 }
+
+

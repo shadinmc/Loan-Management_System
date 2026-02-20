@@ -1,3 +1,7 @@
+
+
+
+
 // src/components/FeatureShowcase.jsx
 import { useState, useEffect } from 'react';
 import { Shield, Zap, Clock, CheckCircle, Award, TrendingUp } from 'lucide-react';
