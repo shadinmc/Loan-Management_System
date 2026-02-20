@@ -39,5 +39,9 @@ describe("Disbursements", () => {
     await userEvent.click(disbursedLabel.closest(".stat-card"));
     expect(screen.queryByText("LN-1")).not.toBeInTheDocument();
     expect(screen.getByText("LN-2")).toBeInTheDocument();
+
+    await userEvent.click(disbursedLabel.closest(".stat-card"));
+    expect(screen.getByText("LN-1")).toBeInTheDocument();
+    expect(screen.getByText("LN-2")).toBeInTheDocument();
   });
 });
