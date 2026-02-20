@@ -9,6 +9,12 @@ import {
 
 const normalize = (v) => (v ?? "").toLowerCase();
 const formatInr = (value) => `INR ${Number(value || 0).toLocaleString()}`;
+const getProgressPercent = (loan) => {
+  const paid = Number(loan.paidEmis || 0);
+  const total = Number(loan.totalEmis || 0);
+  if (total <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round((paid / total) * 100)));
+};
 
 const LoanClosure = () => {
   const queryClient = useQueryClient();
@@ -56,6 +62,10 @@ const LoanClosure = () => {
   }, [loans, filter, search]);
 
   const count = (status) => loans.filter((loan) => loan.status === status).length;
+  const toggleFilter = (status) => {
+    setFilter((current) => (current === status ? "ALL" : status));
+    setPage(0);
+  };
 
   return (
     <>
@@ -67,25 +77,45 @@ const LoanClosure = () => {
       <div className="stats-grid">
         <div
           className={`stat-card info ${filter === "ACTIVE" ? "active" : ""}`}
-          onClick={() => {
-            setFilter("ACTIVE");
-            setPage(0);
+          onClick={() => toggleFilter("ACTIVE")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggleFilter("ACTIVE");
+            }
           }}
         >
-          <Lock />
-          <span>Active Loans</span>
+          <div className="stat-icon-wrap">
+            <Lock />
+          </div>
+          <div className="stat-content">
+            <span>Active Loans</span>
+            <small>Open loans currently in repayment cycle</small>
+          </div>
           <strong>{count("ACTIVE")}</strong>
         </div>
 
         <div
           className={`stat-card success ${filter === "CLOSED" ? "active" : ""}`}
-          onClick={() => {
-            setFilter("CLOSED");
-            setPage(0);
+          onClick={() => toggleFilter("CLOSED")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggleFilter("CLOSED");
+            }
           }}
         >
-          <CheckCircle />
-          <span>Closed Loans</span>
+          <div className="stat-icon-wrap">
+            <CheckCircle />
+          </div>
+          <div className="stat-content">
+            <span>Closed Loans</span>
+            <small>Loans completed and closed successfully</small>
+          </div>
           <strong>{count("CLOSED")}</strong>
         </div>
 
@@ -96,8 +126,13 @@ const LoanClosure = () => {
             setPage(0);
           }}
         >
-          <CheckCircle />
-          <span>All Loans</span>
+          <div className="stat-icon-wrap">
+            <CheckCircle />
+          </div>
+          <div className="stat-content">
+            <span>All Loans</span>
+            <small>Combined view across all closure statuses</small>
+          </div>
           <strong>{closurePage?.totalElements ?? loans.length}</strong>
         </div>
       </div>
@@ -114,6 +149,9 @@ const LoanClosure = () => {
             }}
           />
         </div>
+        <div className="results-chip">
+          Showing <strong>{filteredLoans.length}</strong> results
+        </div>
       </div>
 
       {closuresQuery.isLoading ? (
@@ -121,64 +159,80 @@ const LoanClosure = () => {
       ) : filteredLoans.length === 0 ? (
         <div className="empty">No loans available</div>
       ) : (
-        filteredLoans.map((loan) => (
-          <div className="closure-card" key={loan.loanId}>
-            <div className="closure-header">
-              <strong>{loan.loanId}</strong>
-              <span
-                className={`badge ${loan.status === "CLOSED" ? "success" : "warning"}`}
-              >
-                {loan.status}
-              </span>
-            </div>
+        <div className="closure-list">
+          {filteredLoans.map((loan) => {
+            const progressPercent = getProgressPercent(loan);
+            return (
+              <div className="closure-card" key={loan.loanId}>
+                <div className="closure-header">
+                  <div className="closure-identity">
+                    <strong>{loan.loanId}</strong>
+                    <p className={loan.status === "CLOSED" ? "closed-overline" : ""}>
+                      {loan.fullName || loan.userId}
+                    </p>
+                  </div>
+                  <span
+                    className={`badge ${loan.status === "CLOSED" ? "success" : "warning"}`}
+                  >
+                    {loan.status}
+                  </span>
+                </div>
 
-            <p className={loan.status === "CLOSED" ? "closed-overline" : ""}>
-              {loan.fullName || loan.userId}
-            </p>
+                <div className="closure-grid">
+                  <div>
+                    <label>Loan Amount</label>
+                    <strong>{formatInr(loan.loanAmount)}</strong>
+                  </div>
 
-            <div className="closure-grid">
-              <div>
-                <label>Loan Amount</label>
-                <strong>{formatInr(loan.loanAmount)}</strong>
-              </div>
+                  <div>
+                    <label>Total Paid</label>
+                    <strong className="success">{formatInr(loan.totalPaidAmount)}</strong>
+                  </div>
 
-              <div>
-                <label>Total Paid</label>
-                <strong className="success">{formatInr(loan.totalPaidAmount)}</strong>
-              </div>
+                  <div>
+                    <label>EMI Progress</label>
+                    <strong>{loan.paidEmis || 0}/{loan.totalEmis || 0}</strong>
+                  </div>
 
-              <div>
-                <label>EMI Progress</label>
-                <strong>{loan.paidEmis || 0}/{loan.totalEmis || 0}</strong>
-              </div>
+                  <div>
+                    <label>Remaining Months</label>
+                    <strong>{loan.remainingMonths || 0}</strong>
+                  </div>
+                </div>
 
-              <div>
-                <label>Remaining Months</label>
-                <strong>{loan.remainingMonths || 0}</strong>
-              </div>
-            </div>
+                <div className="repayment-progress">
+                  <div className="progress-meta">
+                    <span>Repayment Progress</span>
+                    <strong>{progressPercent}%</strong>
+                  </div>
+                  <div className="progress-track">
+                    <span style={{ width: `${progressPercent}%` }} />
+                  </div>
+                </div>
 
-            {loan.status === "ACTIVE" ? (
-              <div className="closure-actions">
-                <button
-                  type="button"
-                  className="close-loan-btn"
-                  disabled={!loan.closureEligible || closeMutation.isPending}
-                  onClick={() => closeMutation.mutate(loan.loanId)}
-                >
-                  {closeMutation.isPending ? "Closing..." : "Close Loan"}
-                </button>
-                {!loan.closureEligible && (
-                  <span className="closure-note">Repayment in progress</span>
+                {loan.status === "ACTIVE" ? (
+                  <div className="closure-actions">
+                    <button
+                      type="button"
+                      className="close-loan-btn"
+                      disabled={!loan.closureEligible || closeMutation.isPending}
+                      onClick={() => closeMutation.mutate(loan.loanId)}
+                    >
+                      {closeMutation.isPending ? "Closing..." : "Close Loan"}
+                    </button>
+                    {!loan.closureEligible && (
+                      <span className="closure-note">Repayment in progress</span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="closure-note closed-overline">
+                    Closed on: {loan.closedAt ? new Date(loan.closedAt).toLocaleString() : "-"}
+                  </div>
                 )}
               </div>
-            ) : (
-              <div className="closure-note closed-overline">
-                Closed on: {loan.closedAt ? new Date(loan.closedAt).toLocaleString() : "-"}
-              </div>
-            )}
-          </div>
-        ))
+            );
+          })}
+        </div>
       )}
 
       <div className="pagination-bar">

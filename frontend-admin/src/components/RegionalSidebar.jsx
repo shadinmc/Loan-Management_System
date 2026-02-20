@@ -4,7 +4,6 @@ import {
   FileText,
   DollarSign,
   Repeat,
-  CheckCircle,
   FileCheck
 } from "lucide-react";
 import "./Sidebar.css";
@@ -45,10 +44,6 @@ const RegionalSidebar = () => {
           KYC Verification
         </NavLink>
 
-        <NavLink to="/regional/loan-closure" className={getNavClass}>
-          <CheckCircle size={18} />
-          Loan Closure
-        </NavLink>
       </nav>
     </aside>
   );

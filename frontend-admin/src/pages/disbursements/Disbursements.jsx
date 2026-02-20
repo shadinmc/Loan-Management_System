@@ -69,6 +69,10 @@ const Disbursements = () => {
   });
 
   const count = (status) => disbursements.filter((d) => d.status === status).length;
+  const toggleStatusFilter = (status) => {
+    setStatusFilter((current) => (current === status ? "ALL" : status));
+    setPage(0);
+  };
 
   return (
     <>
@@ -80,10 +84,7 @@ const Disbursements = () => {
       <div className="stats-grid">
         <div
           className={`stat-card warning ${statusFilter === "DISBURSEMENT_PENDING" ? "active" : ""}`}
-          onClick={() => {
-            setStatusFilter("DISBURSEMENT_PENDING");
-            setPage(0);
-          }}
+          onClick={() => toggleStatusFilter("DISBURSEMENT_PENDING")}
         >
           <Clock />
           <span>Disbursement Pending</span>
@@ -92,10 +93,7 @@ const Disbursements = () => {
 
         <div
           className={`stat-card info ${statusFilter === "DISBURSED" ? "active" : ""}`}
-          onClick={() => {
-            setStatusFilter("DISBURSED");
-            setPage(0);
-          }}
+          onClick={() => toggleStatusFilter("DISBURSED")}
         >
           <RefreshCcw />
           <span>Disbursed</span>
@@ -104,10 +102,7 @@ const Disbursements = () => {
 
         <div
           className={`stat-card success ${statusFilter === "ACTIVE" ? "active" : ""}`}
-          onClick={() => {
-            setStatusFilter("ACTIVE");
-            setPage(0);
-          }}
+          onClick={() => toggleStatusFilter("ACTIVE")}
         >
           <CheckCircle />
           <span>Active</span>
@@ -116,10 +111,7 @@ const Disbursements = () => {
 
         <div
           className={`stat-card danger ${statusFilter === "CLOSED" ? "active" : ""}`}
-          onClick={() => {
-            setStatusFilter("CLOSED");
-            setPage(0);
-          }}
+          onClick={() => toggleStatusFilter("CLOSED")}
         >
           <XCircle />
           <span>Closed</span>
