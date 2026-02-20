@@ -2,7 +2,6 @@ import { Routes, Route } from "react-router-dom";
 import AdminLayout from "../layouts/AdminLayout";
 import AdminDashboard from "../pages/dashboard/AdminDashboard";
 import Repayments from "../pages/Repayments/Repayments";
-import LoanClosure from "../pages/LoanClosure/LoanClosure";
 import Disbursement from "../pages/disbursements/Disbursements";
 import LoanApplications from "../pages/LoanApplications/LoanApplications";
 import BranchKycVerification from "../pages/KycVerification/BranchKycVerification";
@@ -24,7 +23,6 @@ const AdminRoutes = () => {
          <Route path="disbursements" element={<Disbursement/>} />
          <Route path="repayments" element={<Repayments />} />
          <Route path="kyc" element={<BranchKycVerification />} />
-            <Route path="closure" element={<LoanClosure />} />
       </Route>
     </Routes>
   );
