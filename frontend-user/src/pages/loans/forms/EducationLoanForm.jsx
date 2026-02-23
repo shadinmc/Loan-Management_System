@@ -35,6 +35,8 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
     interestRate: 8.5
   };
 
+  const isDocumentResubmit = Boolean(resubmitLoanId);
+  const documentsStepId = 4;
   const [formData, setFormData] = useState({
     // Loan basic details
     loanAmount: '',
@@ -57,17 +59,18 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
   });
 
   const [errors, setErrors] = useState({});
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(isDocumentResubmit ? documentsStepId : 1);
   const [direction, setDirection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const steps = [
+  const allSteps = [
     { id: 1, title: 'Course', icon: GraduationCap, description: 'Course details' },
     { id: 2, title: 'Co-applicant', icon: Users, description: 'Guardian details' },
     { id: 3, title: 'Loan', icon: CreditCard, description: 'Amount & tenure' },
     { id: 4, title: 'Documents', icon: FileText, description: 'Upload files' },
     { id: 5, title: 'Review', icon: Eye, description: 'Review & submit' }
   ];
+  const steps = isDocumentResubmit ? allSteps.filter((step) => step.id >= documentsStepId) : allSteps;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -86,6 +89,11 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
 
   const validateStep = (step) => {
     const newErrors = {};
+
+    if (resubmitLoanId && (step === 1 || step === 2 || step === 3)) {
+      setErrors({});
+      return true;
+    }
 
     if (step === 1) {
       if (!validateRequired(formData.courseName)) {
@@ -148,6 +156,9 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
   };
 
   const handlePrev = () => {
+    if (isDocumentResubmit && currentStep <= documentsStepId) {
+      return;
+    }
     setDirection(-1);
     setCurrentStep(prev => prev - 1);
   };
@@ -164,7 +175,7 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
       fileToBase64(formData.proofOfAddress),
       fileToBase64(formData.collateralDocuments)
     ]);
-    const payload = {
+    const fullPayload = {
       loanType: 'EDUCATION',
       loanAmount: Number(formData.loanAmount),
       tenureMonths: Number(formData.tenureMonths),
@@ -181,11 +192,21 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
         collateralDocuments
       }
     };
+    const payload = resubmitLoanId
+      ? {
+          educationLoanDetails: {
+            proofOfAdmission,
+            proofOfIncome,
+            proofOfAddress,
+            collateralDocuments
+          }
+        }
+      : fullPayload;
 
     try {
       const res = resubmitLoanId
         ? await resubmitLoan(resubmitLoanId, payload)
-        : await createLoan(payload, { loanType: 'EDUCATION', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
+        : await createLoan(fullPayload, { loanType: 'EDUCATION', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
 
       if (onSubmit) {
         onSubmit({ response: res, payload });

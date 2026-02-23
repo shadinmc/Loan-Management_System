@@ -5,6 +5,7 @@ import com.lms.auth.security.SecurityUtils;
 import com.lms.common.idempotency.IdempotencyKeyService;
 import com.lms.common.idempotency.IdempotencyRecord;
 import com.lms.common.enums.LoanStatus;
+import com.lms.common.enums.LoanType;
 import com.lms.loan.dto.*;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.entity.embedded.*;
@@ -23,6 +24,7 @@ import java.time.ZoneId;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 @Service
 public class LoanService {
@@ -242,59 +244,54 @@ public class LoanService {
             throw new IllegalStateException("Loan not eligible for resubmission");
         }
 
+        validateDocumentsOnlyResubmission(loan.getLoanType(), updatedRequest);
+
+        boolean hasDocumentUpdate = false;
         switch (loan.getLoanType()) {
 
             case PERSONAL -> {
-                PersonalLoanDetails incoming =
-                        toPersonalEntity(updatedRequest.getPersonalLoanDetails());
-
-                if (incoming != null) {
-                    if (loan.getPersonalLoanDetails() == null) {
-                        loan.setPersonalLoanDetails(incoming);
-                    } else {
-                        mergeNonNullFields(incoming, loan.getPersonalLoanDetails());
-                    }
+                if (loan.getPersonalLoanDetails() == null) {
+                    loan.setPersonalLoanDetails(new PersonalLoanDetails());
                 }
+                hasDocumentUpdate = applyPersonalDocumentUpdates(
+                        updatedRequest.getPersonalLoanDetails(),
+                        loan.getPersonalLoanDetails()
+                );
             }
 
             case EDUCATION -> {
-                EducationLoanDetails incoming =
-                        toEducationEntity(updatedRequest.getEducationLoanDetails());
-
-                if (incoming != null) {
-                    if (loan.getEducationLoanDetails() == null) {
-                        loan.setEducationLoanDetails(incoming);
-                    } else {
-                        mergeNonNullFields(incoming, loan.getEducationLoanDetails());
-                    }
+                if (loan.getEducationLoanDetails() == null) {
+                    loan.setEducationLoanDetails(new EducationLoanDetails());
                 }
+                hasDocumentUpdate = applyEducationDocumentUpdates(
+                        updatedRequest.getEducationLoanDetails(),
+                        loan.getEducationLoanDetails()
+                );
             }
 
             case BUSINESS -> {
-                BusinessLoanDetails incoming =
-                        toBusinessEntity(updatedRequest.getBusinessLoanDetails());
-
-                if (incoming != null) {
-                    if (loan.getBusinessLoanDetails() == null) {
-                        loan.setBusinessLoanDetails(incoming);
-                    } else {
-                        mergeNonNullFields(incoming, loan.getBusinessLoanDetails());
-                    }
+                if (loan.getBusinessLoanDetails() == null) {
+                    loan.setBusinessLoanDetails(new BusinessLoanDetails());
                 }
+                hasDocumentUpdate = applyBusinessDocumentUpdates(
+                        updatedRequest.getBusinessLoanDetails(),
+                        loan.getBusinessLoanDetails()
+                );
             }
 
             case VEHICLE -> {
-                VehicleLoanDetails incoming =
-                        toVehicleEntity(updatedRequest.getVehicleLoanDetails());
-
-                if (incoming != null) {
-                    if (loan.getVehicleLoanDetails() == null) {
-                        loan.setVehicleLoanDetails(incoming);
-                    } else {
-                        mergeNonNullFields(incoming, loan.getVehicleLoanDetails());
-                    }
+                if (loan.getVehicleLoanDetails() == null) {
+                    loan.setVehicleLoanDetails(new VehicleLoanDetails());
                 }
+                hasDocumentUpdate = applyVehicleDocumentUpdates(
+                        updatedRequest.getVehicleLoanDetails(),
+                        loan.getVehicleLoanDetails()
+                );
             }
+        }
+
+        if (!   hasDocumentUpdate) {
+            throw new IllegalArgumentException("At least one document must be provided for resubmission");
         }
 
         loan.setStatus(LoanStatus.APPLIED);
@@ -404,6 +401,141 @@ public class LoanService {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    private void validateDocumentsOnlyResubmission(LoanType loanType, LoanApplicationRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Resubmission payload is required");
+        }
+
+        if (request.getApplicantDetails() != null
+                || request.getLoanType() != null
+                || request.getLoanAmount() != null
+                || request.getTenureMonths() != null) {
+            throw new IllegalArgumentException("Only document fields can be resubmitted for clarification");
+        }
+
+        switch (loanType) {
+            case PERSONAL -> {
+                if (request.getEducationLoanDetails() != null
+                        || request.getBusinessLoanDetails() != null
+                        || request.getVehicleLoanDetails() != null) {
+                    throw new IllegalArgumentException("Only personal loan documents can be resubmitted");
+                }
+
+                PersonalLoanDetailsDto dto = request.getPersonalLoanDetails();
+                if (dto == null) {
+                    throw new IllegalArgumentException("Personal loan document details are required");
+                }
+                if (dto.getEmploymentType() != null
+                        || dto.getMonthlyIncome() != null
+                        || dto.getEmployerName() != null) {
+                    throw new IllegalArgumentException("Only document fields can be resubmitted for personal loan");
+                }
+            }
+            case EDUCATION -> {
+                if (request.getPersonalLoanDetails() != null
+                        || request.getBusinessLoanDetails() != null
+                        || request.getVehicleLoanDetails() != null) {
+                    throw new IllegalArgumentException("Only education loan documents can be resubmitted");
+                }
+
+                EducationLoanDetailsDto dto = request.getEducationLoanDetails();
+                if (dto == null) {
+                    throw new IllegalArgumentException("Education loan document details are required");
+                }
+                if (dto.getCourseName() != null
+                        || dto.getCourseDurationMonths() != null
+                        || dto.getCoApplicantName() != null
+                        || dto.getCoApplicantIncome() != null
+                        || dto.getRelationship() != null) {
+                    throw new IllegalArgumentException("Only document fields can be resubmitted for education loan");
+                }
+            }
+            case BUSINESS -> {
+                if (request.getPersonalLoanDetails() != null
+                        || request.getEducationLoanDetails() != null
+                        || request.getVehicleLoanDetails() != null) {
+                    throw new IllegalArgumentException("Only business loan documents can be resubmitted");
+                }
+
+                BusinessLoanDetailsDto dto = request.getBusinessLoanDetails();
+                if (dto == null) {
+                    throw new IllegalArgumentException("Business loan document details are required");
+                }
+                if (dto.getBusinessName() != null
+                        || dto.getBusinessType() != null
+                        || dto.getGstAnnualTurnover() != null
+                        || dto.getBusinessVintageYears() != null) {
+                    throw new IllegalArgumentException("Only document fields can be resubmitted for business loan");
+                }
+            }
+            case VEHICLE -> {
+                if (request.getPersonalLoanDetails() != null
+                        || request.getEducationLoanDetails() != null
+                        || request.getBusinessLoanDetails() != null) {
+                    throw new IllegalArgumentException("Only vehicle loan documents can be resubmitted");
+                }
+
+                VehicleLoanDetailsDto dto = request.getVehicleLoanDetails();
+                if (dto == null) {
+                    throw new IllegalArgumentException("Vehicle loan document details are required");
+                }
+                if (dto.getVehicleType() != null
+                        || dto.getVehicleBrand() != null
+                        || dto.getVehicleModel() != null
+                        || dto.getDownPaymentAmount() != null
+                        || dto.getDealerName() != null) {
+                    throw new IllegalArgumentException("Only document fields can be resubmitted for vehicle loan");
+                }
+            }
+            default -> throw new IllegalArgumentException("Unsupported loan type: " + loanType);
+        }
+    }
+
+    private boolean applyPersonalDocumentUpdates(PersonalLoanDetailsDto dto, PersonalLoanDetails target) {
+        boolean updated = false;
+        updated |= updateDocumentField(dto.getProofOfIdentity(), target::setProofOfIdentity);
+        updated |= updateDocumentField(dto.getProofOfIncome(), target::setProofOfIncome);
+        updated |= updateDocumentField(dto.getProofOfAddress(), target::setProofOfAddress);
+        return updated;
+    }
+
+    private boolean applyEducationDocumentUpdates(EducationLoanDetailsDto dto, EducationLoanDetails target) {
+        boolean updated = false;
+        updated |= updateDocumentField(dto.getProofOfAdmission(), target::setProofOfAdmission);
+        updated |= updateDocumentField(dto.getProofOfIncome(), target::setProofOfIncome);
+        updated |= updateDocumentField(dto.getProofOfAddress(), target::setProofOfAddress);
+        updated |= updateDocumentField(dto.getCollateralDocuments(), target::setCollateralDocuments);
+        return updated;
+    }
+
+    private boolean applyBusinessDocumentUpdates(BusinessLoanDetailsDto dto, BusinessLoanDetails target) {
+        boolean updated = false;
+        updated |= updateDocumentField(dto.getProofOfBusiness(), target::setProofOfBusiness);
+        updated |= updateDocumentField(dto.getProofOfIncome(), target::setProofOfIncome);
+        return updated;
+    }
+
+    private boolean applyVehicleDocumentUpdates(VehicleLoanDetailsDto dto, VehicleLoanDetails target) {
+        boolean updated = false;
+        updated |= updateDocumentField(dto.getProofOfIdentity(), target::setProofOfIdentity);
+        updated |= updateDocumentField(dto.getProofOfIncome(), target::setProofOfIncome);
+        updated |= updateDocumentField(dto.getInsuranceProof(), target::setInsuranceProof);
+        updated |= updateDocumentField(dto.getDownPaymentProof(), target::setDownPaymentProof);
+        return updated;
+    }
+
+    private boolean updateDocumentField(String encoded, Consumer<Binary> setter) {
+        if (!hasText(encoded)) {
+            return false;
+        }
+        setter.accept(decodeBase64Document(encoded));
+        return true;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
 
