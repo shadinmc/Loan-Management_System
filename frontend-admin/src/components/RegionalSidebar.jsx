@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   FileText,
-  DollarSign,
+  IndianRupee,
   Repeat,
   FileCheck
 } from "lucide-react";
@@ -30,7 +30,7 @@ const RegionalSidebar = () => {
         </NavLink>
 
         <NavLink to="/regional/disbursements" className={getNavClass}>
-          <DollarSign size={18} />
+          <IndianRupee size={18} />
           Disbursements
         </NavLink>
 
