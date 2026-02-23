@@ -395,3 +395,16 @@ textarea::placeholder {
   border: 0;
 }
 
+
+/* Hide browser-native password reveal/clear controls to avoid duplicate eye icons */
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none;
+}
+
+input[type='password']::-webkit-credentials-auto-fill-button,
+input[type='password']::-webkit-textfield-decoration-container {
+  visibility: hidden;
+  pointer-events: none;
+}
+

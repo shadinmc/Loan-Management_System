@@ -32,7 +32,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const isActive = (path) => location.pathname === path;
 
   const sidebarVariants = {
-    closed: { x: '100%', transition: { type: 'spring', stiffness: 300, damping: 30 } },
+    closed: { x: '-100%', transition: { type: 'spring', stiffness: 300, damping: 30 } },
     open: { x: 0, transition: { type: 'spring', stiffness: 300, damping: 30 } }
   };
 
@@ -97,8 +97,9 @@ export default function Sidebar({ isOpen, onClose }) {
       ]
     : [
         { icon: Home, label: 'Home', path: '/', index: 0 },
-        { icon: User, label: 'Login', path: '/login', index: 1 },
-        { icon: FileText, label: 'Sign Up', path: '/signup', index: 2 }
+        { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', index: 1 },
+        { icon: User, label: 'Login', path: '/login', index: 2 },
+        { icon: FileText, label: 'Sign Up', path: '/signup', index: 3 }
       ];
 
 
@@ -292,12 +293,12 @@ export default function Sidebar({ isOpen, onClose }) {
         .sidebar {
           position: fixed;
           top: 0;
-          right: 0;
+          left: 0;
           width: 340px;
           max-width: 90vw;
           height: 100vh;
           background: var(--card-bg);
-          box-shadow: -10px 0 50px rgba(16, 42, 77, 0.2);
+          box-shadow: 10px 0 50px rgba(16, 42, 77, 0.2);
           z-index: 500;
           display: flex;
           flex-direction: column;
