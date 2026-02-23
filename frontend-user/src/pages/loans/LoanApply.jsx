@@ -6,6 +6,7 @@ import { ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
 import { LOAN_TYPES, LOAN_CONFIG } from '../../utils/constants';
 import Button from '../../components/Button';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { getMyLoans } from '../../api/loanApi';
 
 const PersonalLoanForm = lazy(() => import('./forms/PersonalLoanForm'));
 const EducationLoanForm = lazy(() => import('./forms/EducationLoanForm'));
@@ -18,16 +19,53 @@ export default function LoanApply() {
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const resubmitLoanId = location.state?.resubmitLoanId || null;
-  const isResubmit = Boolean(resubmitLoanId);
+  const [fallbackResubmitLoanId, setFallbackResubmitLoanId] = useState(null);
 
   const normalizedType = loanType?.toUpperCase() || 'PERSONAL';
   const config = LOAN_CONFIG[normalizedType] || LOAN_CONFIG[LOAN_TYPES.PERSONAL];
   const isValidType = Object.values(LOAN_TYPES).includes(normalizedType);
+  const stateResubmitLoanId = location.state?.resubmitLoanId || null;
+  const resubmitLoanId = stateResubmitLoanId || fallbackResubmitLoanId;
+  const isResubmit = Boolean(resubmitLoanId);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [loanType]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const resolveResubmitLoanId = async () => {
+      if (stateResubmitLoanId) {
+        setFallbackResubmitLoanId(null);
+        return;
+      }
+
+      try {
+        const loans = await getMyLoans();
+        const matchingLoan = loans
+          .filter((loan) =>
+            String(loan?.loanType || '').toUpperCase() === normalizedType &&
+            String(loan?.status || '').toUpperCase() === 'CLARIFICATION_REQUIRED'
+          )
+          .sort((a, b) => new Date(b?.appliedDate || 0) - new Date(a?.appliedDate || 0))[0];
+
+        if (mounted) {
+          setFallbackResubmitLoanId(matchingLoan?.loanId || null);
+        }
+      } catch (error) {
+        if (mounted) {
+          setFallbackResubmitLoanId(null);
+        }
+      }
+    };
+
+    resolveResubmitLoanId();
+
+    return () => {
+      mounted = false;
+    };
+  }, [normalizedType, stateResubmitLoanId]);
 
   const getLoanId = (res) => (
     res?.loanId ||
@@ -142,7 +180,7 @@ export default function LoanApply() {
             <h1>{isResubmit ? `Resubmit ${config?.name || 'Loan'} Application` : `Apply for ${config?.name || 'Loan'}`}</h1>
             <p>
               {isResubmit
-                ? `Update details and resubmit the same application ID: ${resubmitLoanId}`
+                ? `Resubmit required documents for the same application ID: ${resubmitLoanId}`
                 : 'Complete the form below to submit your application'}
             </p>
           </div>

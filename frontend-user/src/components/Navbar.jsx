@@ -39,41 +39,63 @@ export default function Navbar({ onMenuClick }) {
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}
     >
       <div className="navbar-container">
-        {/* Logo with Lottie hover effect */}
-        <Link
-          to="/"
-          className="navbar-brand"
-          aria-label="LoanWise - Go to homepage"
-        >
-          <motion.div
-            className="logo-icon"
-            aria-hidden="true"
+        <div className="navbar-left">
+          <motion.button
+            className="menu-button"
+            onClick={onMenuClick}
+            aria-label="Open navigation menu"
+            whileHover={{ scale: 1.05, borderColor: '#2DBE60' }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Menu size={20} />
+          </motion.button>
+
+          <motion.button
+            className="mobile-menu-button"
+            onClick={onMenuClick}
+            aria-label="Open mobile menu"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <svg
-              viewBox="0 0 64 64"
-              width="24"
-              height="24"
-              role="img"
-              aria-label="LoanWise logo mark"
-            >
-              <rect x="10" y="12" width="44" height="40" rx="10" fill="none" stroke="white" strokeWidth="3" />
-              <path d="M18 26h22a4 4 0 1 1 0 8H18z" fill="white" />
-              <circle cx="43" cy="30" r="2.5" fill="#16a34a" />
-              <path d="M20 42h24" stroke="white" strokeWidth="3" strokeLinecap="round" />
-              <path d="M20 18l9-6" stroke="white" strokeWidth="3" strokeLinecap="round" />
-            </svg>
-          </motion.div>
-          <motion.span
-            className="logo-text"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
+            <Menu size={24} />
+          </motion.button>
+
+          {/* Logo with Lottie hover effect */}
+          <Link
+            to="/"
+            className="navbar-brand"
+            aria-label="LoanWise - Go to homepage"
           >
-            LoanWise
-          </motion.span>
-        </Link>
+            <motion.div
+              className="logo-icon"
+              aria-hidden="true"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg
+                viewBox="0 0 64 64"
+                width="24"
+                height="24"
+                role="img"
+                aria-label="LoanWise logo mark"
+              >
+                <rect x="10" y="12" width="44" height="40" rx="10" fill="none" stroke="white" strokeWidth="3" />
+                <path d="M18 26h22a4 4 0 1 1 0 8H18z" fill="white" />
+                <circle cx="43" cy="30" r="2.5" fill="#16a34a" />
+                <path d="M20 42h24" stroke="white" strokeWidth="3" strokeLinecap="round" />
+                <path d="M20 18l9-6" stroke="white" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+            </motion.div>
+            <motion.span
+              className="logo-text"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              LoanWise
+            </motion.span>
+          </Link>
+        </div>
 
         {/* Navigation Links */}
         <motion.div
@@ -237,27 +259,6 @@ export default function Navbar({ onMenuClick }) {
             </motion.button>
           )}
 
-          {/* Menu Button with Lottie */}
-          <motion.button
-            className="menu-button"
-            onClick={onMenuClick}
-            aria-label="Open navigation menu"
-            whileHover={{ scale: 1.05, borderColor: '#2DBE60' }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Menu size={20} />
-          </motion.button>
-
-          {/* Mobile Menu */}
-          <motion.button
-            className="mobile-menu-button"
-            onClick={onMenuClick}
-            aria-label="Open mobile menu"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Menu size={24} />
-          </motion.button>
         </motion.div>
       </div><style>{`
         .navbar {
@@ -274,13 +275,20 @@ export default function Navbar({ onMenuClick }) {
         }
 
         .navbar-container {
-          max-width: 1200px;
-          margin: 0 auto;
+          width: 100%;
+          max-width: none;
+          margin: 0;
           height: 100%;
           padding: 0 24px;
           display: flex;
           align-items: center;
           justify-content: space-between;
+        }
+
+        .navbar-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
 
         .navbar-brand {
@@ -501,11 +509,6 @@ export default function Navbar({ onMenuClick }) {
             width: 40px;
             height: 40px;
           }
-        }
-
-        /* Align nav items to the right for a cleaner, professional layout */
-        .navbar-container {
-          justify-content: flex-start;
         }
 
         .navbar-links {

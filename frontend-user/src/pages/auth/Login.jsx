@@ -69,7 +69,15 @@ export default function Login() {
       console.log('Login successful:', response);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
+      if (err.response?.status === 401) {
+        setError('Invalid credentials');
+      } else {
+        setError(
+          err.response?.data?.message ||
+          err.message ||
+          'Login failed. Please try again.'
+        );
+      }
     } finally {
       setLoading(false);
     }
