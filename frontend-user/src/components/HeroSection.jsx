@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -16,6 +16,7 @@ import LottieAnimation from './LottieAnimation';
 export default function HeroSection() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   const highlights = [
     { icon: Sparkles, text: 'Instant Eligibility Check', animation: 'sparkle' },
@@ -36,15 +37,29 @@ export default function HeroSection() {
     }
 
     if (location.state?.scrollToCalculator) {
-      setTimeout(() => {
-        const calculator = document.getElementById('emi-calculator');
-        if (calculator) {
-          calculator.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
+      setIsCalculatorOpen(true);
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
+  useEffect(() => {
+    document.body.style.overflow = isCalculatorOpen ? 'hidden' : '';
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsCalculatorOpen(false);
+      }
+    };
+
+    if (isCalculatorOpen) {
+      window.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [isCalculatorOpen]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -229,10 +244,7 @@ export default function HeroSection() {
         <motion.button
           type="button"
           className="hero-emi-fab"
-          onClick={() => {
-            const calculator = document.getElementById('emi-calculator');
-            calculator?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }}
+          onClick={() => setIsCalculatorOpen(true)}
           whileTap={{ scale: 0.96 }}
           aria-label="Open EMI calculator"
         >
@@ -268,37 +280,48 @@ export default function HeroSection() {
       </div>
 
 
-      {/* EMI Calculator Section */}
-      <div id="emi-calculator" className="calculator-section">
-        <div className="calculator-container">
-          <motion.div
-            className="section-header"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <span className="section-badge calculator-badge">
-              <LottieAnimation
-                src="https://assets8.lottiefiles.com/packages/lf20_4fuy5t7m.json"
-                style={{ width: 18, height: 18 }}
-              />
-              Smart Tool
-            </span>
-            <h2>EMI Calculator</h2>
-            <p>Plan your loan with our intelligent EMI calculator. Get instant estimates for all loan types.</p>
-          </motion.div>
+      <div id="emi-calculator" />
 
+      <AnimatePresence>
+        {isCalculatorOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            className="emi-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsCalculatorOpen(false)}
           >
-            <EMICalculator />
+            <motion.div
+              className="emi-modal-sheet"
+              initial={{ opacity: 0, y: 30, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.97 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label="EMI calculator"
+            >
+              <div className="emi-modal-header">
+                <div className="emi-modal-title">
+                  <Calculator size={18} />
+                  <span>EMI Calculator</span>
+                </div>
+                <button
+                  type="button"
+                  className="emi-modal-close"
+                  onClick={() => setIsCalculatorOpen(false)}
+                  aria-label="Close EMI calculator"
+                >
+                  x</button>
+              </div>
+              <div className="emi-modal-body">
+                <EMICalculator isModal onClose={() => setIsCalculatorOpen(false)} />
+              </div>
+            </motion.div>
           </motion.div>
-        </div>
-      </div><style>{`
+        )}
+      </AnimatePresence><style>{`
         .hero-section {
           position: relative;
           overflow: hidden;
@@ -774,19 +797,72 @@ export default function HeroSection() {
           filter: brightness(1.1);
         }
 
-        /* Calculator Section */
-        .calculator-section {
-          background: var(--bg-primary);
-          padding: 100px 0 120px;
-          position: relative;
+        .emi-modal-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          background: rgba(11, 30, 60, 0.58);
+          backdrop-filter: blur(5px);
         }
 
-        .calculator-container {
-          max-width: 1000px;
-          margin: 0 auto;
-          padding: 0 24px;
-          position: relative;
-          z-index: 1;
+        .emi-modal-sheet {
+          width: min(100%, 980px);
+          max-height: calc(100vh - 48px);
+          overflow: hidden;
+          border-radius: 22px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: var(--card-bg);
+          box-shadow: 0 22px 64px rgba(0, 0, 0, 0.35);
+        }
+
+        .emi-modal-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 14px 16px;
+          border-bottom: 1px solid var(--border-color);
+          background: var(--bg-secondary);
+        }
+
+        .emi-modal-title {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+
+        .emi-modal-close {
+          width: 34px;
+          height: 34px;
+          border: 1px solid var(--border-color);
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.2rem;
+          line-height: 1;
+          color: var(--text-secondary);
+          cursor: pointer;
+          background: var(--card-bg);
+          transition: all 0.2s ease;
+        }
+
+        .emi-modal-close:hover {
+          color: var(--text-primary);
+          border-color: #2DBE60;
+        }
+
+        .emi-modal-body {
+          max-height: calc(100vh - 120px);
+          overflow: auto;
+          padding: 12px;
         }
 
         /* Purple button variant */
@@ -918,11 +994,22 @@ export default function HeroSection() {
             font-size: 2rem;
           }
 
-          .calculator-section {
-            padding: 60px 0 80px;
+          .emi-modal-overlay {
+            padding: 12px;
+          }
+
+          .emi-modal-sheet {
+            max-height: calc(100vh - 24px);
+            border-radius: 16px;
+          }
+
+          .emi-modal-body {
+            max-height: calc(100vh - 96px);
+            padding: 8px;
           }
         }
       `}</style>
     </section>
   );
 }
+
