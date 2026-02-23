@@ -50,7 +50,7 @@ export default function WalletPage() {
   } = useWallet();
   const [showAddMoney, setShowAddMoney] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
-  const [showBalance, setShowBalance] = useState(true);
+  const [showBalance, setShowBalance] = useState(false);
   const [prefillAmount, setPrefillAmount] = useState('');
   const [prefillWithdrawAmount, setPrefillWithdrawAmount] = useState('');
   const [withdrawMeta, setWithdrawMeta] = useState({ loanId: null, purpose: null });

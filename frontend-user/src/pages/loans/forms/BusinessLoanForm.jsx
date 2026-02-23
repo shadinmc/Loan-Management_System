@@ -34,6 +34,8 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
     interestRate: 11.5
   };
 
+  const isDocumentResubmit = Boolean(resubmitLoanId);
+  const documentsStepId = 4;
   const [formData, setFormData] = useState({
     businessName: '',
     businessType: '',
@@ -47,19 +49,20 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
   });
 
   const [errors, setErrors] = useState({});
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(isDocumentResubmit ? documentsStepId : 1);
   const [direction, setDirection] = useState(1);
   const [submissionResult, setSubmissionResult] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const steps = [
+  const allSteps = [
     { id: 1, title: 'Business', icon: Building2, description: 'Company details' },
     { id: 2, title: 'Financial', icon: TrendingUp, description: 'Revenue info' },
     { id: 3, title: 'Loan', icon: CreditCard, description: 'Amount & tenure' },
     { id: 4, title: 'Documents', icon: FileText, description: 'Upload files' },
     { id: 5, title: 'Review', icon: Eye, description: 'Review & submit' }
   ];
+  const steps = isDocumentResubmit ? allSteps.filter((step) => step.id >= documentsStepId) : allSteps;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -74,6 +77,11 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
 
   const validateStep = (step) => {
     const newErrors = {};
+
+    if (resubmitLoanId && (step === 1 || step === 2 || step === 3)) {
+      setErrors({});
+      return true;
+    }
 
     if (step === 1) {
       if (!validateRequired(formData.businessName)) newErrors.businessName = 'Business name is required';
@@ -118,6 +126,9 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
   };
 
   const handlePrev = () => {
+    if (isDocumentResubmit && currentStep <= documentsStepId) {
+      return;
+    }
     setDirection(-1);
     setCurrentStep(prev => prev - 1);
   };
@@ -129,7 +140,7 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
       fileToBase64(formData.proofOfIncome)
     ]);
 
-    const payload = {
+    const fullPayload = {
       loanType: 'BUSINESS',
       loanAmount: Number(formData.loanAmount),
       tenureMonths: Number(formData.tenureMonths),
@@ -145,11 +156,19 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
         proofOfIncome
       }
     };
+    const payload = resubmitLoanId
+      ? {
+          businessLoanDetails: {
+            proofOfBusiness,
+            proofOfIncome
+          }
+        }
+      : fullPayload;
 
     try {
       const res = resubmitLoanId
         ? await resubmitLoan(resubmitLoanId, payload)
-        : await createLoan(payload, { loanType: 'BUSINESS', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
+        : await createLoan(fullPayload, { loanType: 'BUSINESS', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
       setSubmissionResult(res);
       setIsSuccess(true);
       if (onSubmit) onSubmit({ response: res, payload });
