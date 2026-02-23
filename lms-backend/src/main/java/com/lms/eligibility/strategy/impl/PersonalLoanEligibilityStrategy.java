@@ -75,7 +75,7 @@ public class PersonalLoanEligibilityStrategy implements LoanEligibilityStrategy 
             passedRules.add("Loan amount within eligibility");
             score += 20;
         } else {
-            failedRules.add("Requested amount exceeds maximum eligible amount");
+            failedRules.add("Requested amount exceeds maximum eligible amount(24 times monthly income)");
         }
 
         boolean isEligible = failedRules.isEmpty();
