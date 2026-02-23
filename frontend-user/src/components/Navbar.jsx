@@ -1,12 +1,17 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, Wallet, Banknote, Calculator } from 'lucide-react';
+import { Menu, Wallet, Banknote, Calculator, User, Sun, Moon, LogOut, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../hooks/useTheme';
 
 export default function Navbar({ onMenuClick }) {
-  const { user, isLoggedIn } = useAuth();
+  const { user, isLoggedIn, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
 
   const isActive = (path) => location.pathname === path;
 
@@ -28,6 +33,54 @@ export default function Navbar({ onMenuClick }) {
       state: { scrollToCalculator: true, calculatorReturnTo: returnTo }
     });
   };
+
+  const closeUserMenu = () => setIsUserMenuOpen(false);
+
+  const toggleUserMenu = () => setIsUserMenuOpen((prev) => !prev);
+
+  const handleProfileOpen = () => {
+    closeUserMenu();
+    navigate('/profile');
+  };
+
+  const handleThemeToggle = () => {
+    toggleTheme();
+    closeUserMenu();
+  };
+
+  const handleLogout = () => {
+    logout();
+    closeUserMenu();
+    navigate('/');
+  };
+
+  useEffect(() => {
+    if (!isUserMenuOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isUserMenuOpen]);
+
+  useEffect(() => {
+    setIsUserMenuOpen(false);
+  }, [location.pathname]);
 
   return (
     <motion.nav
@@ -237,26 +290,69 @@ export default function Navbar({ onMenuClick }) {
               </motion.button>
             </motion.div>
           ) : (
-            <motion.button
-              type="button"
-              className="user-section user-trigger"
+            <motion.div
+              className="user-menu-wrap"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2, type: 'spring' }}
-              onClick={() => navigate('/profile')}
-              aria-label="Open user profile details"
+              ref={userMenuRef}
             >
-              <motion.div
-                className="user-avatar"
-                aria-hidden="true"
-                whileHover={{ scale: 1.1, rotate: 5 }}
+              <motion.button
+                type="button"
+                className="user-section user-trigger"
+                onClick={toggleUserMenu}
+                aria-label="Open user menu"
+                aria-haspopup="menu"
+                aria-expanded={isUserMenuOpen}
               >
-                {user?.username?.charAt(0).toUpperCase() || 'U'}
-              </motion.div>
-              <span className="welcome-text">
-                Hi, <strong>{user?.username || 'User'}</strong>
-              </span>
-            </motion.button>
+                <motion.div
+                  className="user-avatar"
+                  aria-hidden="true"
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                >
+                  {user?.username?.charAt(0).toUpperCase() || 'U'}
+                </motion.div>
+                <span className="welcome-text">
+                  Hi, <strong>{user?.username || 'User'}</strong>
+                </span>
+                <ChevronDown size={14} className={`user-menu-caret ${isUserMenuOpen ? 'open' : ''}`} />
+              </motion.button>
+
+              {isUserMenuOpen && (
+                <div className="user-menu" role="menu" aria-label="User actions">
+                  <button
+                    type="button"
+                    className="user-menu-item"
+                    role="menuitem"
+                    onClick={handleProfileOpen}
+                  >
+                    <User size={16} />
+                    <span>Profile</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="user-menu-item"
+                    role="menuitem"
+                    onClick={handleThemeToggle}
+                    aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+                  >
+                    {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                    <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="user-menu-item danger"
+                    role="menuitem"
+                    onClick={handleLogout}
+                  >
+                    <LogOut size={16} />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              )}
+            </motion.div>
           )}
 
         </motion.div>
@@ -422,6 +518,10 @@ export default function Navbar({ onMenuClick }) {
           gap: 12px;
         }
 
+        .user-menu-wrap {
+          position: relative;
+        }
+
         .user-trigger {
           background: transparent;
           border: none;
@@ -451,6 +551,58 @@ export default function Navbar({ onMenuClick }) {
         .welcome-text strong {
           color: var(--text-primary);
           font-weight: 600;
+        }
+
+        .user-menu-caret {
+          color: var(--text-muted);
+          transition: transform 0.2s ease;
+        }
+
+        .user-menu-caret.open {
+          transform: rotate(180deg);
+        }
+
+        .user-menu {
+          position: absolute;
+          right: 0;
+          top: calc(100% + 10px);
+          min-width: 190px;
+          display: grid;
+          gap: 4px;
+          padding: 8px;
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          background: var(--card-bg);
+          box-shadow: 0 10px 30px rgba(16, 42, 77, 0.16);
+          z-index: 350;
+        }
+
+        .user-menu-item {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          border: none;
+          background: transparent;
+          color: var(--text-primary);
+          padding: 10px 12px;
+          border-radius: 10px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          font-weight: 500;
+          text-align: left;
+        }
+
+        .user-menu-item:hover {
+          background: var(--bg-secondary);
+        }
+
+        .user-menu-item.danger {
+          color: #DC2626;
+        }
+
+        .user-menu-item.danger:hover {
+          background: rgba(220, 38, 38, 0.1);
         }
 
         .menu-button {

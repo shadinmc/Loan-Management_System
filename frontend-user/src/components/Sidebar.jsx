@@ -1,28 +1,17 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useKYC } from '../context/KYCContext';
-import { useTheme } from '../hooks/useTheme';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X, User, LogOut, Home, LayoutDashboard,
-  FileText, Clock, Sun, Moon,
-  Shield, CheckCircle, AlertCircle, Wallet, Banknote
+  X, User, Home, LayoutDashboard,
+  FileText, Clock, Shield, CheckCircle, AlertCircle, Wallet, Banknote
 } from 'lucide-react';
-import LottieAnimation from './LottieAnimation';
-import { fallbackAnimations } from '../assets/lottie/animations';
 
 export default function Sidebar({ isOpen, onClose }) {
-  const { user, isLoggedIn, logout } = useAuth();
+  const { isLoggedIn } = useAuth();
   const { kycStatus, isKYCComplete } = useKYC();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const handleLogout = () => {
-    logout();
-    onClose();
-    navigate('/');
-  };
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -91,9 +80,7 @@ export default function Sidebar({ isOpen, onClose }) {
         { icon: Banknote, label: 'EMI Repayment', path: '/repayments', index: 3 },
         { icon: Shield, label: 'KYC Verification', path: '/kyc', index: 4, isKYC: true },
         { icon: FileText, label: 'Apply for Loan', path: '/loan/apply', index: 5 },
-        { icon: Clock, label: 'Loan Status', path: '/loan/status', index: 6 },
-        { type: 'divider', index: 7 },
-        { icon: LogOut, label: 'Logout', action: handleLogout, isLogout: true, index: 8 }
+        { icon: Clock, label: 'Loan Status', path: '/loan/status', index: 6 }
       ]
     : [
         { icon: Home, label: 'Home', path: '/', index: 0 },
@@ -146,86 +133,6 @@ export default function Sidebar({ isOpen, onClose }) {
           </motion.button>
         </div>
 
-        {isLoggedIn && (
-          <motion.div
-            className="user-profile"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            onClick={() => handleNavigation('/profile')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleNavigation('/profile');
-              }
-            }}
-          >
-            <motion.div
-              className="avatar"
-              whileHover={{ scale: 1.1, rotate: 5 }}
-            >
-              {user?.username?.charAt(0).toUpperCase() || 'U'}
-            </motion.div>
-            <div className="user-info">
-              <h4>{user?.username || 'User'}</h4>
-              <p>{user?.email || 'user@example.com'}</p>
-            </div>
-            <div className="user-lottie">
-              <LottieAnimation
-                fallback={fallbackAnimations.loading}
-                style={{ width: 24, height: 24 }}
-              />
-            </div>
-          </motion.div>
-        )}
-
-        {/* Theme Toggle with Lottie */}
-        <motion.div
-          className="theme-toggle-section"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-        >
-          <span className="theme-label">Appearance</span>
-          <motion.button
-            className="theme-toggle-btn"
-            onClick={toggleTheme}
-            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            whileTap={{ scale: 0.98 }}
-          >
-            <motion.span
-              className={`toggle-option ${theme === 'light' ? 'active' : ''}`}
-              whileHover={{ scale: theme !== 'light' ? 1.02 : 1 }}
-            >
-              {theme === 'light' ? (
-                <LottieAnimation
-                  fallback={fallbackAnimations.loading}
-                  style={{ width: 18, height: 18 }}
-                />
-              ) : (
-                <Sun size={16} />
-              )}
-              Light
-            </motion.span>
-            <motion.span
-              className={`toggle-option ${theme === 'dark' ? 'active' : ''}`}
-              whileHover={{ scale: theme !== 'dark' ? 1.02 : 1 }}
-            >
-              {theme === 'dark' ? (
-                <LottieAnimation
-                  fallback={fallbackAnimations.loading}
-                  style={{ width: 18, height: 18 }}
-                />
-              ) : (
-                <Moon size={16} />
-              )}
-              Dark
-            </motion.span>
-          </motion.button>
-        </motion.div>
-
         <nav className="sidebar-nav" aria-label="Sidebar navigation">
           <AnimatePresence>
             {isOpen && navItems.map((item) => {
@@ -248,13 +155,13 @@ export default function Sidebar({ isOpen, onClose }) {
               return (
                 <motion.button
                   key={item.label}
-                  className={`nav-item ${item.path && isActive(item.path) ? 'active' : ''} ${item.isLogout ? 'logout' : ''}`}
+                  className={`nav-item ${item.path && isActive(item.path) ? 'active' : ''}`}
                   onClick={() => item.action ? item.action() : handleNavigation(item.path)}
                   custom={item.index}
                   variants={itemVariants}
                   initial="closed"
                   animate="open"
-                  whileHover={{ x: 4, backgroundColor: item.isLogout ? 'rgba(239, 68, 68, 0.1)' : 'var(--bg-secondary)' }}
+                  whileHover={{ x: 4, backgroundColor: 'var(--bg-secondary)' }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <Icon size={20} />
@@ -337,106 +244,6 @@ export default function Sidebar({ isOpen, onClose }) {
           color: #EF4444;
         }
 
-        .user-profile {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 14px;
-          background: linear-gradient(135deg, rgba(45, 190, 96, 0.1) 0%, rgba(45, 190, 96, 0.05) 100%);
-          margin: 14px 16px;
-          border-radius: 14px;
-          border: 1px solid rgba(45, 190, 96, 0.15);
-          position: relative;
-          cursor: pointer;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .user-profile:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(16, 42, 77, 0.12);
-        }
-
-        .avatar {
-          width: 42px;
-          height: 42px;
-          background: linear-gradient(135deg, #2DBE60 0%, #22a652 100%);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-size: 1rem;
-          font-weight: 700;
-          box-shadow: 0 4px 12px rgba(45, 190, 96, 0.3);
-        }
-
-        .user-info h4 {
-          font-size: 0.95rem;
-          font-weight: 600;
-          color: var(--text-primary);
-          margin-bottom: 2px;
-        }
-
-        .user-info p {
-          font-size: 0.78rem;
-          color: var(--text-muted);
-          line-height: 1.2;
-        }
-
-        .user-lottie {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-        }
-
-        .theme-toggle-section {
-          padding: 14px;
-          margin: 0 16px 10px;
-          background: var(--bg-secondary);
-          border-radius: 14px;
-          border: 1px solid var(--border-color);
-        }
-
-        .theme-label {
-          display: block;
-          font-size: 0.7rem;
-          font-weight: 600;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin-bottom: 10px;
-        }
-
-        .theme-toggle-btn {
-          width: 100%;
-          display: flex;
-          padding: 4px;
-          background: var(--bg-primary);
-          border: 1px solid var(--border-color);
-          border-radius: 10px;
-          cursor: pointer;
-        }
-
-        .toggle-option {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          padding: 9px;
-          font-size: 0.82rem;
-          font-weight: 500;
-          color: var(--text-secondary);
-          border-radius: 8px;
-          transition: all 0.25s ease;
-        }
-
-        .toggle-option.active {
-          background: linear-gradient(135deg, #2DBE60 0%, #22a652 100%);
-          color: white;
-          box-shadow: 0 4px 12px rgba(45, 190, 96, 0.35);
-        }
-
         .sidebar-nav {
           flex: 1;
           padding: 8px 20px;
@@ -489,10 +296,6 @@ export default function Sidebar({ isOpen, onClose }) {
           height: 24px;
           background: #2DBE60;
           border-radius: 0 4px 4px 0;
-        }
-
-        .nav-item.logout {
-          color: #EF4444;
         }
 
         .nav-divider {
