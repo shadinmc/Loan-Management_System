@@ -143,27 +143,29 @@ export default function LoanDecision() {
 
   const buildTimeline = (backendStatus, appliedDate, updatedAt) => {
     const submittedDate = appliedDate ? new Date(appliedDate).toLocaleDateString() : 'Submitted';
-    const updated = updatedAt ? new Date(updatedAt).toLocaleDateString() : 'In Progress';
+    const stagePassedDate = updatedAt || appliedDate
+      ? new Date(updatedAt || appliedDate).toLocaleDateString()
+      : '';
     const stage = getStage(backendStatus);
 
     const items = [
       { status: 'Application Submitted', date: submittedDate, completed: true, current: stage === 1 },
-      { status: 'Eligibility Check', date: updated, completed: stage >= 2, current: stage === 2 },
+      { status: 'Eligibility Check', date: stagePassedDate, completed: stage >= 2, current: stage === 2 },
       {
         status: backendStatus === 'BRANCH_REJECTED' ? 'Branch Rejected' : 'Branch Manager Approved',
-        date: updated,
+        date: stagePassedDate,
         completed: stage >= 3 && backendStatus !== 'BRANCH_REJECTED',
         current: stage === 3
       },
       {
         status: backendStatus === 'REGIONAL_REJECTED' ? 'Regional Rejected' : 'Regional Review',
-        date: updated,
+        date: stagePassedDate,
         completed: stage >= 4 && backendStatus !== 'REGIONAL_REJECTED',
         current: stage === 4
       },
-      { status: 'Final Approval', date: updated, completed: stage >= 5, current: stage === 5 },
-      { status: 'Disbursed', date: updated, completed: stage >= 6, current: stage === 6 },
-      { status: 'Closed', date: updated, completed: stage >= 7, current: stage === 7 }
+      { status: 'Final Approval', date: stagePassedDate, completed: stage >= 5, current: stage === 5 },
+      { status: 'Disbursed', date: stagePassedDate, completed: stage >= 6, current: stage === 6 },
+      { status: 'Closed', date: stagePassedDate, completed: stage >= 7, current: stage === 7 }
     ];
 
     return items.map((item) => ({
