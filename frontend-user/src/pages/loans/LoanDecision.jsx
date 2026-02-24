@@ -136,7 +136,7 @@ export default function LoanDecision() {
       DISBURSEMENT_PENDING: 5,
       DISBURSED: 6,
       ACTIVE: 6,
-      CLOSED: 6
+      CLOSED: 7
     };
     return stageMap[backendStatus] || 1;
   };
@@ -162,7 +162,8 @@ export default function LoanDecision() {
         current: stage === 4
       },
       { status: 'Final Approval', date: updated, completed: stage >= 5, current: stage === 5 },
-      { status: 'Disbursed', date: updated, completed: stage >= 6, current: stage === 6 }
+      { status: 'Disbursed', date: updated, completed: stage >= 6, current: stage === 6 },
+      { status: 'Closed', date: updated, completed: stage >= 7, current: stage === 7 }
     ];
 
     return items.map((item) => ({

@@ -21,6 +21,7 @@ const LoanReview = ({ loanId, onClose }) => {
   const queryClient = useQueryClient();
   const [decision, setDecision] = useState(null);
   const [reason, setReason] = useState("");
+  const [ackMessage, setAckMessage] = useState("");
   const [eligibilityResult, setEligibilityResult] = useState(null);
   const [showApproveConsent, setShowApproveConsent] = useState(false);
   const [approveConsentChecked, setApproveConsentChecked] = useState(false);
@@ -39,10 +40,16 @@ const LoanReview = ({ loanId, onClose }) => {
 
   const decisionMutation = useMutation({
     mutationFn: (payload) => submitBranchDecision(loanId, payload),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      const decisionType = variables?.decision;
+      if (decisionType === "REJECT" || decisionType === "CLARIFICATION_REQUIRED") {
+        setAckMessage("Comment sent successfully.");
+      }
       queryClient.invalidateQueries({ queryKey: ["branch-loans"] });
       queryClient.invalidateQueries({ queryKey: ["branch-loan-review", loanId] });
-      onClose();
+      setTimeout(() => {
+        onClose();
+      }, 1400);
     },
     onError: (error) => {
       const message =
@@ -182,6 +189,7 @@ const LoanReview = ({ loanId, onClose }) => {
   };
 
   const handleApprove = () => {
+    setAckMessage("");
     setApproveConsentChecked(false);
     setShowApproveConsent(true);
   };
@@ -472,7 +480,10 @@ const LoanReview = ({ loanId, onClose }) => {
                   className={`btn-manual ${
                     decision === "CLARIFICATION_REQUIRED" ? "active" : ""
                   }`}
-                  onClick={() => setDecision("CLARIFICATION_REQUIRED")}
+                  onClick={() => {
+                    setDecision("CLARIFICATION_REQUIRED");
+                    setAckMessage("");
+                  }}
                 >
                   <AlertTriangle size={20} />
                   <div className="btn-text">
@@ -481,7 +492,10 @@ const LoanReview = ({ loanId, onClose }) => {
                 </button>
                 <button
                   className={`btn-reject ${decision === "REJECT" ? "active" : ""}`}
-                  onClick={() => setDecision("REJECT")}
+                  onClick={() => {
+                    setDecision("REJECT");
+                    setAckMessage("");
+                  }}
                 >
                   <XCircle size={20} />
                   <div className="btn-text">
@@ -498,10 +512,22 @@ const LoanReview = ({ loanId, onClose }) => {
                   <textarea
                     placeholder="Enter message..."
                     value={reason}
-                    onChange={(e) => setReason(e.target.value)}
+                    onChange={(e) => {
+                      setReason(e.target.value);
+                      if (ackMessage) setAckMessage("");
+                    }}
                   />
+                  {ackMessage && (
+                    <p className="acknowledgment-message">{ackMessage}</p>
+                  )}
                   <div className="reject-actions">
-                    <button className="btn-cancel" onClick={() => setDecision(null)}>
+                    <button
+                      className="btn-cancel"
+                      onClick={() => {
+                        setDecision(null);
+                        setAckMessage("");
+                      }}
+                    >
                       Cancel
                     </button>
                     {decision === "REJECT" ? (
