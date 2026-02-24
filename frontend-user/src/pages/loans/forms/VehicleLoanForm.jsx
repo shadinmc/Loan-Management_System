@@ -1,5 +1,5 @@
 // src/pages/loans/forms/VehicleLoanForm.jsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Car, CreditCard, FileText, ChevronRight, ChevronLeft, CheckCircle2, Sparkles, Calculator, Wallet, AlertCircle, Eye, Check } from 'lucide-react';
 import Input from '../../../components/Input';
@@ -8,8 +8,10 @@ import Button from '../../../components/Button';
 import { validateRequired, validateAmount } from '../../../utils/validators';
 import { LOAN_CONFIG, LOAN_TYPES, VEHICLE_TYPES } from '../../../utils/constants';
 import { useCreateLoan } from '../../../hooks/useCreateLoan';
+import { resubmitLoan } from '../../../api/loanApi';
+import { buildLoanDraftKey, loadLoanDraft, saveLoanDraft, clearLoanDraft } from '../../../utils/loanDraftStorage';
 
-export default function VehicleLoanForm({ onSubmit, loading: externalLoading, config }) {
+export default function VehicleLoanForm({ onSubmit, loading: externalLoading, config, resubmitLoanId = null }) {
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
   const { createLoan, loading, error: apiError } = useCreateLoan(
     '/loans/apply',
@@ -35,6 +37,8 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
     interestRate: 9.5
   };
 
+  const isDocumentResubmit = Boolean(resubmitLoanId);
+  const documentsStepId = 3;
   const [formData, setFormData] = useState({
     vehicleType: '',
     vehicleModel: '',
@@ -46,22 +50,47 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
     proofOfIdentity: null,
     proofOfIncome: null,
     insuranceProof: null,
-    downPaymentProof: null
+    downPaymentProof: null,
+    agreedToTerms: false
   });
 
   const [errors, setErrors] = useState({});
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(isDocumentResubmit ? documentsStepId : 1);
   const [direction, setDirection] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [submittedLoanId, setSubmittedLoanId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDraftHydrated, setIsDraftHydrated] = useState(false);
 
-  const steps = [
+  const allSteps = [
     { id: 1, title: 'Vehicle', icon: Car, description: 'Vehicle details' },
     { id: 2, title: 'Loan', icon: CreditCard, description: 'Amount & tenure' },
     { id: 3, title: 'Documents', icon: FileText, description: 'Upload files' },
     { id: 4, title: 'Review', icon: Eye, description: 'Review & submit' }
   ];
+  const steps = isDocumentResubmit ? allSteps.filter((step) => step.id >= documentsStepId) : allSteps;
+  const maxStep = allSteps.length;
+  const minStep = isDocumentResubmit ? documentsStepId : 1;
+  const draftKey = buildLoanDraftKey('VEHICLE', resubmitLoanId);
+
+  useEffect(() => {
+    const draft = loadLoanDraft(draftKey);
+    if (draft) {
+      if (draft.formData && typeof draft.formData === 'object') {
+        setFormData((prev) => ({ ...prev, ...draft.formData }));
+      }
+
+      if (typeof draft.currentStep === 'number') {
+        setCurrentStep(Math.min(maxStep, Math.max(minStep, draft.currentStep)));
+      }
+    }
+    setIsDraftHydrated(true);
+  }, [draftKey, maxStep, minStep]);
+
+  useEffect(() => {
+    if (!isDraftHydrated) return;
+    saveLoanDraft(draftKey, formData, currentStep);
+  }, [draftKey, formData, currentStep, isDraftHydrated]);
 
   const getCalculatedLoanAmount = (nextFormData = formData) => {
     const price = Number(nextFormData.vehiclePrice);
@@ -97,8 +126,21 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
     }
   };
 
+  const handleTermsChange = (e) => {
+    const { checked } = e.target;
+    setFormData(prev => ({ ...prev, agreedToTerms: checked }));
+    if (errors.agreedToTerms) {
+      setErrors(prev => ({ ...prev, agreedToTerms: '' }));
+    }
+  };
+
   const validateStep = (step) => {
     const newErrors = {};
+
+    if (resubmitLoanId && (step === 1 || step === 2)) {
+      setErrors({});
+      return true;
+    }
 
     if (step === 1) {
       if (!validateRequired(formData.vehicleType)) {
@@ -136,6 +178,7 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
       if (!formData.proofOfIncome) newErrors.proofOfIncome = 'Proof of income is required';
       if (!formData.insuranceProof) newErrors.insuranceProof = 'Insurance proof is required';
       if (!formData.downPaymentProof) newErrors.downPaymentProof = 'Down payment proof is required';
+      if (!formData.agreedToTerms) newErrors.agreedToTerms = 'Please accept Terms & Conditions';
     }
 
     setErrors(newErrors);
@@ -150,6 +193,9 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
   };
 
   const handlePrev = () => {
+    if (isDocumentResubmit && currentStep <= documentsStepId) {
+      return;
+    }
     setDirection(-1);
     setCurrentStep(prev => prev - 1);
   };
@@ -163,7 +209,7 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
       fileToBase64(formData.downPaymentProof)
     ]);
     const calculatedLoanAmount = getCalculatedLoanAmount();
-    const payload = {
+    const fullPayload = {
       loanType: 'VEHICLE',
       loanAmount: Number.isFinite(calculatedLoanAmount) ? Number(calculatedLoanAmount) : Number(formData.loanAmount),
       tenureMonths: Number(formData.tenureMonths),
@@ -180,9 +226,22 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
         downPaymentProof
       }
     };
+    const payload = resubmitLoanId
+      ? {
+          vehicleLoanDetails: {
+            proofOfIdentity,
+            proofOfIncome,
+            insuranceProof,
+            downPaymentProof
+          }
+        }
+      : fullPayload;
 
     try {
-      const res = await createLoan(payload, { loanType: 'VEHICLE', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
+      const res = resubmitLoanId
+        ? await resubmitLoan(resubmitLoanId, payload)
+        : await createLoan(fullPayload, { loanType: 'VEHICLE', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
+      clearLoanDraft(draftKey);
       setSubmittedLoanId(getLoanId(res));
       setShowSuccess(true);
       if (onSubmit) onSubmit({ response: res, payload });
@@ -226,6 +285,7 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
     hidden: { opacity: 0, y: 20 },
     visible: (i) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, type: 'spring', stiffness: 100 } })
   };
+  const isKycNotVerifiedError = (message) => /kyc\s*not\s*verified/i.test(String(message || ''));
 
   const calculatedLoanAmount = getCalculatedLoanAmount();
   const effectiveLoanAmount = Number.isFinite(calculatedLoanAmount) ? calculatedLoanAmount : 0;
@@ -538,12 +598,13 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
                 transition={{ delay: 0.6 }}
               >
                 <label className="terms-checkbox">
-                  <input type="checkbox" required />
+                  <input type="checkbox" checked={formData.agreedToTerms} onChange={handleTermsChange} />
                   <span>
                     I agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms & Conditions</a> and{' '}
                     <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>.
                   </span>
                 </label>
+                {errors.agreedToTerms && <div className="error-text">{errors.agreedToTerms}</div>}
               </motion.div>
             </motion.div>
           )}
@@ -580,6 +641,9 @@ export default function VehicleLoanForm({ onSubmit, loading: externalLoading, co
                 >
                   <AlertCircle size={20} />
                   <p>{apiError}</p>
+                  {isKycNotVerifiedError(apiError) && (
+                    <a href="/kyc" className="kyc-verify-link">Click here to verify KYC</a>
+                  )}
                 </motion.div>
               )}
 
@@ -1281,6 +1345,15 @@ const formStyles = `
     margin: 0;
     font-size: 14px;
     color: #DC2626;
+  }
+
+  .kyc-verify-link {
+    color: #B91C1C;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: underline;
+    margin-left: auto;
+    white-space: nowrap;
   }
 
   .form-actions {

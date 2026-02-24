@@ -116,6 +116,8 @@
   --z-modal-backdrop: 400;
   --z-modal: 500;
   --z-toast: 800;
+  --theme-transition-duration: 340ms;
+  --theme-transition-easing: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Dark Theme */
@@ -172,6 +174,52 @@ body {
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
   transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+/* ===== THEME SWITCH MOTION ===== */
+html.theme-switching,
+html.theme-switching * {
+  transition-property: background-color, color, border-color, box-shadow, fill, stroke;
+  transition-duration: var(--theme-transition-duration);
+  transition-timing-function: var(--theme-transition-easing);
+}
+
+@supports (view-transition-name: root) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--theme-transition-duration);
+    animation-timing-function: var(--theme-transition-easing);
+  }
+
+  ::view-transition-old(root) {
+    animation-name: themeFadeOut;
+  }
+
+  ::view-transition-new(root) {
+    animation-name: themeFadeIn;
+  }
+}
+
+@keyframes themeFadeOut {
+  from {
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+  }
+  to {
+    opacity: 0;
+    filter: brightness(0.92) saturate(0.95);
+  }
+}
+
+@keyframes themeFadeIn {
+  from {
+    opacity: 0;
+    filter: brightness(1.08) saturate(1.05);
+  }
+  to {
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+  }
 }
 
 /* ===== TYPOGRAPHY ===== */

@@ -167,29 +167,53 @@ If you plan to wire Stripe in the future, see `STRIPE_GATEWAY_SETUP.md`.
 Place screenshots under `docs/screenshots/` and update filenames below after upload.
 
 User Portal:
-- Home (Loan Types): `docs/screenshots/user-home.png`
-- Login: `docs/screenshots/user-login.png`
-- Signup: `docs/screenshots/user-signup.png`
-- Dashboard: `docs/screenshots/user-dashboard.png`
-- KYC: `docs/screenshots/user-kyc.png`
+- Home:
+  <img width="1876" height="1073" alt="home" src="https://github.com/user-attachments/assets/c38e37b2-b3ef-4951-b908-5b4734f2537c" />
+
+- Login:
+  <img width="1894" height="1084" alt="login" src="https://github.com/user-attachments/assets/2c549d9a-512c-4d42-acc6-31ff39433008" />
+
+- Signup:
+  <img width="1887" height="1075" alt="signup" src="https://github.com/user-attachments/assets/2c03b10a-e2ac-4575-b979-aea5c86811a2" />
+
+- Dashboard:
+  ![userdashboard](https://github.com/user-attachments/assets/c9494af6-6598-4426-8dd3-05e71e938977)
+
+- KYC:
+  ![kyc](https://github.com/user-attachments/assets/74db1f7c-f105-4cdb-b24d-392fba7bca6f)
+
 - Wallet: `docs/screenshots/user-wallet.png`
 - Wallet Transactions: `docs/screenshots/user-wallet-transactions.png`
 - Wallet Payment - UPI: `docs/screenshots/user-wallet-upi.png`
 - Wallet Payment - Card: `docs/screenshots/user-wallet-card.png`
 - Wallet Payment - NetBanking: `docs/screenshots/user-wallet-netbanking.png`
-- Loan Apply: `docs/screenshots/user-loan-apply.png`
-- Loan Confirmation: `docs/screenshots/user-loan-confirmation.png`
+- Loan Apply:
+  <img width="632" height="356" alt="loan" src="https://github.com/user-attachments/assets/bfcb3089-c067-433f-884c-bb228348ecca" />
+
+  ![applyloan](https://github.com/user-attachments/assets/8f80c89a-867c-48b4-a40f-7b81d24f63d3)
+
+- Loan Created:
+  ![loancreated](https://github.com/user-attachments/assets/4fccc5d5-3526-43d1-be17-1cd7108a253a)
+
 - Loan Status: `docs/screenshots/user-loan-status.png`
 - Repayments: `docs/screenshots/user-repayments.png`
-- Profile: `docs/screenshots/user-profile.png`
+- Profile:
+  ![profile](https://github.com/user-attachments/assets/872f551d-272a-43dd-b417-61c95c86caa7)
+
 - Terms: `docs/screenshots/user-terms.png`
 - Privacy: `docs/screenshots/user-privacy.png`
 
 Admin Portal:
-- Admin Login: `docs/screenshots/admin-login.png`
+- Admin Login:
+  ![managerlogin](https://github.com/user-attachments/assets/1ff101a2-4a2d-4b5b-8dd5-f40e4a315267)
+
 - Branch Dashboard: `docs/screenshots/admin-branch-dashboard.png`
-- Branch Loan Applications: `docs/screenshots/admin-branch-loan-applications.png`
-- Branch KYC Review: `docs/screenshots/admin-branch-kyc.png`
+- Branch Loan Applications:
+  <img width="1861" height="1053" alt="loanapproval" src="https://github.com/user-attachments/assets/5a750d27-d7ff-47f8-a578-088c864f5319" />
+
+- Branch KYC Review:
+  <img width="1870" height="1059" alt="kycapprove" src="https://github.com/user-attachments/assets/8ca9694b-8390-41cf-a83f-ccb2173b459e" />
+
 - Branch Disbursements: `docs/screenshots/admin-branch-disbursements.png`
 - Branch Repayments: `docs/screenshots/admin-branch-repayments.png`
 - Regional Dashboard: `docs/screenshots/admin-regional-dashboard.png`
@@ -212,3 +236,4 @@ Once images are uploaded, update the list above to actual filenames and optional
 
 ## License
 Add your license here.
+

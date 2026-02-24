@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, TrendingUp, CreditCard, FileText, ChevronRight, ChevronLeft, AlertCircle, Calculator, CheckCircle2, Sparkles, Upload, PartyPopper, ArrowRight, Home, Eye } from 'lucide-react';
 import Input from '../../../components/Input';
@@ -8,6 +8,7 @@ import { validateRequired, validateAmount } from '../../../utils/validators';
 import { LOAN_CONFIG, LOAN_TYPES } from '../../../utils/constants';
 import { useCreateLoan } from '../../../hooks/useCreateLoan';
 import { resubmitLoan } from '../../../api/loanApi';
+import { buildLoanDraftKey, loadLoanDraft, saveLoanDraft, clearLoanDraft } from '../../../utils/loanDraftStorage';
 
 export default function BusinessLoanForm({ onSubmit, loading: externalLoading, config, resubmitLoanId = null }) {
   const { createLoan, loading, error: apiError } = useCreateLoan(
@@ -34,6 +35,8 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
     interestRate: 11.5
   };
 
+  const isDocumentResubmit = Boolean(resubmitLoanId);
+  const documentsStepId = 4;
   const [formData, setFormData] = useState({
     businessName: '',
     businessType: '',
@@ -43,23 +46,48 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
     loanAmount: '',
     tenureMonths: '',
     proofOfBusiness: null,
-    proofOfIncome: null
+    proofOfIncome: null,
+    agreedToTerms: false
   });
 
   const [errors, setErrors] = useState({});
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(isDocumentResubmit ? documentsStepId : 1);
   const [direction, setDirection] = useState(1);
   const [submissionResult, setSubmissionResult] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDraftHydrated, setIsDraftHydrated] = useState(false);
 
-  const steps = [
+  const allSteps = [
     { id: 1, title: 'Business', icon: Building2, description: 'Company details' },
     { id: 2, title: 'Financial', icon: TrendingUp, description: 'Revenue info' },
     { id: 3, title: 'Loan', icon: CreditCard, description: 'Amount & tenure' },
     { id: 4, title: 'Documents', icon: FileText, description: 'Upload files' },
     { id: 5, title: 'Review', icon: Eye, description: 'Review & submit' }
   ];
+  const steps = isDocumentResubmit ? allSteps.filter((step) => step.id >= documentsStepId) : allSteps;
+  const maxStep = allSteps.length;
+  const minStep = isDocumentResubmit ? documentsStepId : 1;
+  const draftKey = buildLoanDraftKey('BUSINESS', resubmitLoanId);
+
+  useEffect(() => {
+    const draft = loadLoanDraft(draftKey);
+    if (draft) {
+      if (draft.formData && typeof draft.formData === 'object') {
+        setFormData((prev) => ({ ...prev, ...draft.formData }));
+      }
+
+      if (typeof draft.currentStep === 'number') {
+        setCurrentStep(Math.min(maxStep, Math.max(minStep, draft.currentStep)));
+      }
+    }
+    setIsDraftHydrated(true);
+  }, [draftKey, maxStep, minStep]);
+
+  useEffect(() => {
+    if (!isDraftHydrated) return;
+    saveLoanDraft(draftKey, formData, currentStep);
+  }, [draftKey, formData, currentStep, isDraftHydrated]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,8 +100,19 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
+  const handleTermsChange = (e) => {
+    const { checked } = e.target;
+    setFormData(prev => ({ ...prev, agreedToTerms: checked }));
+    if (errors.agreedToTerms) setErrors(prev => ({ ...prev, agreedToTerms: '' }));
+  };
+
   const validateStep = (step) => {
     const newErrors = {};
+
+    if (resubmitLoanId && (step === 1 || step === 2 || step === 3)) {
+      setErrors({});
+      return true;
+    }
 
     if (step === 1) {
       if (!validateRequired(formData.businessName)) newErrors.businessName = 'Business name is required';
@@ -104,6 +143,7 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
     if (step === 4) {
       if (!formData.proofOfBusiness) newErrors.proofOfBusiness = 'Proof of business is required';
       if (!formData.proofOfIncome) newErrors.proofOfIncome = 'Proof of income is required';
+      if (!formData.agreedToTerms) newErrors.agreedToTerms = 'Please accept Terms & Conditions';
     }
 
     setErrors(newErrors);
@@ -118,6 +158,9 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
   };
 
   const handlePrev = () => {
+    if (isDocumentResubmit && currentStep <= documentsStepId) {
+      return;
+    }
     setDirection(-1);
     setCurrentStep(prev => prev - 1);
   };
@@ -129,7 +172,7 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
       fileToBase64(formData.proofOfIncome)
     ]);
 
-    const payload = {
+    const fullPayload = {
       loanType: 'BUSINESS',
       loanAmount: Number(formData.loanAmount),
       tenureMonths: Number(formData.tenureMonths),
@@ -145,11 +188,20 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
         proofOfIncome
       }
     };
+    const payload = resubmitLoanId
+      ? {
+          businessLoanDetails: {
+            proofOfBusiness,
+            proofOfIncome
+          }
+        }
+      : fullPayload;
 
     try {
       const res = resubmitLoanId
         ? await resubmitLoan(resubmitLoanId, payload)
-        : await createLoan(payload, { loanType: 'BUSINESS', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
+        : await createLoan(fullPayload, { loanType: 'BUSINESS', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
+      clearLoanDraft(draftKey);
       setSubmissionResult(res);
       setIsSuccess(true);
       if (onSubmit) onSubmit({ response: res, payload });
@@ -171,6 +223,7 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
   });
 
   const handleReset = () => {
+    clearLoanDraft(draftKey);
     setIsSuccess(false);
     setSubmissionResult(null);
     setCurrentStep(1);
@@ -225,6 +278,7 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
     hidden: { opacity: 0, y: 16 },
     visible: (i) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, type: 'spring', stiffness: 120 } })
   };
+  const isKycNotVerifiedError = (message) => /kyc\s*not\s*verified/i.test(String(message || ''));
 
   const emi = formData.loanAmount && formData.tenureMonths
     ? calculateEMI(Number(formData.loanAmount), loanConfig.interestRate, Number(formData.tenureMonths))
@@ -720,12 +774,13 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
                 transition={{ delay: 0.4 }}
               >
                 <label className="terms-checkbox">
-                  <input type="checkbox" required />
+                  <input type="checkbox" checked={formData.agreedToTerms} onChange={handleTermsChange} />
                   <span className="checkmark" />
                   <span className="terms-text">
                     I agree to the <a href="/terms" className="terms-link" target="_blank" rel="noreferrer">Terms & Conditions</a> and <a href="/privacy" className="terms-link" target="_blank" rel="noreferrer">Privacy Policy</a>
                   </span>
                 </label>
+                {errors.agreedToTerms && <div className="error-text">{errors.agreedToTerms}</div>}
               </motion.div>
             </motion.div>
           )}
@@ -758,6 +813,9 @@ export default function BusinessLoanForm({ onSubmit, loading: externalLoading, c
                 >
                   <AlertCircle size={20} />
                   <p>{apiError}</p>
+                  {isKycNotVerifiedError(apiError) && (
+                    <a href="/kyc" className="kyc-verify-link">Click here to verify KYC</a>
+                  )}
                 </motion.div>
               )}
 
@@ -1818,6 +1876,15 @@ const formStyles = `
     font-size: 14px;
     color: #DC2626;
     font-weight: 500;
+  }
+
+  .kyc-verify-link {
+    color: #B91C1C;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: underline;
+    margin-left: auto;
+    white-space: nowrap;
   }
 
   /* Form Actions */

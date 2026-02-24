@@ -1,5 +1,5 @@
 // src/pages/loans/forms/EducationLoanForm.jsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GraduationCap, Users, CreditCard, FileText, ChevronRight, ChevronLeft, AlertCircle, Calculator, CheckCircle2, Sparkles, Eye, Check } from 'lucide-react';
 import Input from '../../../components/Input';
@@ -9,6 +9,7 @@ import { validateRequired, validateAmount } from '../../../utils/validators';
 import { LOAN_CONFIG, LOAN_TYPES } from '../../../utils/constants';
 import { useCreateLoan } from '../../../hooks/useCreateLoan';
 import { resubmitLoan } from '../../../api/loanApi';
+import { buildLoanDraftKey, loadLoanDraft, saveLoanDraft, clearLoanDraft } from '../../../utils/loanDraftStorage';
 
 export default function EducationLoanForm({ onSubmit, loading: externalLoading, config, resubmitLoanId = null }) {
   const { createLoan, loading, error } = useCreateLoan(
@@ -35,6 +36,8 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
     interestRate: 8.5
   };
 
+  const isDocumentResubmit = Boolean(resubmitLoanId);
+  const documentsStepId = 4;
   const [formData, setFormData] = useState({
     // Loan basic details
     loanAmount: '',
@@ -53,21 +56,46 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
     proofOfAdmission: null,
     proofOfIncome: null,
     proofOfAddress: null,
-    collateralDocuments: null
+    collateralDocuments: null,
+    agreedToTerms: false
   });
 
   const [errors, setErrors] = useState({});
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(isDocumentResubmit ? documentsStepId : 1);
   const [direction, setDirection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDraftHydrated, setIsDraftHydrated] = useState(false);
 
-  const steps = [
+  const allSteps = [
     { id: 1, title: 'Course', icon: GraduationCap, description: 'Course details' },
     { id: 2, title: 'Co-applicant', icon: Users, description: 'Guardian details' },
     { id: 3, title: 'Loan', icon: CreditCard, description: 'Amount & tenure' },
     { id: 4, title: 'Documents', icon: FileText, description: 'Upload files' },
     { id: 5, title: 'Review', icon: Eye, description: 'Review & submit' }
   ];
+  const steps = isDocumentResubmit ? allSteps.filter((step) => step.id >= documentsStepId) : allSteps;
+  const maxStep = allSteps.length;
+  const minStep = isDocumentResubmit ? documentsStepId : 1;
+  const draftKey = buildLoanDraftKey('EDUCATION', resubmitLoanId);
+
+  useEffect(() => {
+    const draft = loadLoanDraft(draftKey);
+    if (draft) {
+      if (draft.formData && typeof draft.formData === 'object') {
+        setFormData((prev) => ({ ...prev, ...draft.formData }));
+      }
+
+      if (typeof draft.currentStep === 'number') {
+        setCurrentStep(Math.min(maxStep, Math.max(minStep, draft.currentStep)));
+      }
+    }
+    setIsDraftHydrated(true);
+  }, [draftKey, maxStep, minStep]);
+
+  useEffect(() => {
+    if (!isDraftHydrated) return;
+    saveLoanDraft(draftKey, formData, currentStep);
+  }, [draftKey, formData, currentStep, isDraftHydrated]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -84,8 +112,21 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
     }
   };
 
+  const handleTermsChange = (e) => {
+    const { checked } = e.target;
+    setFormData(prev => ({ ...prev, agreedToTerms: checked }));
+    if (errors.agreedToTerms) {
+      setErrors(prev => ({ ...prev, agreedToTerms: '' }));
+    }
+  };
+
   const validateStep = (step) => {
     const newErrors = {};
+
+    if (resubmitLoanId && (step === 1 || step === 2 || step === 3)) {
+      setErrors({});
+      return true;
+    }
 
     if (step === 1) {
       if (!validateRequired(formData.courseName)) {
@@ -134,6 +175,9 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
       if (!formData.collateralDocuments) {
         newErrors.collateralDocuments = 'Collateral documents are required';
       }
+      if (!formData.agreedToTerms) {
+        newErrors.agreedToTerms = 'Please accept Terms & Conditions';
+      }
     }
 
     setErrors(newErrors);
@@ -148,6 +192,9 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
   };
 
   const handlePrev = () => {
+    if (isDocumentResubmit && currentStep <= documentsStepId) {
+      return;
+    }
     setDirection(-1);
     setCurrentStep(prev => prev - 1);
   };
@@ -164,7 +211,7 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
       fileToBase64(formData.proofOfAddress),
       fileToBase64(formData.collateralDocuments)
     ]);
-    const payload = {
+    const fullPayload = {
       loanType: 'EDUCATION',
       loanAmount: Number(formData.loanAmount),
       tenureMonths: Number(formData.tenureMonths),
@@ -181,12 +228,23 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
         collateralDocuments
       }
     };
+    const payload = resubmitLoanId
+      ? {
+          educationLoanDetails: {
+            proofOfAdmission,
+            proofOfIncome,
+            proofOfAddress,
+            collateralDocuments
+          }
+        }
+      : fullPayload;
 
     try {
       const res = resubmitLoanId
         ? await resubmitLoan(resubmitLoanId, payload)
-        : await createLoan(payload, { loanType: 'EDUCATION', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
+        : await createLoan(fullPayload, { loanType: 'EDUCATION', idempotencyTtlMs: 60 * 1000, clearOnSuccess: false });
 
+      clearLoanDraft(draftKey);
       if (onSubmit) {
         onSubmit({ response: res, payload });
       }
@@ -236,6 +294,8 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
     hidden: { opacity: 0, y: 20 },
     visible: (i) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, type: 'spring', stiffness: 100 } })
   };
+
+  const isKycNotVerifiedError = (message) => /kyc\s*not\s*verified/i.test(String(message || ''));
 
   const loanAmountValue = Number(formData.loanAmount || 0);
   const emi = loanAmountValue && formData.tenureMonths
@@ -412,7 +472,11 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
 
               {error && (
                 <motion.div className="error-banner" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <AlertCircle size={20} /><p>{error}</p>
+                  <AlertCircle size={20} />
+                  <p>{error}</p>
+                  {isKycNotVerifiedError(error) && (
+                    <a href="/kyc" className="kyc-verify-link">Click here to verify KYC</a>
+                  )}
                 </motion.div>
               )}
 
@@ -441,9 +505,10 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
               </div>
               <motion.div className="terms-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <label className="terms-checkbox">
-                  <input type="checkbox" required />
+                  <input type="checkbox" checked={formData.agreedToTerms} onChange={handleTermsChange} />
                   <span>I agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms & Conditions</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a></span>
                 </label>
+                {errors.agreedToTerms && <div className="error-text">{errors.agreedToTerms}</div>}
               </motion.div>
             </motion.div>
           )}
@@ -460,7 +525,11 @@ export default function EducationLoanForm({ onSubmit, loading: externalLoading, 
 
               {error && (
                 <motion.div className="error-banner" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <AlertCircle size={20} /><p>{error}</p>
+                  <AlertCircle size={20} />
+                  <p>{error}</p>
+                  {isKycNotVerifiedError(error) && (
+                    <a href="/kyc" className="kyc-verify-link">Click here to verify KYC</a>
+                  )}
                 </motion.div>
               )}
 
@@ -825,6 +894,15 @@ const formStyles = `
   .error-banner p {
     margin: 0;
     font-size: 14px;
+  }
+
+  .kyc-verify-link {
+    color: #B91C1C;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: underline;
+    margin-left: auto;
+    white-space: nowrap;
   }
 
   .loan-config-banner {
