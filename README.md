@@ -161,10 +161,8 @@ npm run build
 ## Payment Handling
 The system uses an internal wallet ledger to simulate payments (UPI, card, net banking) for safe testing without real transactions. Stripe-related pages exist in the UI for optional test-mode integration, but the default LMS flow works without any external provider.
 
-If you plan to wire Stripe in the future, see `STRIPE_GATEWAY_SETUP.md`.
 
 ## Screenshots
-Place screenshots under `docs/screenshots/` and update filenames below after upload.
 
 User Portal:
 - Home:
@@ -182,11 +180,15 @@ User Portal:
 - KYC:
   ![kyc](https://github.com/user-attachments/assets/74db1f7c-f105-4cdb-b24d-392fba7bca6f)
 
-- Wallet: `docs/screenshots/user-wallet.png`
-- Wallet Transactions: `docs/screenshots/user-wallet-transactions.png`
-- Wallet Payment - UPI: `docs/screenshots/user-wallet-upi.png`
-- Wallet Payment - Card: `docs/screenshots/user-wallet-card.png`
-- Wallet Payment - NetBanking: `docs/screenshots/user-wallet-netbanking.png`
+- Wallet:
+  ![wallet](https://github.com/user-attachments/assets/9a3c93f7-f43a-4c85-9d20-781a8b1f5c45)
+
+- EMI Repayment:
+  ![emirepyament](https://github.com/user-attachments/assets/ce4a5319-b1cf-4c0e-8f28-eb4b085c3a64)
+
+- One Time Settlement:
+  ![ots](https://github.com/user-attachments/assets/5b33ba2c-d4ec-4070-b687-c3bd59394a7b)
+
 - Loan Apply:
   <img width="632" height="356" alt="loan" src="https://github.com/user-attachments/assets/bfcb3089-c067-433f-884c-bb228348ecca" />
 
@@ -195,38 +197,39 @@ User Portal:
 - Loan Created:
   ![loancreated](https://github.com/user-attachments/assets/4fccc5d5-3526-43d1-be17-1cd7108a253a)
 
-- Loan Status: `docs/screenshots/user-loan-status.png`
-- Repayments: `docs/screenshots/user-repayments.png`
+- Loan Status:
+  ![loanstatus](https://github.com/user-attachments/assets/640aa091-6262-4886-8389-28d8303ffeae)
+
 - Profile:
   ![profile](https://github.com/user-attachments/assets/872f551d-272a-43dd-b417-61c95c86caa7)
 
-- Terms: `docs/screenshots/user-terms.png`
-- Privacy: `docs/screenshots/user-privacy.png`
 
 Admin Portal:
 - Admin Login:
   ![managerlogin](https://github.com/user-attachments/assets/1ff101a2-4a2d-4b5b-8dd5-f40e4a315267)
 
-- Branch Dashboard: `docs/screenshots/admin-branch-dashboard.png`
+- Branch Dashboard:
+  ![branchdash](https://github.com/user-attachments/assets/5710ab3c-63cd-4ff4-abec-6ffc766ba2d7)
+
 - Branch Loan Applications:
   <img width="1861" height="1053" alt="loanapproval" src="https://github.com/user-attachments/assets/5a750d27-d7ff-47f8-a578-088c864f5319" />
 
 - Branch KYC Review:
   <img width="1870" height="1059" alt="kycapprove" src="https://github.com/user-attachments/assets/8ca9694b-8390-41cf-a83f-ccb2173b459e" />
 
-- Branch Disbursements: `docs/screenshots/admin-branch-disbursements.png`
-- Branch Repayments: `docs/screenshots/admin-branch-repayments.png`
-- Regional Dashboard: `docs/screenshots/admin-regional-dashboard.png`
-- Regional Loan Applications: `docs/screenshots/admin-regional-loan-applications.png`
-- Regional KYC Review: `docs/screenshots/admin-regional-kyc.png`
-- Regional Disbursements: `docs/screenshots/admin-regional-disbursements.png`
-- Regional Repayments: `docs/screenshots/admin-regional-repayments.png`
-- Regional Audit Logs: `docs/screenshots/admin-regional-audit-logs.png`
+- Regional Dashboard:
+  ![regionaldash](https://github.com/user-attachments/assets/48af7b89-23bf-4957-8b36-b08ff48ab798)
 
-Once images are uploaded, update the list above to actual filenames and optionally render them inline like:
-```markdown
-![User Dashboard](docs/screenshots/user-dashboard.png)
-```
+- Regional Loan Applications:
+  <img width="1875" height="1082" alt="regionalapprove" src="https://github.com/user-attachments/assets/76319695-4cf4-47a7-807c-8366924bdcb0" />
+  
+- Regional Repayments:
+  ![regionalrepyament](https://github.com/user-attachments/assets/df940edf-3b7e-40c8-bdae-be6ae759191d)
+
+- Regional Audit Logs:
+  <img width="953" height="541" alt="auditlogs" src="https://github.com/user-attachments/assets/7964f76b-3530-4a97-8389-6316a80a0032" />
+
+
 
 ## Production Notes
 - Externalize MongoDB config into environment properties for deployment.
@@ -234,6 +237,6 @@ Once images are uploaded, update the list above to actual filenames and optional
 - Store secrets in a secure vault or environment manager.
 - Run frontends behind a reverse proxy and serve the API on a stable domain.
 
-## License
-Add your license here.
+
+
 
